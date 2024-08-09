@@ -14,8 +14,8 @@
 #' @param mean_num vector of mean for the numerical variables
 #' @param sd_num vector of standard deviations for the numerical variables
 #' @param size_train size for the train set
-#' @param size_calib size for the calibration set
 #' @param size_valid size for the validation set
+#' @param size_calib size for the calibration set
 #' @param size_test size for the test set
 #' @param transform_probs if `TRUE`, the true probability is taken to the power of 3
 #' @param linear_predictor if `TRUE`, the predictor of the true probability is a
@@ -30,12 +30,12 @@
 #'
 #' @returns A list with the following components:
 #'  - train: train set
-#'  - calib: calibration set
 #'  - valid: validation set
+#'  - calib: calibration set
 #'  - test: test set
 #'  - probs_train: true probabilities for binary event in train set
-#'  - probs_calib: true probabilities for binary event in calibration set
 #'  - probs_valid: true probabilities for binary event in validation set
+#'  - probs_calib: true probabilities for binary event in calibration set
 #'  - probs_test: true probabilities for binary event in test set
 simulate_data <- function(n_num = 2,
                           add_categ = FALSE,
@@ -44,15 +44,15 @@ simulate_data <- function(n_num = 2,
                           mean_num,
                           sd_num,
                           size_train,
-                          size_calib,
                           size_valid,
+                          size_calib,
                           size_test,
                           transform_probs = FALSE,
                           linear_predictor = TRUE,
                           linear_predictor_factor = 3,
                           seed = NULL) {
 
-  n_obs <- size_train + size_calib + size_valid + size_test
+  n_obs <- size_train + size_valid + size_calib + size_test
   if (linear_predictor == FALSE) {
     n_obs <- n_obs * linear_predictor_factor
   }
@@ -142,29 +142,29 @@ simulate_data <- function(n_num = 2,
   tb_train <- tb |> dplyr::slice(1:size_train)
   true_prob_train <- true_prob[1:size_train]
 
-  # Calibration
-  ind_calib <- (size_train + 1):(size_train + size_calib)
-  tb_calib <- tb |> dplyr::slice(ind_calib)
-  true_prob_calib <- true_prob[ind_calib]
-
   # Validation
-  ind_valid <- (size_train + size_calib + 1):(size_train + size_calib + size_valid)
+  ind_valid <- (size_train + 1):(size_train + size_valid)
   tb_valid <- tb |> dplyr::slice(ind_valid)
   true_prob_valid <- true_prob[ind_valid]
 
+  # Calibration
+  ind_calib <- (size_train + size_valid + 1):(size_train + size_valid + size_calib)
+  tb_calib <- tb |> dplyr::slice(ind_calib)
+  true_prob_calib <- true_prob[ind_calib]
+
   # Test
-  ind_test <- (size_train + size_calib + size_valid+ 1):n_obs
+  ind_test <- (size_train + size_valid + size_calib + 1):n_obs
   tb_test <- tb |> dplyr::slice(ind_test)
   true_prob_test <- true_prob[ind_test]
 
   list(
     train = tb_train,
-    calib = tb_calib,
     valid = tb_valid,
+    calib = tb_calib,
     test = tb_test,
     probs_train = true_prob_train,
-    probs_calib = true_prob_calib,
     probs_valid = true_prob_valid,
+    probs_calib = true_prob_calib,
     probs_test = true_prob_test
   )
 }
@@ -204,8 +204,8 @@ simulate_data_wrapper <- function(scenario, params_df, repn) {
     mean_num = params |> pull("mean_num") |> pluck(1),
     sd_num = params |> pull("sd_num") |> pluck(1),
     size_train = params |> pull("size_train"),
-    size_calib = params |> pull("size_calib"),
     size_valid = params |> pull("size_valid"),
+    size_calib = params |> pull("size_calib"),
     size_test = params |> pull("size_test"),
     transform_probs = params |> pull("transform_probs"),
     linear_predictor = params |> pull("linear_predictor"),

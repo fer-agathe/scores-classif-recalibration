@@ -18,8 +18,8 @@ library(philentropy)
 # Colours for train/validation/test
 colour_samples <- c(
   "Train" = "#0072B2",
-  "Calibration" = "#CC79A7",
   "Validation" = "#009E73",
+  "Calibration" = "#CC79A7",
   "Test" = "#D55E00"
 )
 ```
@@ -149,8 +149,8 @@ params_df <- tibble(
   mean_num = mean_num,
   sd_num = sd_num,
   size_train = rep(nb_obs, 16),
-  size_calib = rep(nb_obs, 16),
   size_valid = rep(nb_obs, 16),
+  size_calib = rep(nb_obs, 16),
   size_test = rep(nb_obs, 16),
   transform_probs = c(rep(FALSE, 4), rep(TRUE, 4), rep(FALSE, 4), rep(FALSE, 4)),
   linear_predictor = c(rep(TRUE, 12), rep(FALSE, 4)),
@@ -196,8 +196,8 @@ As explained in the foreword of this page, we compute metrics based on scores ob
 #' @param params hyperparameters of the current model
 #' @param fitted_xgb xgb estimated model
 #' @param tb_train_xgb train data (in xgb.DMatrix format)
-#' @param tb_calib_xgb calibration data (in xgb.DMatrix format)
 #' @param tb_valid_xgb validation data (in xgb.DMatrix format)
+#' @param tb_calib_xgb calibration data (in xgb.DMatrix format)
 #' @param tb_test_xgb test data (in xgb.DMatrix format)
 #' @param simu_data simulated dataset
 #' @param true_prob list with true probabilities on train, calibration,
@@ -206,8 +206,8 @@ get_metrics_nb_iter <- function(nb_iter,
                                 params,
                                 fitted_xgb,
                                 tb_train_xgb,
-                                tb_calib_xgb,
                                 tb_valid_xgb,
+                                tb_calib_xgb,
                                 tb_test_xgb,
                                 simu_data,
                                 true_prob) {
@@ -215,26 +215,26 @@ get_metrics_nb_iter <- function(nb_iter,
   ind <- params$ind
   max_depth <- params$max_depth
   tb_train <- simu_data$data$train |> rename(d = y)
-  tb_calib <- simu_data$data$calib |> rename(d = y)
   tb_valid <- simu_data$data$valid |> rename(d = y)
+  tb_calib <- simu_data$data$calib |> rename(d = y)
   tb_test <- simu_data$data$test |> rename(d = y)
 
   # Predicted scores
   scores_train <- predict(fitted_xgb, tb_train_xgb, iterationrange = c(1, nb_iter))
-  scores_calib <- predict(fitted_xgb, tb_calib_xgb, iterationrange = c(1, nb_iter))
   scores_valid <- predict(fitted_xgb, tb_valid_xgb, iterationrange = c(1, nb_iter))
+  scores_calib <- predict(fitted_xgb, tb_calib_xgb, iterationrange = c(1, nb_iter))
   scores_test <- predict(fitted_xgb, tb_test_xgb, iterationrange = c(1, nb_iter))
 
   ## Histogram of scores----
   breaks <- seq(0, 1, by = .05)
   scores_train_hist <- hist(scores_train, breaks = breaks, plot = FALSE)
-  scores_calib_hist <- hist(scores_calib, breaks = breaks, plot = FALSE)
   scores_valid_hist <- hist(scores_valid, breaks = breaks, plot = FALSE)
+  scores_calib_hist <- hist(scores_calib, breaks = breaks, plot = FALSE)
   scores_test_hist <- hist(scores_test, breaks = breaks, plot = FALSE)
   scores_hist <- list(
     train = scores_train_hist,
-    calib = scores_calib_hist,
     valid = scores_valid_hist,
+    calib = scores_calib_hist,
     test = scores_test_hist,
     scenario = simu_data$scenario,
     ind = ind,
@@ -250,18 +250,18 @@ get_metrics_nb_iter <- function(nb_iter,
   ) |>
     list_rbind() |>
     mutate(sample = "train")
-  proq_scores_calib <- map(
-    c(.1, .2, .3, .4),
-    ~prop_btw_quantiles(s = scores_calib, q1 = .x)
-  ) |>
-    list_rbind() |>
-    mutate(sample = "calib")
   proq_scores_valid <- map(
     c(.1, .2, .3, .4),
     ~prop_btw_quantiles(s = scores_valid, q1 = .x)
   ) |>
     list_rbind() |>
     mutate(sample = "valid")
+  proq_scores_calib <- map(
+    c(.1, .2, .3, .4),
+    ~prop_btw_quantiles(s = scores_calib, q1 = .x)
+  ) |>
+    list_rbind() |>
+    mutate(sample = "calib")
   proq_scores_test <- map(
     c(.1, .2, .3, .4),
     ~prop_btw_quantiles(s = scores_test, q1 = .x)
@@ -273,14 +273,14 @@ get_metrics_nb_iter <- function(nb_iter,
   disp_train <- dispersion_metrics(
     true_probas = true_prob$train, scores = scores_train
   ) |> mutate(sample = "train")
-
-  disp_calib <- dispersion_metrics(
-    true_probas = true_prob$calib, scores = scores_calib
-  ) |>mutate(sample = "calib")
   
   disp_valid <- dispersion_metrics(
     true_probas = true_prob$valid, scores = scores_valid
   ) |>mutate(sample = "valid")
+  
+  disp_calib <- dispersion_metrics(
+    true_probas = true_prob$calib, scores = scores_calib
+  ) |>mutate(sample = "calib")
 
   disp_test <- dispersion_metrics(
     true_probas = true_prob$test, scores = scores_test
@@ -295,13 +295,6 @@ get_metrics_nb_iter <- function(nb_iter,
   metrics_train <- compute_metrics(
     obs = tb_train$d, scores = scores_train_noise, true_probas = true_prob$train
   ) |> mutate(sample = "train")
-
-  scores_calib_noise <- scores_calib +
-    runif(n = length(scores_calib), min = 0, max = 0.01)
-  scores_calib_noise[scores_calib_noise > 1] <- 1
-  metrics_calib <- compute_metrics(
-    obs = tb_calib$d, scores = scores_calib_noise, true_probas = true_prob$calib
-  ) |> mutate(sample = "calib")
   
   scores_valid_noise <- scores_valid +
     runif(n = length(scores_valid), min = 0, max = 0.01)
@@ -309,6 +302,13 @@ get_metrics_nb_iter <- function(nb_iter,
   metrics_valid <- compute_metrics(
     obs = tb_valid$d, scores = scores_valid_noise, true_probas = true_prob$valid
   ) |> mutate(sample = "valid")
+  
+  scores_calib_noise <- scores_calib +
+    runif(n = length(scores_calib), min = 0, max = 0.01)
+  scores_calib_noise[scores_calib_noise > 1] <- 1
+  metrics_calib <- compute_metrics(
+    obs = tb_calib$d, scores = scores_calib_noise, true_probas = true_prob$calib
+  ) |> mutate(sample = "calib")
 
   scores_test_noise <- scores_test +
     runif(n = length(scores_test), min = 0, max = 0.01)
@@ -318,13 +318,13 @@ get_metrics_nb_iter <- function(nb_iter,
   ) |> mutate(sample = "test")
 
   tb_metrics <- metrics_train |>
-    bind_rows(metrics_calib) |>
     bind_rows(metrics_valid) |>
+    bind_rows(metrics_calib) |>
     bind_rows(metrics_test) |>
     left_join(
       disp_train |>
-        bind_rows(disp_calib) |> 
         bind_rows(disp_valid) |> 
+        bind_rows(disp_calib) |> 
         bind_rows(disp_test),
       by = "sample"
     ) |>
@@ -337,8 +337,8 @@ get_metrics_nb_iter <- function(nb_iter,
     )
 
   tb_prop_scores <- proq_scores_train |>
-    bind_rows(proq_scores_calib) |>
     bind_rows(proq_scores_valid) |>
+    bind_rows(proq_scores_calib) |>
     bind_rows(proq_scores_test) |>
     mutate(
       scenario = simu_data$scenario,
@@ -378,14 +378,14 @@ simul_xgb <- function(params,
                       ind,
                       simu_data) {
   tb_train <- simu_data$data$train |> rename(d = y)
-  tb_calib <- simu_data$data$calib |> rename(d = y)
   tb_valid <- simu_data$data$valid |> rename(d = y)
+  tb_calib <- simu_data$data$calib |> rename(d = y)
   tb_test <- simu_data$data$test |> rename(d = y)
   true_prob <-
     list(
       train = simu_data$data$probs_train,
-      calib = simu_data$data$probs_calib,
       valid = simu_data$data$probs_valid,
+      calib = simu_data$data$probs_calib,
       test = simu_data$data$probs_test
     )
 
@@ -393,11 +393,11 @@ simul_xgb <- function(params,
   tb_train_xgb <- xgb.DMatrix(
     data = model.matrix(d ~ -1 + ., tb_train), label = tb_train$d
   )
-  tb_calib_xgb <- xgb.DMatrix(
-    data = model.matrix(d ~ -1 + ., tb_calib), label = tb_calib$d
-  )
   tb_valid_xgb <- xgb.DMatrix(
     data = model.matrix(d ~ -1 + ., tb_valid), label = tb_valid$d
+  )
+  tb_calib_xgb <- xgb.DMatrix(
+    data = model.matrix(d ~ -1 + ., tb_calib), label = tb_calib$d
   )
   tb_test_xgb <- xgb.DMatrix(
     data = model.matrix(d ~ -1 + ., tb_test), label = tb_test$d
@@ -429,8 +429,8 @@ simul_xgb <- function(params,
       params = params,
       fitted_xgb = xgb_fit,
       tb_train_xgb = tb_train_xgb,
-      tb_calib_xgb = tb_calib_xgb,
       tb_valid_xgb = tb_valid_xgb,
+      tb_calib_xgb = tb_calib_xgb,
       tb_test_xgb = tb_test_xgb,
       simu_data = simu_data,
       true_prob = true_prob
