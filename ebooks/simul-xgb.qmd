@@ -175,6 +175,78 @@ To train the models, we rely on the {xgboost} R package.
 library(xgboost)
 ```
 
+
+
+```{r define-recalibrate}
+#' Recalibrates scores using a calibration
+#' 
+#' @param obs_calib vector of observed events in the calibration set
+#' @param scores_calib vector of predicted probabilities in the calibration set
+#' #' @param obs_test vector of observed events in the test set
+#' @param scores_test vector of predicted probabilities in the test set
+#' @param method recalibration method (`"platt"` for Platt-Scaling, 
+#'   `"isotonic"` for isotonic regression)
+#' @param linspace vector of alues at which to compute the recalibrated scores
+#' @returns list of three elements: recalibrated scores on the calibration set,
+#'   recalibrated scores on the test set, and recalibrated scores on a segment 
+#'   of values
+recalibrate <- function(obs_calib,
+                        obs_test,
+                        pred_calib,
+                        pred_test,
+                        method = c("platt", "isotonic"),
+                        linspace = NULL) {
+  if (is.null(linspace)) linspace <- seq(0, 1, length.out = 101)
+  data_calib <- tibble(d = obs_calib, scores = pred_calib)
+  data_test <- tibble(d = obs_test, scores = pred_test)
+  
+  if (method == "platt") {
+    lr <- glm(d ~ scores, family = binomial(link = 'logit'), data = data_calib)
+    score_c_calib <- predict(lr, newdata = data_calib, type = "response")
+    score_c_test <- predict(lr, newdata = data_test, type = "response")
+    # Recalibrated scores on [0,1]
+    score_c_linspace <- predict(
+      lr, newdata = tibble(scores = linspace), type = "response"
+    )
+  } else if (method == "isotonic") {
+    iso <- isoreg(x = data_calib$scores, y = data_calib$d)
+    fit_iso <- as.stepfun(iso)
+    score_c_calib <- fit_iso(data_calib$scores)
+    score_c_test <- fit_iso(data_test$scores)
+    score_c_linspace <- fit_iso(linspace)
+    
+  } else {
+    stop("Unrecognized method: platt or isotonic only")
+  }
+  # Format results in tibbles:
+  # For calibration set
+  tb_score_c_calib <- tibble(
+    d = obs_calib,
+    p_u = pred_calib,
+    p_c = score_c_calib
+  )
+  # For test set
+  tb_score_c_test <- tibble(
+    d = obs_test,
+    p_u = pred_test,
+    p_c = score_c_test
+  )
+  # For linear space
+  tb_score_c_linspace <- tibble(
+    linspace = linspace,
+    p_c = score_c_linspace
+  )
+  
+  list(
+    tb_score_c_calib = tb_score_c_calib,
+    tb_score_c_test = tb_score_c_test,
+    tb_score_c_linspace = tb_score_c_linspace
+  )
+  
+}
+```
+
+
 As explained in the foreword of this page, we compute metrics based on scores obtained at various boosting iterations. To do so, we define a function, `get_metrics_nb_iter()`{.R}, that will be applied to a fitted model. This function will be called for all the boosting iterations (controlled by the `nb_iter` argument). The function returns a list with the following elements:
 
 - `scenario`: the ID of the scenario
@@ -224,18 +296,52 @@ get_metrics_nb_iter <- function(nb_iter,
   scores_valid <- predict(fitted_xgb, tb_valid_xgb, iterationrange = c(1, nb_iter))
   scores_calib <- predict(fitted_xgb, tb_calib_xgb, iterationrange = c(1, nb_iter))
   scores_test <- predict(fitted_xgb, tb_test_xgb, iterationrange = c(1, nb_iter))
+  
+  # Recalibration
+  # Platt scaling
+  res_recalibration_platt <- recalibrate(
+    obs_calib = tb_calib$d, 
+    obs_test = tb_test$d, 
+    pred_calib = scores_calib, 
+    pred_test = scores_test, 
+    method = "platt", 
+    linspace = linspace
+  )
+  scores_c_platt_calib <- res_recalibration_platt$tb_score_c_calib$p_c
+  scores_c_platt_test <- res_recalibration_platt$tb_score_c_test$p_c
+  
+  # Isotonic regression
+  res_recalibration_iso <- recalibrate(
+    obs_calib = tb_calib$d, 
+    obs_test = tb_test$d, 
+    pred_calib = scores_calib, 
+    pred_test = scores_test, 
+    method = "isotonic", 
+    linspace = linspace
+  )
+  scores_c_iso_calib <- res_recalibration_platt$tb_score_c_calib$p_c
+  scores_c_iso_test <- res_recalibration_platt$tb_score_c_test$p_c
 
   ## Histogram of scores----
   breaks <- seq(0, 1, by = .05)
   scores_train_hist <- hist(scores_train, breaks = breaks, plot = FALSE)
-  scores_valid_hist <- hist(scores_valid, breaks = breaks, plot = FALSE)
   scores_calib_hist <- hist(scores_calib, breaks = breaks, plot = FALSE)
+  scores_valid_hist <- hist(scores_valid, breaks = breaks, plot = FALSE)
   scores_test_hist <- hist(scores_test, breaks = breaks, plot = FALSE)
+  scores_c_platt_calib_hist <- hist(scores_c_platt_calib, breaks = breaks, plot = FALSE)
+  scores_c_platt_test_hist <- hist(scores_c_platt_test, breaks = breaks, plot = FALSE)
+  scores_c_iso_calib_hist <- hist(scores_c_iso_calib, breaks = breaks, plot = FALSE)
+  scores_c_iso_test_hist <- hist(scores_c_iso_test, breaks = breaks, plot = FALSE)
+  
   scores_hist <- list(
     train = scores_train_hist,
     valid = scores_valid_hist,
     calib = scores_calib_hist,
     test = scores_test_hist,
+    calib_c_platt = scores_c_platt_calib_hist,
+    test_c_platt = scores_c_platt_test_hist,
+    calib_c_iso = scores_c_iso_calib_hist,
+    test_c_iso = scores_c_iso_test_hist,
     scenario = simu_data$scenario,
     ind = ind,
     repn = simu_data$repn,
@@ -244,48 +350,82 @@ get_metrics_nb_iter <- function(nb_iter,
   )
 
   ## Estimation of P(q1 < score < q2)----
-  proq_scores_train <- map(
-    c(.1, .2, .3, .4),
-    ~prop_btw_quantiles(s = scores_train, q1 = .x)
-  ) |>
-    list_rbind() |>
-    mutate(sample = "train")
-  proq_scores_valid <- map(
-    c(.1, .2, .3, .4),
-    ~prop_btw_quantiles(s = scores_valid, q1 = .x)
-  ) |>
-    list_rbind() |>
-    mutate(sample = "valid")
-  proq_scores_calib <- map(
-    c(.1, .2, .3, .4),
-    ~prop_btw_quantiles(s = scores_calib, q1 = .x)
-  ) |>
-    list_rbind() |>
-    mutate(sample = "calib")
-  proq_scores_test <- map(
-    c(.1, .2, .3, .4),
-    ~prop_btw_quantiles(s = scores_test, q1 = .x)
-  ) |>
-    list_rbind() |>
-    mutate(sample = "test")
+  prop_btw_q_h <- function(s, sample_name, recalib_name) {
+    map(
+      c(.1, .2, .3, .4),
+      ~prop_btw_quantiles(s = s, q1 = .x)
+    ) |>
+      list_rbind() |>
+      mutate(sample = sample_name, recalib = recalib_name)
+  }
+  
+  proq_scores_train <- prop_btw_q_h(
+    scores_train, sample_name = "train", recalib_name = "none"
+  )
+  proq_scores_valid <- prop_btw_q_h(
+    scores_valid, sample_name = "valid", recalib_name = "none"
+  )
+  proq_scores_calib <- prop_btw_q_h(
+    scores_calib, sample_name = "calib", recalib_name = "none"
+  )
+  proq_scores_test <- prop_btw_q_h(
+    scores_test, sample_name = "test", recalib_name = "none"
+  )
+  proq_scores_c_platt_calib <- prop_btw_q_h(
+    scores_c_platt_calib, sample_name = "calib", recalib_name = "platt"
+  )
+  proq_scores_c_platt_test <- prop_btw_q_h(
+    scores_c_platt_test, sample_name = "test", recalib_name = "platt"
+  )
+  proq_scores_c_iso_calib <- prop_btw_q_h(
+    scores_c_iso_calib, sample_name = "calib", recalib_name = "isotonic"
+  )
+  proq_scores_c_iso_test <- prop_btw_q_h(
+    scores_c_iso_test, sample_name = "test", recalib_name = "isotonic"
+  )
+  
 
   ## Dispersion Metrics----
   disp_train <- dispersion_metrics(
     true_probas = true_prob$train, scores = scores_train
-  ) |> mutate(sample = "train")
-  
+  ) |> 
+    mutate(sample = "train", recalib = "none")
   disp_valid <- dispersion_metrics(
     true_probas = true_prob$valid, scores = scores_valid
-  ) |>mutate(sample = "valid")
+  ) |>
+    mutate(sample = "valid", recalib = "none")
   
   disp_calib <- dispersion_metrics(
     true_probas = true_prob$calib, scores = scores_calib
-  ) |>mutate(sample = "calib")
-
+  ) |>
+    mutate(sample = "calib", recalib = "none")
+  
   disp_test <- dispersion_metrics(
     true_probas = true_prob$test, scores = scores_test
-  ) |> mutate(sample = "test")
-
+  ) |> 
+    mutate(sample = "test", recalib = "none")
+  
+  
+  disp_c_platt_calib <- dispersion_metrics(
+    true_probas = true_prob$calib, scores = scores_c_platt_calib
+  ) |>
+    mutate(sample = "calib", recalib = "platt")
+  
+  disp_c_platt_test <- dispersion_metrics(
+    true_probas = true_prob$test, scores = scores_c_platt_test
+  ) |> 
+    mutate(sample = "test", recalib = "platt")
+  
+  disp_c_iso_calib <- dispersion_metrics(
+    true_probas = true_prob$calib, scores = scores_c_iso_calib
+  ) |>
+    mutate(sample = "calib", recalib = "isotonic")
+  
+  disp_c_iso_test <- dispersion_metrics(
+    true_probas = true_prob$test, scores = scores_c_iso_test
+  ) |> 
+    mutate(sample = "test", recalib = "isotonic")
+  
   # Performance and Calibration Metrics
   # We add very small noise to predicted scores
   # otherwise the local regression may crash
@@ -294,39 +434,81 @@ get_metrics_nb_iter <- function(nb_iter,
   scores_train_noise[scores_train_noise > 1] <- 1
   metrics_train <- compute_metrics(
     obs = tb_train$d, scores = scores_train_noise, true_probas = true_prob$train
-  ) |> mutate(sample = "train")
+  ) |> mutate(sample = "train", recalib = "none")
   
   scores_valid_noise <- scores_valid +
     runif(n = length(scores_valid), min = 0, max = 0.01)
   scores_valid_noise[scores_valid_noise > 1] <- 1
   metrics_valid <- compute_metrics(
     obs = tb_valid$d, scores = scores_valid_noise, true_probas = true_prob$valid
-  ) |> mutate(sample = "valid")
+  ) |> mutate(sample = "valid", recalib = "none")
   
   scores_calib_noise <- scores_calib +
     runif(n = length(scores_calib), min = 0, max = 0.01)
   scores_calib_noise[scores_calib_noise > 1] <- 1
   metrics_calib <- compute_metrics(
     obs = tb_calib$d, scores = scores_calib_noise, true_probas = true_prob$calib
-  ) |> mutate(sample = "calib")
-
+  ) |> mutate(sample = "calib", recalib = "none")
+  
   scores_test_noise <- scores_test +
     runif(n = length(scores_test), min = 0, max = 0.01)
   scores_test_noise[scores_test_noise > 1] <- 1
   metrics_test <- compute_metrics(
     obs = tb_test$d, scores = scores_test_noise, true_probas = true_prob$test
-  ) |> mutate(sample = "test")
-
+  ) |> mutate(sample = "test", recalib = "none")
+  
+  # With recalibrated scores (platt)
+  scores_c_platt_calib_noise <- scores_c_platt_calib +
+    runif(n = length(scores_c_platt_calib), min = 0, max = 0.01)
+  scores_c_platt_calib_noise[scores_c_platt_calib_noise > 1] <- 1
+  metrics_c_platt_calib <- compute_metrics(
+    obs = tb_calib$d, scores = scores_c_platt_calib_noise, 
+    true_probas = true_prob$calib
+  ) |> mutate(sample = "calib", recalib = "platt")
+  
+  scores_c_platt_test_noise <- scores_c_platt_test +
+    runif(n = length(scores_c_platt_test), min = 0, max = 0.01)
+  scores_c_platt_test_noise[scores_c_platt_test_noise > 1] <- 1
+  metrics_c_platt_test <- compute_metrics(
+    obs = tb_test$d, scores = scores_c_platt_test_noise, 
+    true_probas = true_prob$test
+  ) |> mutate(sample = "test", recalib = "platt")
+  
+  # With recalibrated scores (isotonic)
+  scores_c_iso_calib_noise <- scores_c_iso_calib +
+    runif(n = length(scores_c_iso_calib), min = 0, max = 0.01)
+  scores_c_iso_calib_noise[scores_c_iso_calib_noise > 1] <- 1
+  metrics_c_iso_calib <- compute_metrics(
+    obs = tb_calib$d, scores = scores_c_iso_calib_noise, 
+    true_probas = true_prob$calib
+  ) |> mutate(sample = "calib", recalib = "isotonic")
+  
+  scores_c_iso_test_noise <- scores_c_iso_test +
+    runif(n = length(scores_c_iso_test), min = 0, max = 0.01)
+  scores_c_iso_test_noise[scores_c_iso_test_noise > 1] <- 1
+  metrics_c_iso_test <- compute_metrics(
+    obs = tb_test$d, scores = scores_c_iso_test_noise, 
+    true_probas = true_prob$test
+  ) |> mutate(sample = "test", recalib = "isotonic")
+  
   tb_metrics <- metrics_train |>
     bind_rows(metrics_valid) |>
     bind_rows(metrics_calib) |>
     bind_rows(metrics_test) |>
+    bind_rows(metrics_c_platt_calib) |>
+    bind_rows(metrics_c_platt_test) |>
+    bind_rows(metrics_c_iso_calib) |>
+    bind_rows(metrics_c_iso_test) |>
     left_join(
       disp_train |>
         bind_rows(disp_valid) |> 
         bind_rows(disp_calib) |> 
-        bind_rows(disp_test),
-      by = "sample"
+        bind_rows(disp_test) |> 
+        bind_rows(disp_c_platt_calib) |> 
+        bind_rows(disp_c_platt_test) |> 
+        bind_rows(disp_c_iso_calib) |> 
+        bind_rows(disp_c_iso_test),
+      by = c("sample", "recalib")
     ) |>
     mutate(
       scenario = simu_data$scenario,
@@ -335,11 +517,15 @@ get_metrics_nb_iter <- function(nb_iter,
       max_depth = params$max_depth,
       nb_iter = nb_iter
     )
-
+  
   tb_prop_scores <- proq_scores_train |>
     bind_rows(proq_scores_valid) |>
     bind_rows(proq_scores_calib) |>
     bind_rows(proq_scores_test) |>
+    bind_rows(proq_scores_c_platt_calib) |>
+    bind_rows(proq_scores_c_platt_test) |>
+    bind_rows(proq_scores_c_iso_calib) |>
+    bind_rows(proq_scores_c_iso_test) |>
     mutate(
       scenario = simu_data$scenario,
       ind = ind,
