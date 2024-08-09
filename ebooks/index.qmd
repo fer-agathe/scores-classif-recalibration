@@ -1,0 +1,49 @@
+# Introduction
+
+This notebook is the online appendix of the article titled _xxx_." It provides supplementary materials to the main part of the paper.
+
+## Abstract of the Paper
+
+
+
+## Outline
+
+
+
+
+## Replication Codes
+
+The codes to replicate the results displayed in the paper are presented in this ebook. We also provide the codes in an archive file with the following structure:
+
+
+```
+Supplementary-materials
+├ ── ebook
+├ ── scripts
+│   └── functions
+|   |   └── data-ojeda.R
+|   |   └── data-setup-dgp-scenarios.R
+|   |   └── metrics.R
+|   |   └── real-data.R
+|   |   └── subsample_target_distribution.R
+|   |   └── utils.R
+│   └── 01_data_targeted_distrib.R
+│   └── 02_data-simulated.R
+│   └── 03_simul-trees.R
+│   └── 04_simul-random-forests.R
+│   └── 05_simul-random-forests-ntrees.R
+│   └── 06_simul-xgb.R
+│   └── 07_simul-glm.R
+│   └── 08_simul-gam.R
+│   └── 09_simul-gamsel.R
+│   └── 10_simul-comparison.R
+│   └── 11_real-priors-illustration.R
+│   └── 12_real-datasets-priors.R
+│   └── 13_real-estimations.R
+│   └── 14_real_results.R
+│   └── proj.Rproj
+```
+
+
+
+<a href="./replication_codes.zip" class="btn btn-primary btn-sm" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{< fa brands r-project >}} Download the Replication Codes (Zip archive)</a>

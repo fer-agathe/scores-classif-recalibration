@@ -1,0 +1,15 @@
+{
+  "hash": "2127787368624228d357d6ceb34ab01d",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Extreme Gradient Boosting {#sec-simul-xgb}\n\n\n:::{.callout-note}\n\nThis chapter investigates how the distribution of estimated scores by an extreme gradient boosting model evolves with the number of boosting iterations. In the models we train, we vary the maximum depth of trees and consider boosting iterations up to 400. For each configuration, we compute the predicted scores from iteration 1 to 400; for each boosting iteration, we use the predicted scores (both on train set and on test set) to compute various metrics (performance, calibration, divergence between the distribution of scores and that of true underlying probabilities).\n\n:::\n\n\n::: {.cell}\n\n```{.r .cell-code}\nlibrary(tidyverse)\n```\n\n::: {.cell-output .cell-output-stderr}\n\n```\n── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──\n✔ dplyr     1.1.4     ✔ readr     2.1.5\n✔ forcats   1.0.0     ✔ stringr   1.5.1\n✔ ggplot2   3.5.1     ✔ tibble    3.2.1\n✔ lubridate 1.9.3     ✔ tidyr     1.3.1\n✔ purrr     1.0.2     \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\nℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors\n```\n\n\n:::\n\n```{.r .cell-code}\nlibrary(ggh4x)\n```\n\n::: {.cell-output .cell-output-stderr}\n\n```\n\nAttaching package: 'ggh4x'\n\nThe following object is masked from 'package:ggplot2':\n\n    guide_axis_logticks\n```\n\n\n:::\n\n```{.r .cell-code}\nlibrary(ggrepel)\nlibrary(rpart)\nlibrary(locfit)\n```\n\n::: {.cell-output .cell-output-stderr}\n\n```\nlocfit 1.5-9.9 \t 2024-03-01\n\nAttaching package: 'locfit'\n\nThe following object is masked from 'package:purrr':\n\n    none\n```\n\n\n:::\n\n```{.r .cell-code}\nlibrary(philentropy)\n\n# Colours for train/validation/test\ncolour_samples <- c(\n  \"Train\" = \"#0072B2\",\n  \"Calibration\" = \"#CC79A7\",\n  \"Validation\" = \"#009E73\",\n  \"Test\" = \"#D55E00\"\n)\n```\n:::\n\n::: {.cell}\n\n```{.r .cell-code  code-fold=\"true\" code-summary=\"definition of the `theme_paper()` function (for ggplot2 graphs)\"}\n#' Theme for ggplot2\n#'\n#' @param ... arguments passed to the theme function\n#' @export\n#' @importFrom ggplot2 element_rect element_text element_blank element_line unit\n#'   rel\ntheme_paper <- function (...) {\n  ggthemes::theme_base() +\n    theme(\n      plot.background = element_blank(),\n      legend.background = element_rect(\n        fill = \"transparent\", linetype=\"solid\", colour =\"black\"),\n      legend.position = \"bottom\",\n      legend.direction = \"horizontal\",\n      legend.box = \"horizontal\",\n      legend.key = element_blank()\n    )\n}\n```\n:::\n\n\n## Data\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

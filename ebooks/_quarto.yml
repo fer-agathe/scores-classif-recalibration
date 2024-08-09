@@ -1,0 +1,64 @@
+project:
+  type: book
+  output-dir: ../docs
+
+book:
+  title: "Recalibration"
+  author:
+  - name: Arthur Charpentier
+    orcid: 0000-0003-3654-6286
+    affiliations:
+      - name: Université du Québec à Montréal
+  - name: Agathe Fernandes Machado
+    orcid: 0009-0002-9743-9708
+    affiliations:
+      - name: Université du Québec à Montréal
+  - name: Emmanuel Flachaire
+    orcid: 0000-0001-6241-5875
+    affiliations:
+      - name: Aix-Marseille School of Economics, Aix-Marseille Univ.
+  - name: Ewen Gallic
+    orcid: 0000-0003-3740-2620
+    affiliations:
+      - name: Aix-Marseille School of Economics, Aix-Marseille Univ.
+  - name: François Hu
+    orcid: 0009-0000-6093-6175
+    affiliations:
+      - name: Milliman France
+  date: "08/15/2024"
+  chapters:
+    - index.qmd
+    - part: "I. Subsampling"
+      chapters:
+      - target-distribution.qmd
+    - part: "II. Metrics"
+      chapters:
+        - metrics.qmd
+    - part: "III. Simulated Data"
+      chapters:
+      - simul-data.qmd
+      - simul-xgb.qmd
+    - references.qmd
+  navbar:
+    right:
+      - icon: github
+        href: https://github.com/fer-agathe/scores-classif-recalibration
+        aria-label: GitHub
+
+bibliography: ./biblio.bib
+
+fig-cap-location: top
+
+format:
+  html:
+    from: markdown+emoji
+    theme: cosmo
+    highlight-style: github
+    html-math-method: mathjax
+    include-in-header:
+    - file: mathjax-color.html
+
+filters:
+  - pseudocode
+
+editor: source
