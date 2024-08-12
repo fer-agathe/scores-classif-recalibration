@@ -22,6 +22,12 @@ colour_samples <- c(
   "Calibration" = "#CC79A7",
   "Test" = "#D55E00"
 )
+
+colour_recalib <- c(
+  "None" = "#88CCEE",
+  "Platt" = "#44AA99",
+  "Isotonic" = "#882255"
+)
 ```
 
 
@@ -186,17 +192,13 @@ library(xgboost)
 #' @param scores_test vector of predicted probabilities in the test set
 #' @param method recalibration method (`"platt"` for Platt-Scaling, 
 #'   `"isotonic"` for isotonic regression)
-#' @param linspace vector of alues at which to compute the recalibrated scores
-#' @returns list of three elements: recalibrated scores on the calibration set,
-#'   recalibrated scores on the test set, and recalibrated scores on a segment 
-#'   of values
+#' @returns list of two elements: recalibrated scores on the calibration set,
+#'   recalibrated scores on the test set
 recalibrate <- function(obs_calib,
                         obs_test,
                         pred_calib,
                         pred_test,
-                        method = c("platt", "isotonic"),
-                        linspace = NULL) {
-  if (is.null(linspace)) linspace <- seq(0, 1, length.out = 101)
+                        method = c("platt", "isotonic")) {
   data_calib <- tibble(d = obs_calib, scores = pred_calib)
   data_test <- tibble(d = obs_test, scores = pred_test)
   
@@ -204,16 +206,11 @@ recalibrate <- function(obs_calib,
     lr <- glm(d ~ scores, family = binomial(link = 'logit'), data = data_calib)
     score_c_calib <- predict(lr, newdata = data_calib, type = "response")
     score_c_test <- predict(lr, newdata = data_test, type = "response")
-    # Recalibrated scores on [0,1]
-    score_c_linspace <- predict(
-      lr, newdata = tibble(scores = linspace), type = "response"
-    )
   } else if (method == "isotonic") {
     iso <- isoreg(x = data_calib$scores, y = data_calib$d)
     fit_iso <- as.stepfun(iso)
     score_c_calib <- fit_iso(data_calib$scores)
     score_c_test <- fit_iso(data_test$scores)
-    score_c_linspace <- fit_iso(linspace)
     
   } else {
     stop("Unrecognized method: platt or isotonic only")
@@ -231,16 +228,10 @@ recalibrate <- function(obs_calib,
     p_u = pred_test,
     p_c = score_c_test
   )
-  # For linear space
-  tb_score_c_linspace <- tibble(
-    linspace = linspace,
-    p_c = score_c_linspace
-  )
   
   list(
     tb_score_c_calib = tb_score_c_calib,
-    tb_score_c_test = tb_score_c_test,
-    tb_score_c_linspace = tb_score_c_linspace
+    tb_score_c_test = tb_score_c_test
   )
   
 }
@@ -304,8 +295,7 @@ get_metrics_nb_iter <- function(nb_iter,
     obs_test = tb_test$d, 
     pred_calib = scores_calib, 
     pred_test = scores_test, 
-    method = "platt", 
-    linspace = linspace
+    method = "platt"
   )
   scores_c_platt_calib <- res_recalibration_platt$tb_score_c_calib$p_c
   scores_c_platt_test <- res_recalibration_platt$tb_score_c_test$p_c
@@ -316,11 +306,10 @@ get_metrics_nb_iter <- function(nb_iter,
     obs_test = tb_test$d, 
     pred_calib = scores_calib, 
     pred_test = scores_test, 
-    method = "isotonic", 
-    linspace = linspace
+    method = "isotonic"
   )
-  scores_c_iso_calib <- res_recalibration_platt$tb_score_c_calib$p_c
-  scores_c_iso_test <- res_recalibration_platt$tb_score_c_test$p_c
+  scores_c_iso_calib <- res_recalibration_iso$tb_score_c_calib$p_c
+  scores_c_iso_test <- res_recalibration_iso$tb_score_c_test$p_c
 
   ## Histogram of scores----
   breaks <- seq(0, 1, by = .05)
@@ -684,8 +673,8 @@ We consider the following grid:
 ```{r define-grid-xgb}
 grid <- expand_grid(
   # max_depth = c(2, 4, 6),
-  max_depth = c(2, 6),
-  nb_iter_total = 30,
+  max_depth = c(2),
+  nb_iter_total = 10,
   eta = 0.3
 ) |>
   mutate(ind = row_number())
@@ -806,6 +795,7 @@ clusterExport(
     "simul_xgb",
     "simulate_xgb_scenario",
     "get_metrics_nb_iter",
+    "recalibrate",
     # Objects
     "grid",
     "params_df",
@@ -818,7 +808,7 @@ if (!dir.exists("../output/simul/")) {
   dir.create("../output/simul/", recursive = TRUE)
 }
 
-for (i_scenario in 1:16) {
+for (i_scenario in 2:16) {
   scenario <- i_scenario
   print(str_c("Scenario ", scenario, "/", nrow(params_df)))
   clusterExport(cl, c("scenario"))
@@ -831,8 +821,264 @@ for (i_scenario in 1:16) {
     )
   save(
     resul_xgb_scenario,
-    file = str_c("../output/simul/dgp-ojeda/resul_xgb_scenario_", scenario, ".rda")
+    file = str_c("../output/simul/resul_xgb_scenario_", scenario, ".rda")
   )
 }
 stopCluster(cl)
 ```
+
+
+The results can be loaded as follows:
+
+```{r load-resul_xgb}
+scenarios <- 1:16 
+files <- str_c(
+  "../output/simul/resul_xgb_scenario_", scenarios, ".rda"
+)
+resul_xgb <- map(files[file.exists(files)], ~{load(.x) ; resul_xgb_scenario})
+```
+
+
+
+The `resul_rf` object is of length 16: each element contains the simulations for a scenario. For each scenario, the elements are a list of length `max(repns_vector)`, i.e., the number of replications. Each replication gives, in a list, the following elements:
+
+- `metrics_simul`: the metrics (AUC, Calibration, KL Divergence, etc.) for each model from the grid search, for all boosting iterations
+- `scores_hist`: the counts on bins defined on estimated scores (on train, validation, calibration, and test sets ; for calibration and test sets, the counts are given with or without recalibration)
+- `prop_scores_simul`: the estimations of $\mathbb{P}(q_1 < \hat{\mathbf{x}}< q_2)$ for various values of `q_1` and `q_2`.
+
+## Results
+
+We can now extract some information from the results.
+
+We first aggregate all the computed metrics performance/calibration/divergence in a single tibble, `metrics_xgb_all`.
+```{r}
+#| code-fold: true
+#| code-summary: Codes to create the metrics table
+metrics_xgb_all <- map(
+  resul_xgb,
+  function(resul_xgb_sc) map(resul_xgb_sc, "metrics_simul") |> list_rbind()
+) |>
+  list_rbind() |>
+  mutate(
+    sample = factor(
+      sample,
+      levels = c("train", "valid", "calib", "test"),
+      labels = c("Train","Validation", "Calibration" ,"Test")
+    ),
+    recalib = factor(
+      recalib,
+      levels = c("none", "platt", "isotonic"),
+      labels = c("None", "Platt", "Isotonic")
+    )
+  )
+
+# Sanity check
+# metrics_xgb_all |> count(scenario, ind, sample, nb_iter) |>
+#   filter(n != max(repns_vector))
+```
+
+For each replication, we made some hyperparameters vary. Let us identify some models of interest:
+
+- `smallest`: model with the lowest number of boosting iteration
+- `largest`: model with the highest number of boosting iteration
+- `largest_auc`: model with the highest AUC on validation set
+- `lowest_mse`: model with the lowest MSE on validation set
+- `lowest_ici`: model with the lowest ICI on validation set
+- `lowest_kl`: model with the lowest KL Divergence on validation set
+
+```{r xgb-identify-trees-of-interest}
+#| code-fold: true
+# Identify the model with the smallest number of boosting iterations
+smallest_xgb <-
+  metrics_xgb_all |>
+  filter(sample == "Validation", recalib == "None") |>
+  group_by(scenario, repn) |>
+  arrange(nb_iter) |>
+  slice_head(n = 1) |>
+  select(scenario, repn, ind, nb_iter, recalib) |>
+  mutate(result_type = "smallest") |>
+  ungroup()
+
+# Identify the largest tree
+largest_xgb <-
+  metrics_xgb_all |>
+  filter(sample == "Validation", recalib == "None") |>
+  group_by(scenario, repn) |>
+  arrange(desc(nb_iter)) |>
+  slice_head(n = 1) |>
+  select(scenario, repn, ind, nb_iter, recalib) |>
+  mutate(result_type = "largest") |>
+  ungroup()
+
+# Identify tree with highest AUC on test set
+highest_auc_xgb <-
+  metrics_xgb_all |>
+  filter(sample == "Validation", recalib == "None") |>
+  group_by(scenario, repn) |>
+  arrange(desc(AUC)) |>
+  slice_head(n = 1) |>
+  select(scenario, repn, ind, nb_iter, recalib) |>
+  mutate(result_type = "largest_auc") |>
+  ungroup()
+
+# Identify tree with lowest MSE
+lowest_mse_xgb <-
+  metrics_xgb_all |>
+  filter(sample == "Validation", recalib == "None") |>
+  group_by(scenario, repn) |>
+  arrange(mse) |>
+  slice_head(n = 1) |>
+  select(scenario, repn, ind, nb_iter, recalib) |>
+  mutate(result_type = "lowest_mse") |>
+  ungroup()
+
+# Identify tree with lowest brier
+lowest_brier_xgb <-
+  metrics_xgb_all |>
+  filter(sample == "Validation", recalib == "None") |>
+  group_by(scenario, repn) |>
+  arrange(brier) |>
+  slice_head(n = 1) |>
+  select(scenario, repn, ind, nb_iter, recalib) |>
+  mutate(result_type = "lowest_brier") |>
+  ungroup()
+
+# Identify tree with lowest ICI
+lowest_ici_xgb <-
+  metrics_xgb_all |>
+  filter(sample == "Validation", recalib == "None") |>
+  group_by(scenario, repn) |>
+  arrange(ici) |>
+  slice_head(n = 1) |>
+  select(scenario, repn, ind, nb_iter, recalib) |>
+  mutate(result_type = "lowest_ici") |>
+  ungroup()
+
+# Identify tree with lowest KL
+lowest_kl_xgb <-
+  metrics_xgb_all |>
+  filter(sample == "Validation", recalib == "None") |>
+  group_by(scenario, repn) |>
+  arrange(KL_20_true_probas) |>
+  slice_head(n = 1) |>
+  select(scenario, repn, ind, nb_iter, recalib) |>
+  mutate(result_type = "lowest_kl") |>
+  ungroup()
+
+# Merge these
+models_of_interest_xgb <-
+  smallest_xgb |>
+  bind_rows(largest_xgb) |>
+  bind_rows(highest_auc_xgb) |>
+  bind_rows(lowest_mse_xgb) |>
+  bind_rows(lowest_brier_xgb) |>
+  bind_rows(lowest_ici_xgb) |>
+  bind_rows(lowest_kl_xgb)
+
+# Add metrics now
+models_of_interest_metrics <-
+  models_of_interest_xgb |>
+  left_join(
+    metrics_xgb_all,
+    by = c("scenario", "repn", "ind", "nb_iter"),
+    relationship = "many-to-many" # (train, valid, calib, test)
+  )
+
+# Sanity check
+# models_of_interest_metrics |> count(scenario, sample, result_type)
+```
+
+### Metrics vs Number of Iterations
+
+We define a function, `plot_metrics()`{.R} to plot selected metrics (AUC, ICI, and KL Divergence) as a function of the number of boosting iterations, for a given value for the hyperparameter `max_depth`. Each curve corresponds to a value of the maximal depth hyperparameter.
+
+```{r define-plot_metrics}
+#| code-fold: true
+#| code-summary: Function `plot_metrics()`{.R}
+plot_metrics <- function(dgp, max_depth = 2) {
+  df_plot <-
+    metrics_xgb_all |>
+    mutate(
+      dgp = case_when(
+        scenario %in% 1:4 ~ 1,
+        scenario %in% 5:8 ~ 2,
+        scenario %in% 9:12 ~ 3,
+        scenario %in% 13:16 ~ 4
+      ),
+      no_noise = c(0, 10, 50, 100)[(scenario-1)%%4 + 1],
+      no_noise = factor(
+        no_noise,
+        levels = c(no_noise),
+        labels = str_c(no_noise, " noise variables")
+      )
+    ) |>
+    filter(dgp == !!dgp) |>
+    select(
+      dgp, no_noise, scenario, recalib, ind, sample, nb_iter, max_depth,
+      AUC, brier, ici, KL_20_true_probas
+    ) |>
+    pivot_longer(
+      cols = -c(dgp, no_noise, scenario, recalib, ind, sample, nb_iter, max_depth),
+      names_to = "metric", values_to = "value"
+    ) |>
+    group_by(
+      dgp, no_noise, scenario, recalib, ind, sample, nb_iter, max_depth, metric
+    ) |>
+    summarise(
+      value_lower = quantile(value, probs = 2.5/100),
+      value_upper = quantile(value, probs = 97.5/100),
+      value = mean(value)
+    ) |>
+    mutate(
+      max_depth = factor(max_depth),
+      metric = factor(
+        metric,
+        levels = c("AUC", "brier", "ici", "KL_20_true_probas"),
+        labels = c("AUC", "brier", "ICI", "KL Divergence")
+      )
+    ) |>
+    filter(max_depth %in% max_depth, sample %in% c("Calibration", "Test"))
+  
+  ggplot(
+    data = df_plot,
+    mapping = aes(x = nb_iter, y = value)
+  ) +
+    geom_ribbon(
+      mapping = aes(
+        ymin = value_lower, ymax = value_upper,
+        fill = recalib
+      ),
+      alpha = .2
+    ) +
+    geom_line(mapping = aes(colour = recalib, linetype = recalib)) +
+    facet_grid(metric~no_noise+sample, scales = "free_y") +
+    labs(
+      x = "Boosting Iterations", y = NULL
+    ) +
+    scale_colour_manual(
+      "Recalibration", values = colour_recalib
+    ) +
+    scale_linetype_discrete("Recalibration") +
+    scale_fill_manual("Recalibration", values = colour_recalib) +
+    theme_paper()
+}
+```
+
+:::{.panel-tabset}
+#### DGP 1
+::::{.panel-tabset}
+##### Max Depth = 2
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Metrics for DGP 1
+#| label: fig-xgb-metrics-1
+#| code-fold: true
+#| fig-height: 8
+#| fig-width: 10
+plot_metrics(dgp = 1, max_depth = 2)
+```
+::::
+:::
+::::
+
+
+
