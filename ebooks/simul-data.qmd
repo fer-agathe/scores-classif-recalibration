@@ -68,7 +68,7 @@ The `simulate_data()`{.R} function generates data for one of the 12 first scenar
 
 ```{r define-simulate_data}
 #| code-fold: true
-#' Simulates train/test
+#' Simulates train/validation/calibration/test
 #'
 #' @details
 #' This function is a modified version of the function 'simulateData' in the
@@ -426,7 +426,7 @@ rm(coefficients, mean_num, sd_num)
 
 ## Example
 
-Let us draw a sample of 10,000 observation in each set (train, calibration, validation, test), for each scenario. We can then plot the histogram of the true probabilities in each sample (@fig-hist-true-prob-ojeda).
+Let us draw a sample of 10,000 observations in each set (train, calibration, validation, test), for each scenario. We can then plot the histogram of the true probabilities in each sample (@fig-hist-true-prob-ojeda).
 
 
 ```{r, warning=FALSE}

@@ -3,7 +3,7 @@
 
 :::{.callout-note}
 
-This chapter investigates how the distribution of estimated scores by an extreme gradient boosting model evolves with the number of boosting iterations. In the models we train, we vary the maximum depth of trees and consider boosting iterations up to 400. For each configuration, we compute the predicted scores from iteration 1 to 400; for each boosting iteration, we use the predicted scores (both on train set and on test set) to compute various metrics (performance, calibration, divergence between the distribution of scores and that of true underlying probabilities).
+This chapter investigates how the distribution of estimated scores by an extreme gradient boosting model evolves with the number of boosting iterations. In the models, we vary the maximum depth of trees and consider boosting iterations up to 400. For each configuration, we compute the predicted scores from iteration 1 to 400; for each boosting iteration, we use the predicted scores (on train, calibration and test sets) to compute various metrics (performance, calibration, divergence between the distribution of scores and that of true underlying probabilities) on both the initial and recalibrated scores.
 
 :::
 
@@ -181,16 +181,16 @@ To train the models, we rely on the {xgboost} R package.
 library(xgboost)
 ```
 
-
+Here, we define a function to recalibrate predicted scores using either Platt scaling or isotonic regression. The recalibration algorithm is first trained on the calibration set and then applied to both the calibration and test sets.
 
 ```{r define-recalibrate}
 #' Recalibrates scores using a calibration
 #' 
 #' @param obs_calib vector of observed events in the calibration set
 #' @param scores_calib vector of predicted probabilities in the calibration set
-#' #' @param obs_test vector of observed events in the test set
+#' @param obs_test vector of observed events in the test set
 #' @param scores_test vector of predicted probabilities in the test set
-#' @param method recalibration method (`"platt"` for Platt-Scaling, 
+#' @param method recalibration method (`"platt"` for Platt scaling, 
 #'   `"isotonic"` for isotonic regression)
 #' @returns list of two elements: recalibrated scores on the calibration set,
 #'   recalibrated scores on the test set
