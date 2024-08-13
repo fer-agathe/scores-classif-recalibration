@@ -673,8 +673,8 @@ We consider the following grid:
 ```{r define-grid-xgb}
 grid <- expand_grid(
   # max_depth = c(2, 4, 6),
-  max_depth = c(2),
-  nb_iter_total = 10,
+  max_depth = c(2,4,6),
+  nb_iter_total = 400,
   eta = 0.3
 ) |>
   mutate(ind = row_number())
@@ -808,7 +808,7 @@ if (!dir.exists("../output/simul/")) {
   dir.create("../output/simul/", recursive = TRUE)
 }
 
-for (i_scenario in 2:16) {
+for (i_scenario in 1:16) {
   scenario <- i_scenario
   print(str_c("Scenario ", scenario, "/", nrow(params_df)))
   clusterExport(cl, c("scenario"))
@@ -888,7 +888,8 @@ For each replication, we made some hyperparameters vary. Let us identify some mo
 
 ```{r xgb-identify-trees-of-interest}
 #| code-fold: true
-# Identify the model with the smallest number of boosting iterations
+# Identify the smallest tree on the validation set, when the scores are not
+# recalibrated
 smallest_xgb <-
   metrics_xgb_all |>
   filter(sample == "Validation", recalib == "None") |>
@@ -975,13 +976,39 @@ models_of_interest_xgb <-
   bind_rows(lowest_ici_xgb) |>
   bind_rows(lowest_kl_xgb)
 
-# Add metrics now
+models_of_interest_metrics <- NULL
+for (recalibration_method in c("None", "Platt", "Isotonic")) {
+  # Add metrics now
+  models_of_interest_metrics <-
+    models_of_interest_metrics |>
+    bind_rows(
+      models_of_interest_xgb |> select(-recalib) |>
+        left_join(
+          metrics_xgb_all |>
+            filter(
+              recalib == recalibration_method,
+              sample %in% c("Validation", "Test")
+            ),
+          by = c("scenario", "repn", "ind", "nb_iter"),
+          relationship = "many-to-many" # (calib, test)
+        )
+    )
+}
+
+
 models_of_interest_metrics <-
-  models_of_interest_xgb |>
-  left_join(
-    metrics_xgb_all,
-    by = c("scenario", "repn", "ind", "nb_iter"),
-    relationship = "many-to-many" # (train, valid, calib, test)
+  models_of_interest_metrics |>
+  mutate(
+    result_type = factor(
+      result_type,
+      levels = c(
+        "smallest", "largest", "lowest_mse", "largest_auc",
+        "lowest_brier", "lowest_ici", "lowest_kl"),
+      labels = c(
+        "Smallest", "Largest", "MSE*", "AUC*",
+        "Brier*", "ICI*", "KL*"
+      )
+    )
   )
 
 # Sanity check
