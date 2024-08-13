@@ -1466,5 +1466,211 @@ for (scenario in 1:16) {
 
 
 
+### KL Divergence and Calibration along Boosting Iterations
 
+We can examine the evolution of the relationship between the divergence of score distributions from true probabilities and model calibration across increasing boosting iterations.
+
+```{r define-df_plot}
+#| code-fold: true
+#| code-summary: Codes to create the figure
+#| fig-cap: KL Divergence and Calibration across increasing boosting iterations
+#| label: fig-kl-calib-xgb-iterations
+#| fig-width: 10
+#| fig-height: 8
+df_plot <-
+  metrics_xgb_all |>
+  mutate(
+    dgp = case_when(
+      scenario %in% 1:4 ~ 1,
+      scenario %in% 5:8 ~ 2,
+      scenario %in% 9:12 ~ 3,
+      scenario %in% 13:16 ~ 4
+    ),
+    dgp = factor(dgp, levels = 1:4, labels = str_c("DGP ", 1:4)),
+    no_noise = c(0, 10, 50, 100)[(scenario-1)%%4 + 1],
+    no_noise = factor(
+      no_noise, levels = c(no_noise),
+      labels = str_c(no_noise, " noise variables")
+    )
+  ) |>
+  select(
+    dgp, no_noise, scenario, recalib, ind, sample, nb_iter, max_depth,
+    brier, ici, KL_20_true_probas
+  ) |>
+  group_by(dgp, no_noise, scenario, recalib, ind, sample, nb_iter, max_depth) |>
+  summarise(
+    brier = mean(brier),
+    ici = mean(ici),
+    KL_20_true_probas = mean(KL_20_true_probas),
+    .groups = "drop"
+  ) |>
+  mutate(
+    max_depth = factor(
+      max_depth,
+      levels = c(2, 4, 6)
+    )
+  )
+
+formatter1000 <- function(x) x*1000
+```
+
+::: {.panel-tabset}
+
+#### Brier
+
+```{r}
+#| code-fold: true
+#| code-summary: Codes to create the figure
+#| fig-cap: KL Divergence and Calibration (Brier) across increasing boosting iterations (log scales)
+#| label: fig-kl-calib-brier-xgb-iterations
+#| fig-width: 10
+#| fig-height: 8
+p_brier <- ggplot(
+  data = df_plot |> arrange(nb_iter) |> filter(max_depth == 2),
+  mapping = aes(x = brier, y = KL_20_true_probas)
+) +
+  geom_path(
+    mapping = aes(colour = sample, linetype = recalib),
+    arrow = arrow(type = "closed", ends = "last",
+                  length = unit(0.08, "inches"))
+  ) +
+  # facet_wrap(~scenario) +
+  ggh4x::facet_grid2(dgp~no_noise, scales = "free_y", independent = "y") +
+  labs(
+    x = latex2exp::TeX("Calibration (Brier), $\\times 10^{3}$, log scale"),
+    y = "KL Divergence"
+  ) +
+  scale_x_log10(labels = formatter1000) + scale_y_log10() +
+  scale_colour_manual("Sample", values = colour_samples) +
+  scale_linetype_discrete("Recalibration") +
+  theme_paper() +
+  theme(legend.key.width = unit(1.5, "cm"))
+
+
+ggsave(
+  p_brier, file = "../figs/xgb-kl-calib-brier-leaves-all.pdf",
+       width = 10, height = 8
+)
+
+p_brier
+```
+
+#### ICI
+
+
+```{r}
+#| code-fold: true
+#| code-summary: Codes to create the figure
+#| fig-cap: KL Divergence and Calibration (ICI) across increasing boosting iterations (log scales)
+#| label: fig-kl-calib-ici-xgb-iterations
+#| fig-width: 10
+#| fig-height: 8
+p_ici <- ggplot(
+  data = df_plot |> arrange(nb_iter) |> filter(max_depth == 2),
+  mapping = aes(x = ici, y = KL_20_true_probas)
+) +
+  geom_path(
+    mapping = aes(colour = sample, linetype = recalib),
+    arrow = arrow(type = "closed", ends = "last",
+                  length = unit(0.08, "inches"))
+  ) +
+  # facet_wrap(~scenario) +
+  ggh4x::facet_grid2(dgp~no_noise, scales = "free_y", independent = "y") +
+  labs(
+    x = latex2exp::TeX("Calibration (ICI), $\\times 10^{3}$, log scale"),
+    y = "KL Divergence"
+  ) +
+  scale_x_log10(labels = formatter1000) + scale_y_log10() +
+  scale_colour_manual("Sample", values = colour_samples) +
+  scale_linetype_discrete("Recalibration") +
+  theme_paper() +
+  theme(legend.key.width = unit(1.5, "cm"))
+
+
+ggsave(
+  p_ici, file = "../figs/xgb-kl-calib-ici-leaves-all.pdf",
+  width = 10, height = 8
+)
+p_ici
+```
+
+
+:::
+
+
+
+### Tables
+
+```{r}
+models_interest_xgb <- models_of_interest_metrics |> 
+  group_by(scenario, recalib, sample, result_type) |> 
+  summarise(
+    AUC_lower = quantile(AUC, probs = 2.5/100),
+    AUC_upper = quantile(AUC, probs = 97.5/100),
+    AUC_sd = sd(AUC),
+    AUC = mean(AUC),
+    brier_lower = quantile(brier, probs = 2.5/100),
+    brier_upper = quantile(brier, probs = 97.5/100),
+    brier_sd = sd(brier),
+    brier = mean(brier),
+    ici_lower = quantile(ici, probs = 2.5/100),
+    ici_upper = quantile(ici, probs = 97.5/100),
+    ici_sd = sd(ici),
+    ici = mean(ici),
+    KL_20_true_probas_lower = quantile(KL_20_true_probas, probs = 2.5/100),
+    KL_20_true_probas_upper = quantile(KL_20_true_probas, probs = 97.5/100),
+    KL_20_true_probas_sd = sd(KL_20_true_probas),
+    KL_20_true_probas = mean(KL_20_true_probas),
+    quant_ratio_sd = sd(inter_quantile_10_90),
+    quant_ratio = mean(inter_quantile_10_90),
+    .groups = "drop"
+  ) |> 
+  mutate(
+    model = "xgb",
+    sample = str_to_lower(as.character(sample))
+  )
+
+# Sanity check
+# metrics_xgb_all |> count(scenario, recalib, ind, sample, nb_iter) |>
+#   filter(n != max(repns_vector))
+
+table_models_interest_mean <- 
+  models_interest_xgb |> 
+  filter(sample == "test") |> 
+  select(
+    scenario, recalib, sample, result_type, 
+    AUC, brier, ici, kl = KL_20_true_probas, quant_ratio
+  ) |> 
+  filter(
+    result_type %in% c("AUC*", "Brier*", "ICI*", "KL*")
+  ) |> 
+  mutate(value_type = "mean")
+
+
+table_models_interest_sd <- 
+  models_interest_xgb |> 
+  filter(sample == "test") |> 
+  select(
+    scenario, sample, model, result_type, 
+    AUC = AUC_sd, brier = brier_sd, ici = ici_sd, 
+    kl = KL_20_true_probas_sd, quant_ratio = quant_ratio_sd
+  ) |> 
+  filter(
+    result_type %in% c("AUC*", "Brier*", "ICI*", "KL*")
+  ) |> 
+  mutate(value_type = "sd")
+
+
+table_models_interest_mean |> 
+  # bind_rows(table_models_interest_sd) |> 
+  filter(scenario==5) |> 
+  select(-sample, -brier, -quant_ratio) |> 
+  pivot_wider(names_from = recalib, values_from = c(AUC, ici, kl)) |> 
+  select(-value_type) |> 
+  filter(result_type != "Brier*") |> 
+  mutate(
+    delta_platt = kl_None - kl_Platt,
+    delta_iso = kl_None - kl_Isotonic,
+    )
+```
 
