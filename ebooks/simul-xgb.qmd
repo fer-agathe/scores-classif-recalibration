@@ -1602,6 +1602,10 @@ p_ici
 ### Tables
 
 ```{r}
+#| code-fold: true
+#| code-summary: Display the R codes to produce the table
+#| tbl-cap: "Performance and calibration metrics (Brier Score, Integrated Calibration Index, Kullback-Leibler Divergence) computed on the test set, on scores returned by the model (column 'None'), on scores recalibrated using Platt scaling (column 'Platt'), or Isotonic regression (coliumn 'Isotonic')"
+#| label: tbl-metrics-xgb
 models_interest_xgb <- models_of_interest_metrics |> 
   group_by(scenario, recalib, sample, result_type) |> 
   summarise(
@@ -1627,7 +1631,19 @@ models_interest_xgb <- models_of_interest_metrics |>
   ) |> 
   mutate(
     model = "xgb",
-    sample = str_to_lower(as.character(sample))
+    sample = str_to_lower(as.character(sample)),
+    dgp = case_when(
+      scenario %in% 1:4 ~ 1,
+      scenario %in% 5:8 ~ 2,
+      scenario %in% 9:12 ~ 3,
+      scenario %in% 13:16 ~ 4
+    ),
+    no_noise = c(0, 10, 50, 100)[(scenario-1)%%4 + 1],
+    no_noise = factor(
+      no_noise,
+      levels = c(no_noise),
+      labels = str_c(no_noise, " noise variables")
+    )
   )
 
 # Sanity check
@@ -1638,11 +1654,11 @@ table_models_interest_mean <-
   models_interest_xgb |> 
   filter(sample == "test") |> 
   select(
-    scenario, recalib, sample, result_type, 
-    AUC, brier, ici, kl = KL_20_true_probas, quant_ratio
+    dgp, no_noise, recalib, sample, result_type, 
+    brier, ici, kl = KL_20_true_probas
   ) |> 
   filter(
-    result_type %in% c("AUC*", "Brier*", "ICI*", "KL*")
+    result_type %in% c("AUC*", "KL*", "Smallest", "Largest")
   ) |> 
   mutate(value_type = "mean")
 
@@ -1651,26 +1667,41 @@ table_models_interest_sd <-
   models_interest_xgb |> 
   filter(sample == "test") |> 
   select(
-    scenario, sample, model, result_type, 
-    AUC = AUC_sd, brier = brier_sd, ici = ici_sd, 
-    kl = KL_20_true_probas_sd, quant_ratio = quant_ratio_sd
+    dgp, no_noise, recalib, sample, result_type, 
+    brier = brier_sd, ici = ici_sd, 
+    kl = KL_20_true_probas_sd
   ) |> 
   filter(
-    result_type %in% c("AUC*", "Brier*", "ICI*", "KL*")
+    result_type %in% c("AUC*", "KL*", "Smallest", "Largest")
   ) |> 
   mutate(value_type = "sd")
 
+digits <- 2
 
 table_models_interest_mean |> 
-  # bind_rows(table_models_interest_sd) |> 
-  filter(scenario==5) |> 
-  select(-sample, -brier, -quant_ratio) |> 
-  pivot_wider(names_from = recalib, values_from = c(AUC, ici, kl)) |> 
-  select(-value_type) |> 
-  filter(result_type != "Brier*") |> 
-  mutate(
-    delta_platt = kl_None - kl_Platt,
-    delta_iso = kl_None - kl_Isotonic,
+  bind_rows(table_models_interest_sd) |> 
+  pivot_longer(cols = c(brier, ici, kl)) |> 
+  pivot_wider(names_from = "value_type", values_from = "value") |> 
+  mutate(value = str_c(round(`mean`, digits), " (", round(`sd`, digits), ")")) |> 
+  select(-mean, -sd, -sample) |> 
+  pivot_wider(names_from = c(recalib, name), values_from = value) |> 
+  knitr::kable(
+    align = str_c("cl", str_c(rep("c", 3*3), collapse = ""), collapse = ""),
+    escape = FALSE, booktabs = T, digits = 3, format = "markdown",
+    col.names = c(
+      "DGP", "Noise", "Optim.",
+      rep(c("BS", "ICI", "KL"), 3)
     )
+  ) |> 
+  kableExtra::collapse_rows(columns = 1:2, valign = "top") |> 
+  kableExtra::add_header_above(
+    c(" " = 3,
+      "None" = 3,
+      "Platt" = 3,
+      "Isotonic" = 3
+    )
+  ) |> 
+  kableExtra::scroll_box(fixed_thead = TRUE, height = "500px")
+
 ```
 
