@@ -1019,93 +1019,452 @@ models_of_interest_metrics <-
 
 We define a function, `plot_metrics()`{.R} to plot selected metrics (AUC, ICI, and KL Divergence) as a function of the number of boosting iterations, for a given value for the hyperparameter `max_depth`. Each curve corresponds to a value of the maximal depth hyperparameter.
 
+TBD
+
+### Distribution of Scores
+
+Let us extract all the histogram information computed over the simulations and put that in a single object, `scores_hist_all`.
+
+```{r define-scores_hist_all}
+scores_hist_all <-
+  map(
+    resul_xgb,
+    function(resul_xgb_sc) map(resul_xgb_sc, "scores_hist")
+  )
+```
+
+We then define a function, `plot_bp_xgb()`{.R} which plots the distribution of scores on the test set for a single replication (`repn`), for a scenario, (`scenario`). We also define a helper function, `plot_bp_interest()`, which plots the histogram of the scores at a specific iteration number. We will then be able to plot the distributions at the beginning of the boosting iterations, at the end, at a point where the AUC was the highest on the validation set, and at a point where the KL divergence between the distribution of scores on the validation set and the distribution of the true probabilities was the lowest. We will plot the distributions of the scores returned by the classifier, as well as those obtained with the reclibrators.
+
 ```{r define-plot_metrics}
 #| code-fold: true
 #| code-summary: Function `plot_metrics()`{.R}
-plot_metrics <- function(dgp, max_depth = 2) {
-  df_plot <-
-    metrics_xgb_all |>
-    mutate(
-      dgp = case_when(
-        scenario %in% 1:4 ~ 1,
-        scenario %in% 5:8 ~ 2,
-        scenario %in% 9:12 ~ 3,
-        scenario %in% 13:16 ~ 4
-      ),
-      no_noise = c(0, 10, 50, 100)[(scenario-1)%%4 + 1],
-      no_noise = factor(
-        no_noise,
-        levels = c(no_noise),
-        labels = str_c(no_noise, " noise variables")
+plot_bp_interest <- function(metrics_interest,
+                             scores_hist_interest,
+                             label,
+                             recalib_method) {
+  subtitle <- str_c(
+    "Depth = ", metrics_interest$max_depth, ", ",
+    "MSE = ", round(metrics_interest$mse, 2), ", ",
+    "AUC = ", round(metrics_interest$AUC, 2), ", \n",
+    "Brier = ", round(metrics_interest$brier, 2), ",",
+    "ICI = ", round(metrics_interest$ici, 2), ", ",
+    "KL = ", round(metrics_interest$KL_20_true_probas, 2)
+  )
+
+  if (recalib_method == "none") {
+    plot(
+      main = str_c(label, " (iter = ", metrics_interest$nb_iter,")"),
+      scores_hist_interest$test,
+      xlab = latex2exp::TeX("$\\hat{s}(x)$"),
+      ylab = ""
+    )
+  } else if (recalib_method == "platt") {
+    plot(
+      main = str_c(label, " (iter = ", metrics_interest$nb_iter,")"),
+      scores_hist_interest$test_c_platt,
+      xlab = latex2exp::TeX("$\\hat{s}(x)$"),
+      ylab = "",
+      col = colour_recalib[["Platt"]]
+    )
+  } else if (recalib_method == "iso") {
+    plot(
+      main = str_c(label, " (iter = ", metrics_interest$nb_iter,")"),
+      scores_hist_interest$test_c_iso,
+      xlab = latex2exp::TeX("$\\hat{s}(x)$"),
+      ylab = "",
+      col = colour_recalib[["Isotonic"]]
+    )
+  }
+  mtext(side = 3, line = -0.25, adj = .5, subtitle, cex = .5)
+}
+
+plot_bp_xgb <- function(scenario,
+                        repn,
+                        paper_version = FALSE) {
+  # Focus on current scenario
+  scores_hist_scenario <- scores_hist_all[[scenario]]
+  # Focus on a particular replication
+  scores_hist_repn <- scores_hist_scenario[[repn]]
+  # # Focus on a value for max_depth
+  max_depth_val <- map_dbl(scores_hist_repn, ~.x[[1]]$max_depth)
+  # i_max_depth <- which(max_depth_val == max_depth)
+  # scores_hist <- scores_hist_repn[[i_max_depth]]
+
+  # True Probabilities
+  simu_data <- simulate_data_wrapper(
+    scenario = scenario,
+    params_df = params_df,
+    repn = repn # only one replication here
+  )
+  true_prob <- simu_data$data$probs_train
+
+  for (recalib_method in c("none", "platt", "iso")) {
+
+    i_method <- match(recalib_method, c("none", "platt", "iso"))
+    recalib_method_lab <- c("None", "Platt", "Isotonic")[i_method]
+
+    # The metrics for the corresponding simulations, on the validation set
+    metrics_xgb_current_valid <-
+      metrics_xgb_all |>
+      filter(
+        scenario == !!scenario,
+        repn == !!repn,
+        sample == "Validation",
+        recalib == "None"
       )
-    ) |>
-    filter(dgp == !!dgp) |>
-    select(
-      dgp, no_noise, scenario, recalib, ind, sample, nb_iter, max_depth,
-      AUC, brier, ici, KL_20_true_probas
-    ) |>
-    pivot_longer(
-      cols = -c(dgp, no_noise, scenario, recalib, ind, sample, nb_iter, max_depth),
-      names_to = "metric", values_to = "value"
-    ) |>
-    group_by(
-      dgp, no_noise, scenario, recalib, ind, sample, nb_iter, max_depth, metric
-    ) |>
-    summarise(
-      value_lower = quantile(value, probs = 2.5/100),
-      value_upper = quantile(value, probs = 97.5/100),
-      value = mean(value)
-    ) |>
-    mutate(
-      max_depth = factor(max_depth),
-      metric = factor(
-        metric,
-        levels = c("AUC", "brier", "ici", "KL_20_true_probas"),
-        labels = c("AUC", "brier", "ICI", "KL Divergence")
+    # and on the test set
+    metrics_xgb_current_test <-
+      metrics_xgb_all |>
+      filter(
+        scenario == !!scenario,
+        repn == !!repn,
+        sample == "Test",
+        recalib == recalib_method_lab
       )
-    ) |>
-    filter(max_depth %in% max_depth, sample %in% c("Calibration", "Test"))
-  
-  ggplot(
-    data = df_plot,
-    mapping = aes(x = nb_iter, y = value)
-  ) +
-    geom_ribbon(
-      mapping = aes(
-        ymin = value_lower, ymax = value_upper,
-        fill = recalib
-      ),
-      alpha = .2
-    ) +
-    geom_line(mapping = aes(colour = recalib, linetype = recalib)) +
-    facet_grid(metric~no_noise+sample, scales = "free_y") +
-    labs(
-      x = "Boosting Iterations", y = NULL
-    ) +
-    scale_colour_manual(
-      "Recalibration", values = colour_recalib
-    ) +
-    scale_linetype_discrete("Recalibration") +
-    scale_fill_manual("Recalibration", values = colour_recalib) +
-    theme_paper()
+
+    if (paper_version == FALSE) {
+      hist(
+        true_prob,
+        breaks = seq(0, 1, by = .05),
+        xlab = "p", ylab = "",
+        main = "True Probabilities",
+        xlim = c(0, 1)
+      )
+      mtext(
+        side = 2, recalib_method_lab, line = 2.5, cex = 1,
+        font.lab = 2
+      )
+      # Iterations of interest----
+      ## Start of iterations
+      scores_hist_start <- scores_hist_repn[[1]][[1]]
+      metrics_start <- metrics_xgb_current_test |>
+        filter(
+          nb_iter == scores_hist_start$nb_iter,
+          max_depth == scores_hist_start$max_depth
+        )
+
+      plot_bp_interest(
+        metrics_interest = metrics_start,
+        scores_hist_interest = scores_hist_start,
+        label = "Start",
+        recalib_method = recalib_method
+      )
+
+      ## End of iterations
+      scores_hist_end <- scores_hist_repn[[1]][[length(scores_hist_repn[[1]])]]
+      metrics_end <- metrics_xgb_current_test |>
+        filter(
+          nb_iter == scores_hist_end$nb_iter,
+          max_depth == scores_hist_start$max_depth
+        )
+      plot_bp_interest(
+        metrics_interest = metrics_end,
+        scores_hist_interest = scores_hist_end,
+        label = "End",
+        recalib_method = recalib_method
+      )
+
+      ## Iteration with min MSE on validation set
+      metrics_valid_mse_star <- metrics_xgb_current_valid |> arrange(mse) |>
+        dplyr::slice(1)
+      nb_iter_mse <- metrics_valid_mse_star$nb_iter
+      max_depth_mse_star <- metrics_valid_mse_star$max_depth
+      i_max_depth_mse_star <- which(max_depth_val == max_depth_mse_star)
+      # Metrics at the same iteration on the test set
+      metrics_min_mse <-
+        metrics_xgb_current_test |>
+        filter(
+          nb_iter == !!nb_iter_mse,
+          max_depth == max_depth_mse_star
+        )
+      # Note: indexing at 0 here...
+      ind_mse <- which(map_dbl(scores_hist_repn[[i_max_depth_mse_star]], "nb_iter") == nb_iter_mse)
+      scores_hist_min_mse <- scores_hist_repn[[i_max_depth_mse_star]][[ind_mse]]
+      plot_bp_interest(
+        metrics_interest = metrics_min_mse,
+        scores_hist_interest = scores_hist_min_mse,
+        label = "MSE*",
+        recalib_method = recalib_method
+      )
+    }
+    ## Iteration with max AUC on validation set
+    metrics_valid_auc_star <-
+      metrics_xgb_current_valid |> arrange(desc(AUC)) |> dplyr::slice(1)
+    nb_iter_auc <- metrics_valid_auc_star$nb_iter
+    max_depth_auc_star <- metrics_valid_auc_star$max_depth
+    i_max_depth_auc_star <- which(max_depth_val == max_depth_auc_star)
+
+    metrics_max_auc <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_auc, max_depth == max_depth_auc_star)
+    # Note: indexing at 0 here...
+    ind_auc <- which(map_dbl(scores_hist_repn[[i_max_depth_auc_star]], "nb_iter") == nb_iter_auc)
+    scores_hist_max_auc <- scores_hist_repn[[i_max_depth_auc_star]][[ind_auc]]
+    plot_bp_interest(
+      metrics_interest = metrics_max_auc,
+      scores_hist_interest = scores_hist_max_auc,
+      label = "AUC*",
+      recalib_method = recalib_method
+    )
+    if (paper_version == TRUE) {
+      mtext(
+        side = 2, recalib_method_lab, line = 2.5, cex = 1,
+        font.lab = 2
+      )
+    }
+
+    ## Min Brier on validation set
+    metrics_valid_brier_star <-
+      metrics_xgb_current_valid |> arrange(brier) |> dplyr::slice(1)
+    nb_iter_brier <- metrics_valid_brier_star$nb_iter
+    max_depth_brier_star <- metrics_valid_brier_star$max_depth
+    i_max_depth_brier_star <- which(max_depth_val == max_depth_brier_star)
+
+    metrics_min_brier <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_brier, max_depth == max_depth_brier_star)
+    ind_brier <- which(map_dbl(scores_hist_repn[[i_max_depth_brier_star]], "nb_iter") == nb_iter_brier)
+    scores_hist_min_brier <- scores_hist_repn[[i_max_depth_brier_star]][[ind_brier]]
+    plot_bp_interest(
+      metrics_interest = metrics_min_brier,
+      scores_hist_interest = scores_hist_min_brier,
+      label = "Brier*",
+      recalib_method = recalib_method
+    )
+
+    ## Min ICI on validation set
+    metrics_valid_ici_star <-
+      metrics_xgb_current_valid |> arrange(ici) |> dplyr::slice(1)
+    nb_iter_ici <-   metrics_valid_ici_star$nb_iter
+    max_depth_ici_star <- metrics_valid_ici_star$max_depth
+    i_max_depth_ici_star <- which(max_depth_val == max_depth_ici_star)
+
+    metrics_min_ici <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_ici, max_depth == max_depth_ici_star)
+    ind_ici <- which(map_dbl(scores_hist_repn[[i_max_depth_ici_star]], "nb_iter") == nb_iter_ici)
+    scores_hist_min_ici <- scores_hist_repn[[i_max_depth_ici_star]][[ind_ici]]
+    plot_bp_interest(
+      metrics_interest = metrics_min_ici,
+      scores_hist_interest = scores_hist_min_ici,
+      label = "ICI*",
+      recalib_method = recalib_method
+    )
+
+    ## Min KL on validation set
+    metrics_valid_kl_star <-
+      metrics_xgb_current_valid |> arrange(KL_20_true_probas) |> dplyr::slice(1)
+    nb_iter_kl <-   metrics_valid_kl_star$nb_iter
+    max_depth_kl_star <- metrics_valid_kl_star$max_depth
+    i_max_depth_kl_star <- which(max_depth_val == max_depth_kl_star)
+
+    metrics_min_kl <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_kl, max_depth == max_depth_kl_star)
+    ind_kl <- which(map_dbl(scores_hist_repn[[i_max_depth_kl_star]], "nb_iter") == nb_iter_kl)
+    scores_hist_min_kl <- scores_hist_repn[[i_max_depth_kl_star]][[ind_kl]]
+    plot_bp_interest(
+      metrics_interest = metrics_min_kl,
+      scores_hist_interest = scores_hist_min_kl,
+      label = "KL*",
+      recalib_method = recalib_method
+    )
+  }
 }
 ```
 
 :::{.panel-tabset}
 #### DGP 1
 ::::{.panel-tabset}
-##### Max Depth = 2
+##### 0 noise variable
 ```{r, warning=FALSE, message=FALSE}
-#| fig-cap: Metrics for DGP 1
-#| label: fig-xgb-metrics-1
+#| fig-cap: Distribution of scores on the test set (DGP 1, 0 noise variable)
+#| label: fig-xgb-bp-1-0
 #| code-fold: true
-#| fig-height: 8
-#| fig-width: 10
-plot_metrics(dgp = 1, max_depth = 2)
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 1, repn = 1)
+```
+##### 10 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 1, 10 noise variables)
+#| label: fig-xgb-bp-1-10
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 2, repn = 1)
+```
+##### 50 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 1, 50 noise variables)
+#| label: fig-xgb-bp-1-50
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 3, repn = 1)
+```
+##### 100 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 1, 100 noise variables)
+#| label: fig-xgb-bp-1-100
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 4, repn = 1)
+```
+::::
+#### DGP 2
+::::{.panel-tabset}
+##### 0 noise variable
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 2, 0 noise variable)
+#| label: fig-xgb-bp-2-0
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 5, repn = 1)
+```
+##### 10 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 2, 10 noise variables)
+#| label: fig-xgb-bp-2-10
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 6, repn = 1)
+```
+##### 50 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 2, 50 noise variables)
+#| label: fig-xgb-bp-2-50
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 7, repn = 1)
+```
+##### 100 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 2, 100 noise variables)
+#| label: fig-xgb-bp-2-100
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 8, repn = 1)
+```
+::::
+#### DGP 3
+::::{.panel-tabset}
+##### 0 noise variable
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 3, 0 noise variable)
+#| label: fig-xgb-bp-3-0
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 9, repn = 1)
+```
+##### 10 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 3, 10 noise variables)
+#| label: fig-xgb-bp-3-10
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 10, repn = 1)
+```
+##### 50 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 3, 50 noise variables)
+#| label: fig-xgb-bp-3-50
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 11, repn = 1)
+```
+##### 100 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 3, 100 noise variables)
+#| label: fig-xgb-bp-3-100
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 12, repn = 1)
+```
+::::
+#### DGP 4
+::::{.panel-tabset}
+##### 0 noise variable
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 4, 0 noise variable)
+#| label: fig-xgb-bp-4-0
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 13, repn = 1)
+```
+##### 10 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 4, 10 noise variables)
+#| label: fig-xgb-bp-4-10
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 14, repn = 1)
+```
+##### 50 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 4, 50 noise variables)
+#| label: fig-xgb-bp-4-50
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 15, repn = 1)
+```
+##### 100 noise variables
+```{r, warning=FALSE, message=FALSE}
+#| fig-cap: Distribution of scores on the test set (DGP 4, 100 noise variables)
+#| label: fig-xgb-bp-4-100
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 12
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb(scenario = 16, repn = 1)
 ```
 ::::
 :::
-::::
+
+
+
+```{r, eval=FALSE}
+#| code-fold: true
+#| code-summary: Code to create PDF figures
+for (scenario in 1:16) {
+  pdf(
+    file = str_c("../figs/bp_synthetic_xbg_", scenario, ".pdf"),
+    height = 4.5, width = 10
+  )
+  par(mfrow = c(3,4), mar = c(4.1, 4, 3.5, 1.5))
+  plot_bp_xgb(scenario = scenario, repn = 1, paper_version = TRUE)
+  dev.off()
+}
+```
+
+
 
 
 
