@@ -325,6 +325,7 @@ window.Quarto = {
   <li><a href="#metrics-vs-number-of-iterations" id="toc-metrics-vs-number-of-iterations" class="nav-link" data-scroll-target="#metrics-vs-number-of-iterations"><span class="header-section-number">5.5.1</span> Metrics vs Number of Iterations</a></li>
   <li><a href="#distribution-of-scores" id="toc-distribution-of-scores" class="nav-link" data-scroll-target="#distribution-of-scores"><span class="header-section-number">5.5.2</span> Distribution of Scores</a></li>
   <li><a href="#kl-divergence-and-calibration-along-boosting-iterations" id="toc-kl-divergence-and-calibration-along-boosting-iterations" class="nav-link" data-scroll-target="#kl-divergence-and-calibration-along-boosting-iterations"><span class="header-section-number">5.5.3</span> KL Divergence and Calibration along Boosting Iterations</a></li>
+  <li><a href="#tables" id="toc-tables" class="nav-link" data-scroll-target="#tables"><span class="header-section-number">5.5.4</span> Tables</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -1070,8 +1071,8 @@ Table&nbsp;5.1: Grid Search Values
 </figcaption>
 <div aria-describedby="tbl-grid-values-xgb-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<div class="datatables html-widget html-fill-item" id="htmlwidget-bc65ffa11147c34ad97d" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-bc65ffa11147c34ad97d">{"x":{"filter":"none","vertical":false,"data":[["1","2","3"],[2,4,6],[400,400,400],[0.3,0.3,0.3],[1,2,3]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>max_depth<\/th>\n      <th>nb_iter_total<\/th>\n      <th>eta<\/th>\n      <th>ind<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[1,2,3,4]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"max_depth","targets":1},{"name":"nb_iter_total","targets":2},{"name":"eta","targets":3},{"name":"ind","targets":4}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-b96b736cc939d4a85921" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-b96b736cc939d4a85921">{"x":{"filter":"none","vertical":false,"data":[["1","2","3"],[2,4,6],[400,400,400],[0.3,0.3,0.3],[1,2,3]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>max_depth<\/th>\n      <th>nb_iter_total<\/th>\n      <th>eta<\/th>\n      <th>ind<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[1,2,3,4]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"max_depth","targets":1},{"name":"nb_iter_total","targets":2},{"name":"eta","targets":3},{"name":"ind","targets":4}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 </figure>
@@ -2168,6 +2169,91 @@ Figure&nbsp;5.18: KL Divergence and Calibration (ICI) across increasing boosting
 </div>
 </div>
 </div>
+</div>
+</div>
+</section>
+<section id="tables" class="level3" data-number="5.5.4">
+<h3 data-number="5.5.4" class="anchored" data-anchor-id="tables"><span class="header-section-number">5.5.4</span> Tables</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>models_interest_xgb <span class="ot">&lt;-</span> models_of_interest_metrics <span class="sc">|&gt;</span> </span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(scenario, recalib, sample, result_type) <span class="sc">|&gt;</span> </span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">AUC_lower =</span> <span class="fu">quantile</span>(AUC, <span class="at">probs =</span> <span class="fl">2.5</span><span class="sc">/</span><span class="dv">100</span>),</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">AUC_upper =</span> <span class="fu">quantile</span>(AUC, <span class="at">probs =</span> <span class="fl">97.5</span><span class="sc">/</span><span class="dv">100</span>),</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">AUC_sd =</span> <span class="fu">sd</span>(AUC),</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">AUC =</span> <span class="fu">mean</span>(AUC),</span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">brier_lower =</span> <span class="fu">quantile</span>(brier, <span class="at">probs =</span> <span class="fl">2.5</span><span class="sc">/</span><span class="dv">100</span>),</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">brier_upper =</span> <span class="fu">quantile</span>(brier, <span class="at">probs =</span> <span class="fl">97.5</span><span class="sc">/</span><span class="dv">100</span>),</span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">brier_sd =</span> <span class="fu">sd</span>(brier),</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">brier =</span> <span class="fu">mean</span>(brier),</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">ici_lower =</span> <span class="fu">quantile</span>(ici, <span class="at">probs =</span> <span class="fl">2.5</span><span class="sc">/</span><span class="dv">100</span>),</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">ici_upper =</span> <span class="fu">quantile</span>(ici, <span class="at">probs =</span> <span class="fl">97.5</span><span class="sc">/</span><span class="dv">100</span>),</span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">ici_sd =</span> <span class="fu">sd</span>(ici),</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">ici =</span> <span class="fu">mean</span>(ici),</span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">KL_20_true_probas_lower =</span> <span class="fu">quantile</span>(KL_20_true_probas, <span class="at">probs =</span> <span class="fl">2.5</span><span class="sc">/</span><span class="dv">100</span>),</span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">KL_20_true_probas_upper =</span> <span class="fu">quantile</span>(KL_20_true_probas, <span class="at">probs =</span> <span class="fl">97.5</span><span class="sc">/</span><span class="dv">100</span>),</span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">KL_20_true_probas_sd =</span> <span class="fu">sd</span>(KL_20_true_probas),</span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">KL_20_true_probas =</span> <span class="fu">mean</span>(KL_20_true_probas),</span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">quant_ratio_sd =</span> <span class="fu">sd</span>(inter_quantile_10_90),</span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">quant_ratio =</span> <span class="fu">mean</span>(inter_quantile_10_90),</span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">model =</span> <span class="st">"xgb"</span>,</span>
+<span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">sample =</span> <span class="fu">str_to_lower</span>(<span class="fu">as.character</span>(sample))</span>
+<span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb49-28"><a href="#cb49-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-29"><a href="#cb49-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Sanity check</span></span>
+<span id="cb49-30"><a href="#cb49-30" aria-hidden="true" tabindex="-1"></a><span class="co"># metrics_xgb_all |&gt; count(scenario, recalib, ind, sample, nb_iter) |&gt;</span></span>
+<span id="cb49-31"><a href="#cb49-31" aria-hidden="true" tabindex="-1"></a><span class="co">#   filter(n != max(repns_vector))</span></span>
+<span id="cb49-32"><a href="#cb49-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-33"><a href="#cb49-33" aria-hidden="true" tabindex="-1"></a>table_models_interest_mean <span class="ot">&lt;-</span> </span>
+<span id="cb49-34"><a href="#cb49-34" aria-hidden="true" tabindex="-1"></a>  models_interest_xgb <span class="sc">|&gt;</span> </span>
+<span id="cb49-35"><a href="#cb49-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(sample <span class="sc">==</span> <span class="st">"test"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb49-36"><a href="#cb49-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb49-37"><a href="#cb49-37" aria-hidden="true" tabindex="-1"></a>    scenario, recalib, sample, result_type, </span>
+<span id="cb49-38"><a href="#cb49-38" aria-hidden="true" tabindex="-1"></a>    AUC, brier, ici, <span class="at">kl =</span> KL_20_true_probas, quant_ratio</span>
+<span id="cb49-39"><a href="#cb49-39" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb49-40"><a href="#cb49-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb49-41"><a href="#cb49-41" aria-hidden="true" tabindex="-1"></a>    result_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"AUC*"</span>, <span class="st">"Brier*"</span>, <span class="st">"ICI*"</span>, <span class="st">"KL*"</span>)</span>
+<span id="cb49-42"><a href="#cb49-42" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb49-43"><a href="#cb49-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">value_type =</span> <span class="st">"mean"</span>)</span>
+<span id="cb49-44"><a href="#cb49-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-45"><a href="#cb49-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-46"><a href="#cb49-46" aria-hidden="true" tabindex="-1"></a>table_models_interest_sd <span class="ot">&lt;-</span> </span>
+<span id="cb49-47"><a href="#cb49-47" aria-hidden="true" tabindex="-1"></a>  models_interest_xgb <span class="sc">|&gt;</span> </span>
+<span id="cb49-48"><a href="#cb49-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(sample <span class="sc">==</span> <span class="st">"test"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb49-49"><a href="#cb49-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb49-50"><a href="#cb49-50" aria-hidden="true" tabindex="-1"></a>    scenario, sample, model, result_type, </span>
+<span id="cb49-51"><a href="#cb49-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">AUC =</span> AUC_sd, <span class="at">brier =</span> brier_sd, <span class="at">ici =</span> ici_sd, </span>
+<span id="cb49-52"><a href="#cb49-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">kl =</span> KL_20_true_probas_sd, <span class="at">quant_ratio =</span> quant_ratio_sd</span>
+<span id="cb49-53"><a href="#cb49-53" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb49-54"><a href="#cb49-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb49-55"><a href="#cb49-55" aria-hidden="true" tabindex="-1"></a>    result_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"AUC*"</span>, <span class="st">"Brier*"</span>, <span class="st">"ICI*"</span>, <span class="st">"KL*"</span>)</span>
+<span id="cb49-56"><a href="#cb49-56" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb49-57"><a href="#cb49-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">value_type =</span> <span class="st">"sd"</span>)</span>
+<span id="cb49-58"><a href="#cb49-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-59"><a href="#cb49-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-60"><a href="#cb49-60" aria-hidden="true" tabindex="-1"></a>table_models_interest_mean <span class="sc">|&gt;</span> </span>
+<span id="cb49-61"><a href="#cb49-61" aria-hidden="true" tabindex="-1"></a>  <span class="co"># bind_rows(table_models_interest_sd) |&gt; </span></span>
+<span id="cb49-62"><a href="#cb49-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(scenario<span class="sc">==</span><span class="dv">5</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb49-63"><a href="#cb49-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>sample, <span class="sc">-</span>brier, <span class="sc">-</span>quant_ratio) <span class="sc">|&gt;</span> </span>
+<span id="cb49-64"><a href="#cb49-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> recalib, <span class="at">values_from =</span> <span class="fu">c</span>(AUC, ici, kl)) <span class="sc">|&gt;</span> </span>
+<span id="cb49-65"><a href="#cb49-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>value_type) <span class="sc">|&gt;</span> </span>
+<span id="cb49-66"><a href="#cb49-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(result_type <span class="sc">!=</span> <span class="st">"Brier*"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb49-67"><a href="#cb49-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb49-68"><a href="#cb49-68" aria-hidden="true" tabindex="-1"></a>    <span class="at">delta_platt =</span> kl_None <span class="sc">-</span> kl_Platt,</span>
+<span id="cb49-69"><a href="#cb49-69" aria-hidden="true" tabindex="-1"></a>    <span class="at">delta_iso =</span> kl_None <span class="sc">-</span> kl_Isotonic,</span>
+<span id="cb49-70"><a href="#cb49-70" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 13
+  scenario result_type AUC_None AUC_Platt AUC_Isotonic ici_None ici_Platt
+     &lt;dbl&gt; &lt;fct&gt;          &lt;dbl&gt;     &lt;dbl&gt;        &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+1        5 AUC*           0.840     0.840        0.840  0.00949    0.0383
+2        5 ICI*           0.840     0.839        0.839  0.00874    0.0381
+3        5 KL*            0.840     0.839        0.839  0.00893    0.0382
+# ℹ 6 more variables: ici_Isotonic &lt;dbl&gt;, kl_None &lt;dbl&gt;, kl_Platt &lt;dbl&gt;,
+#   kl_Isotonic &lt;dbl&gt;, delta_platt &lt;dbl&gt;, delta_iso &lt;dbl&gt;</code></pre>
 </div>
 </div>
 
