@@ -1,1 +1,1 @@
-{"metrics.qmd":["brier_1950","Austin_2019","brier_1950","Austin_2019","Kullback_1951"],"index.qmd":[],"simul-xgb.qmd":["Ojeda_2023"],"simul-data.qmd":["Ojeda_2023","Ojeda_2023"],"references.qmd":[],"target-distribution.qmd":["chen1999beta","rumbell2023novel","caffo2002empirical"]}
+{"simul-xgb.qmd":["Ojeda_2023"],"references.qmd":[],"target-distribution.qmd":["chen1999beta","rumbell2023novel","caffo2002empirical"],"index.qmd":[],"simul-data.qmd":["Ojeda_2023","Ojeda_2023"],"metrics.qmd":["brier_1950","Austin_2019","brier_1950","Austin_2019","Kullback_1951"]}
