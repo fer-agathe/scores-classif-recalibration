@@ -41,19 +41,17 @@ compute_metrics <- function(obs,
                             scores,
                             true_probas = NULL) {
 
-  # True MSE
+  # True MSE, MAE
   if (!is.null(true_probas)) {
     mse <- mean((true_probas - scores)^2)
-  } else {
-    mse <- NA
-  }
-
-  # True MAE
-  if (!is.null(true_probas)) {
     mae <- mean(abs(true_probas - scores))
   } else {
+    mse <- NA
     mae <- NA
   }
+
+  # Log loss
+  log_loss <- -mean(obs * log(scores) + (1 - obs) * log(1 - scores))
 
   # AUC
   AUC <- pROC::auc(obs, scores, levels = c("0", "1"), quiet = TRUE) |>
@@ -78,7 +76,8 @@ compute_metrics <- function(obs,
     acc = acc,
     AUC = AUC,
     brier = brier,
-    ici = ici
+    ici = ici,
+    log_loss = log_loss
   )
 
 }
