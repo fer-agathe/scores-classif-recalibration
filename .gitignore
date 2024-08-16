@@ -166,6 +166,8 @@ cython_debug/
 
 .Rhistory
 
+output/simul/*
+
 # OS generated files #
 ######################
 .DS_Store
