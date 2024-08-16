@@ -160,7 +160,7 @@ compute_metrics <- function(obs,
 
 
 
-## Dispersion Metrics
+## Divergence and Dispersion Metrics
 
 We compute the Kullback-Leibler divergence @Kullback_1951 between the distribution of the estimated scores and the distribution of the true probabilities. Denoting \(Q\) the distribution of the scores and \(P\) the distribution of the true probabilities, the Kullback Leibler divergence of $Q$ with respect to $P$ is :%
 \begin{equation}

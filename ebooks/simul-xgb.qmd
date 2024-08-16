@@ -672,8 +672,7 @@ simulate_xgb_scenario <- function(scenario, params_df, repn) {
 We consider the following grid:
 ```{r define-grid-xgb}
 grid <- expand_grid(
-  # max_depth = c(2, 4, 6),
-  max_depth = c(2,4,6),
+  max_depth = c(2, 4, 6),
   nb_iter_total = 400,
   eta = 0.3
 ) |>
@@ -808,7 +807,7 @@ if (!dir.exists("../output/simul/")) {
   dir.create("../output/simul/", recursive = TRUE)
 }
 
-for (i_scenario in 1:16) {
+for (i_scenario in 13:16) {
   scenario <- i_scenario
   print(str_c("Scenario ", scenario, "/", nrow(params_df)))
   clusterExport(cl, c("scenario"))
@@ -830,8 +829,8 @@ stopCluster(cl)
 
 The results can be loaded as follows:
 
-```{r load-resul_xgb}
-scenarios <- 1:16 
+```{r load-resul_xgb, eval=FALSE}
+scenarios <- 1:16
 files <- str_c(
   "../output/simul/resul_xgb_scenario_", scenarios, ".rda"
 )
@@ -851,7 +850,7 @@ The `resul_rf` object is of length 16: each element contains the simulations for
 We can now extract some information from the results.
 
 We first aggregate all the computed metrics performance/calibration/divergence in a single tibble, `metrics_xgb_all`.
-```{r}
+```{r, eval=FALSE}
 #| code-fold: true
 #| code-summary: Codes to create the metrics table
 metrics_xgb_all <- map(
@@ -876,6 +875,16 @@ metrics_xgb_all <- map(
 # metrics_xgb_all |> count(scenario, ind, sample, nb_iter) |>
 #   filter(n != max(repns_vector))
 ```
+
+
+```{r save-metrics_xgb_all.rda, echo=FALSE, eval=FALSE}
+save(metrics_xgb_all, file = "../output/simul/metrics_xgb_all.rda")
+```
+
+```{r load-metrics_xgb_all.rda, echo=FALSE}
+load("../output/simul/metrics_xgb_all.rda")
+```
+
 
 For each replication, we made some hyperparameters vary. Let us identify some models of interest:
 
@@ -966,6 +975,26 @@ lowest_kl_xgb <-
   mutate(result_type = "lowest_kl") |>
   ungroup()
 
+mediocre_ici_xgb <- 
+  metrics_xgb_all |>
+  filter(sample == "Validation", recalib == "None") |>
+  group_by(scenario, repn) |>
+  # For each replication for a scenario, we select a model with a mediocre 
+  # calibration
+  mutate(
+    mean_ici = mean(ici),
+    sd_ici = sd(ici),
+    upb_ici = mean_ici + sd_ici,
+  ) |> 
+  filter(ici >  upb_ici) |> 
+  # Among the configurations for which the calibration is not within 1-sd of the
+  # average calibration, we select the model with the lowest ICI
+  arrange(ici) |> 
+  slice_head(n = 1) |> 
+  select(scenario, repn, ind, nb_iter, recalib) |>
+  mutate(result_type = "mediocre_ici") |>
+  ungroup()
+
 # Merge these
 models_of_interest_xgb <-
   smallest_xgb |>
@@ -974,7 +1003,8 @@ models_of_interest_xgb <-
   bind_rows(lowest_mse_xgb) |>
   bind_rows(lowest_brier_xgb) |>
   bind_rows(lowest_ici_xgb) |>
-  bind_rows(lowest_kl_xgb)
+  bind_rows(lowest_kl_xgb) |> 
+  bind_rows(mediocre_ici_xgb)
 
 models_of_interest_metrics <- NULL
 for (recalibration_method in c("None", "Platt", "Isotonic")) {
@@ -1003,10 +1033,10 @@ models_of_interest_metrics <-
       result_type,
       levels = c(
         "smallest", "largest", "lowest_mse", "largest_auc",
-        "lowest_brier", "lowest_ici", "lowest_kl"),
+        "lowest_brier", "lowest_ici", "lowest_kl", "mediocre_ici_xgb"),
       labels = c(
         "Smallest", "Largest", "MSE*", "AUC*",
-        "Brier*", "ICI*", "KL*"
+        "Brier*", "ICI*", "KL*", "Mediocre ICI"
       )
     )
   )
@@ -1089,7 +1119,7 @@ plot_bp_xgb <- function(scenario,
   max_depth_val <- map_dbl(scores_hist_repn, ~.x[[1]]$max_depth)
   # i_max_depth <- which(max_depth_val == max_depth)
   # scores_hist <- scores_hist_repn[[i_max_depth]]
-
+  
   # True Probabilities
   simu_data <- simulate_data_wrapper(
     scenario = scenario,
@@ -1097,12 +1127,12 @@ plot_bp_xgb <- function(scenario,
     repn = repn # only one replication here
   )
   true_prob <- simu_data$data$probs_train
-
+  
   for (recalib_method in c("none", "platt", "iso")) {
-
+    
     i_method <- match(recalib_method, c("none", "platt", "iso"))
     recalib_method_lab <- c("None", "Platt", "Isotonic")[i_method]
-
+    
     # The metrics for the corresponding simulations, on the validation set
     metrics_xgb_current_valid <-
       metrics_xgb_all |>
@@ -1121,7 +1151,7 @@ plot_bp_xgb <- function(scenario,
         sample == "Test",
         recalib == recalib_method_lab
       )
-
+    
     if (paper_version == FALSE) {
       hist(
         true_prob,
@@ -1142,14 +1172,14 @@ plot_bp_xgb <- function(scenario,
           nb_iter == scores_hist_start$nb_iter,
           max_depth == scores_hist_start$max_depth
         )
-
+      
       plot_bp_interest(
         metrics_interest = metrics_start,
         scores_hist_interest = scores_hist_start,
         label = "Start",
         recalib_method = recalib_method
       )
-
+      
       ## End of iterations
       scores_hist_end <- scores_hist_repn[[1]][[length(scores_hist_repn[[1]])]]
       metrics_end <- metrics_xgb_current_test |>
@@ -1163,7 +1193,7 @@ plot_bp_xgb <- function(scenario,
         label = "End",
         recalib_method = recalib_method
       )
-
+      
       ## Iteration with min MSE on validation set
       metrics_valid_mse_star <- metrics_xgb_current_valid |> arrange(mse) |>
         dplyr::slice(1)
@@ -1193,7 +1223,7 @@ plot_bp_xgb <- function(scenario,
     nb_iter_auc <- metrics_valid_auc_star$nb_iter
     max_depth_auc_star <- metrics_valid_auc_star$max_depth
     i_max_depth_auc_star <- which(max_depth_val == max_depth_auc_star)
-
+    
     metrics_max_auc <-
       metrics_xgb_current_test |>
       filter(nb_iter == !!nb_iter_auc, max_depth == max_depth_auc_star)
@@ -1212,14 +1242,14 @@ plot_bp_xgb <- function(scenario,
         font.lab = 2
       )
     }
-
+    
     ## Min Brier on validation set
     metrics_valid_brier_star <-
       metrics_xgb_current_valid |> arrange(brier) |> dplyr::slice(1)
     nb_iter_brier <- metrics_valid_brier_star$nb_iter
     max_depth_brier_star <- metrics_valid_brier_star$max_depth
     i_max_depth_brier_star <- which(max_depth_val == max_depth_brier_star)
-
+    
     metrics_min_brier <-
       metrics_xgb_current_test |>
       filter(nb_iter == !!nb_iter_brier, max_depth == max_depth_brier_star)
@@ -1231,14 +1261,14 @@ plot_bp_xgb <- function(scenario,
       label = "Brier*",
       recalib_method = recalib_method
     )
-
+    
     ## Min ICI on validation set
     metrics_valid_ici_star <-
       metrics_xgb_current_valid |> arrange(ici) |> dplyr::slice(1)
     nb_iter_ici <-   metrics_valid_ici_star$nb_iter
     max_depth_ici_star <- metrics_valid_ici_star$max_depth
     i_max_depth_ici_star <- which(max_depth_val == max_depth_ici_star)
-
+    
     metrics_min_ici <-
       metrics_xgb_current_test |>
       filter(nb_iter == !!nb_iter_ici, max_depth == max_depth_ici_star)
@@ -1250,14 +1280,14 @@ plot_bp_xgb <- function(scenario,
       label = "ICI*",
       recalib_method = recalib_method
     )
-
+    
     ## Min KL on validation set
     metrics_valid_kl_star <-
       metrics_xgb_current_valid |> arrange(KL_20_true_probas) |> dplyr::slice(1)
-    nb_iter_kl <-   metrics_valid_kl_star$nb_iter
+    nb_iter_kl <- metrics_valid_kl_star$nb_iter
     max_depth_kl_star <- metrics_valid_kl_star$max_depth
     i_max_depth_kl_star <- which(max_depth_val == max_depth_kl_star)
-
+    
     metrics_min_kl <-
       metrics_xgb_current_test |>
       filter(nb_iter == !!nb_iter_kl, max_depth == max_depth_kl_star)
@@ -1267,6 +1297,28 @@ plot_bp_xgb <- function(scenario,
       metrics_interest = metrics_min_kl,
       scores_hist_interest = scores_hist_min_kl,
       label = "KL*",
+      recalib_method = recalib_method
+    )
+    
+    ## Mediocre ICI on validation set
+    identified_mici <- 
+      mediocre_ici_xgb |> filter(scenario == !!scenario, repn == !!repn)
+    
+    metrics_valid_mici_star <- metrics_xgb_current_valid |> 
+      filter(ind == identified_mici$ind, nb_iter == identified_mici$nb_iter)
+    nb_iter_mici <- metrics_valid_mici_star$nb_iter
+    max_depth_mici_star <- metrics_valid_mici_star$max_depth
+    i_max_depth_mici_star <- which(max_depth_val == max_depth_mici_star)
+    
+    metrics_mici <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_mici, max_depth == max_depth_mici_star)
+    ind_mici <- which(map_dbl(scores_hist_repn[[i_max_depth_mici_star]], "nb_iter") == nb_iter_mici)
+    scores_hist_mici <- scores_hist_repn[[i_max_depth_mici_star]][[ind_mici]]
+    plot_bp_interest(
+      metrics_interest = metrics_mici,
+      scores_hist_interest = scores_hist_mici,
+      label = "Med. ICI",
       recalib_method = recalib_method
     )
   }
@@ -1282,8 +1334,8 @@ plot_bp_xgb <- function(scenario,
 #| label: fig-xgb-bp-1-0
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 1, repn = 1)
 ```
 ##### 10 noise variables
@@ -1292,8 +1344,8 @@ plot_bp_xgb(scenario = 1, repn = 1)
 #| label: fig-xgb-bp-1-10
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 2, repn = 1)
 ```
 ##### 50 noise variables
@@ -1302,8 +1354,8 @@ plot_bp_xgb(scenario = 2, repn = 1)
 #| label: fig-xgb-bp-1-50
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 3, repn = 1)
 ```
 ##### 100 noise variables
@@ -1312,8 +1364,8 @@ plot_bp_xgb(scenario = 3, repn = 1)
 #| label: fig-xgb-bp-1-100
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 4, repn = 1)
 ```
 ::::
@@ -1325,8 +1377,8 @@ plot_bp_xgb(scenario = 4, repn = 1)
 #| label: fig-xgb-bp-2-0
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 5, repn = 1)
 ```
 ##### 10 noise variables
@@ -1335,8 +1387,8 @@ plot_bp_xgb(scenario = 5, repn = 1)
 #| label: fig-xgb-bp-2-10
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 6, repn = 1)
 ```
 ##### 50 noise variables
@@ -1345,8 +1397,8 @@ plot_bp_xgb(scenario = 6, repn = 1)
 #| label: fig-xgb-bp-2-50
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 7, repn = 1)
 ```
 ##### 100 noise variables
@@ -1355,8 +1407,8 @@ plot_bp_xgb(scenario = 7, repn = 1)
 #| label: fig-xgb-bp-2-100
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 8, repn = 1)
 ```
 ::::
@@ -1368,8 +1420,8 @@ plot_bp_xgb(scenario = 8, repn = 1)
 #| label: fig-xgb-bp-3-0
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 9, repn = 1)
 ```
 ##### 10 noise variables
@@ -1378,8 +1430,8 @@ plot_bp_xgb(scenario = 9, repn = 1)
 #| label: fig-xgb-bp-3-10
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 10, repn = 1)
 ```
 ##### 50 noise variables
@@ -1388,8 +1440,8 @@ plot_bp_xgb(scenario = 10, repn = 1)
 #| label: fig-xgb-bp-3-50
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 11, repn = 1)
 ```
 ##### 100 noise variables
@@ -1398,8 +1450,8 @@ plot_bp_xgb(scenario = 11, repn = 1)
 #| label: fig-xgb-bp-3-100
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 12, repn = 1)
 ```
 ::::
@@ -1411,8 +1463,8 @@ plot_bp_xgb(scenario = 12, repn = 1)
 #| label: fig-xgb-bp-4-0
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 13, repn = 1)
 ```
 ##### 10 noise variables
@@ -1421,8 +1473,8 @@ plot_bp_xgb(scenario = 13, repn = 1)
 #| label: fig-xgb-bp-4-10
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 14, repn = 1)
 ```
 ##### 50 noise variables
@@ -1431,8 +1483,8 @@ plot_bp_xgb(scenario = 14, repn = 1)
 #| label: fig-xgb-bp-4-50
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 15, repn = 1)
 ```
 ##### 100 noise variables
@@ -1441,8 +1493,8 @@ plot_bp_xgb(scenario = 15, repn = 1)
 #| label: fig-xgb-bp-4-100
 #| code-fold: true
 #| fig-height: 6
-#| fig-width: 12
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+#| fig-width: 14
+par(mfrow = c(3,9), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb(scenario = 16, repn = 1)
 ```
 ::::
@@ -1458,7 +1510,7 @@ for (scenario in 1:16) {
     file = str_c("../figs/bp_synthetic_xbg_", scenario, ".pdf"),
     height = 4.5, width = 10
   )
-  par(mfrow = c(3,4), mar = c(4.1, 4, 3.5, 1.5))
+  par(mfrow = c(3,5), mar = c(4.1, 4, 3.5, 1.5))
   plot_bp_xgb(scenario = scenario, repn = 1, paper_version = TRUE)
   dev.off()
 }
@@ -1549,7 +1601,7 @@ p_brier <- ggplot(
 
 ggsave(
   p_brier, file = "../figs/xgb-kl-calib-brier-leaves-all.pdf",
-       width = 10, height = 8
+       width = 13, height = 8
 )
 
 p_brier
@@ -1589,7 +1641,7 @@ p_ici <- ggplot(
 
 ggsave(
   p_ici, file = "../figs/xgb-kl-calib-ici-leaves-all.pdf",
-  width = 10, height = 8
+  width = 13, height = 8
 )
 p_ici
 ```
@@ -1655,10 +1707,10 @@ table_models_interest_mean <-
   filter(sample == "test") |> 
   select(
     dgp, no_noise, recalib, sample, result_type, 
-    brier, ici, kl = KL_20_true_probas
+    brier, ici, kl = KL_20_true_probas,
   ) |> 
   filter(
-    result_type %in% c("AUC*", "KL*", "Smallest", "Largest")
+    result_type %in% c("AUC*", "KL*", "Mediocre ICI", "Smallest", "Largest")
   ) |> 
   mutate(value_type = "mean")
 
@@ -1669,10 +1721,10 @@ table_models_interest_sd <-
   select(
     dgp, no_noise, recalib, sample, result_type, 
     brier = brier_sd, ici = ici_sd, 
-    kl = KL_20_true_probas_sd
+    kl = KL_20_true_probas_sd,
   ) |> 
   filter(
-    result_type %in% c("AUC*", "KL*", "Smallest", "Largest")
+    result_type %in% c("AUC*", "KL*", "Mediocre ICI", "Smallest", "Largest")
   ) |> 
   mutate(value_type = "sd")
 
@@ -1703,5 +1755,95 @@ table_models_interest_mean |>
   ) |> 
   kableExtra::scroll_box(fixed_thead = TRUE, height = "500px")
 
+```
+
+
+```{r, echo=FALSE}
+# Latex version for paper
+table_models_interest_mean |> 
+  bind_rows(table_models_interest_sd) |> 
+  pivot_longer(cols = c(brier, ici, kl)) |> 
+  pivot_wider(names_from = "value_type", values_from = "value") |> 
+  mutate(value = str_c(round(`mean`, digits), " (", round(`sd`, digits), ")")) |> 
+  select(-mean, -sd, -sample) |> 
+  pivot_wider(names_from = c(recalib, name), values_from = value) |> 
+  knitr::kable(
+    align = str_c("cl", str_c(rep("c", 3*3), collapse = ""), collapse = ""),
+    escape = FALSE, booktabs = T, digits = 3, format = "latex",
+    col.names = c(
+      "DGP", "Noise", "Optim.",
+      rep(c("BS", "ICI", "KL"), 3)
+    )
+  ) |> 
+  kableExtra::collapse_rows(columns = 1:2, valign = "top") |> 
+  kableExtra::add_header_above(
+    c(" " = 3,
+      "None" = 3,
+      "Platt" = 3,
+      "Isotonic" = 3
+    )
+  )
+```
+
+
+### Draft
+
+```{r}
+
+table_models_interest_mean <- 
+  models_interest_xgb |> 
+  filter(sample == "test") |> 
+  select(
+    scenario, dgp, no_noise, recalib, sample, result_type, 
+    brier, ici, kl = KL_20_true_probas
+  ) |> 
+  filter(
+    result_type %in% c("AUC*", "KL*", "Largest")
+  ) |> 
+  mutate(value_type = "mean")
+
+
+initial_points <- table_models_interest_mean |> 
+  filter(dgp == 1, recalib == "None")
+
+points_after_c <- initial_points |> 
+  select(scenario, dgp, no_noise, result_type, ici, kl) |> 
+  left_join(
+    table_models_interest_mean |> 
+      filter(recalib %in% c("Platt", "Isotonic")) |> 
+      select(scenario, dgp, no_noise, recalib, result_type, ici, kl) |> 
+      rename(ici_end = ici, kl_end = kl),
+    relationship = "many-to-many" # (Platt and Isotonic)
+  )
+
+
+ggplot() +
+  geom_point(
+    data = initial_points,
+    mapping = aes(x = ici, y = kl, shape = result_type),
+    size = 2
+    ) +
+  geom_segment(
+    data = points_after_c,
+    mapping = aes(
+      x = ici, y = kl, xend = ici_end, yend = kl_end,
+      colour = recalib, linetype = recalib
+      ),
+    arrow = arrow(length=unit(.2, 'cm'))
+  ) +
+  facet_wrap(~no_noise, ncol = 4) +
+  scale_shape_manual(
+    NULL,
+    values = c(
+      # "Smallest" = 1,
+      "Largest" = 2,
+      "AUC*" = 19,
+      "KL*" = 15
+    )
+  ) +
+  labs(x = "ICI", y = "KL Divergence") +
+  scale_colour_manual("Recalibration", values = colour_recalib) +
+  scale_linetype_discrete("Recalibration") +
+  theme_paper()
 ```
 
