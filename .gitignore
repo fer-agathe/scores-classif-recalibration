@@ -167,6 +167,7 @@ cython_debug/
 .Rhistory
 
 output/simul/*
+figs/
 
 # OS generated files #
 ######################
