@@ -701,8 +701,8 @@ We load the dataset "spambase" and the associated Beta prior on both train and t
 load("output/real-data/tb_spambase.rda") # dataset
 load("output/real-data/priors_spambase.rda") # scores_gamsel
 
-prior <- resul
-data <- dataset
+prior <- priors_spambase
+data <- tb_spambase
 ```
 
 The target variable is `is_spam`.
@@ -1223,6 +1223,8 @@ We can now load the results:
 load(str_c("output/real-data/xgb_resul_", name, ".rda"))
 ```
 
+## Results 
+
 ```{r}
 metrics_xgb_all <- xgb_resul$metrics_simul |>
   mutate(
@@ -1309,7 +1311,8 @@ mediocre_ici_xgb <-
   metrics_xgb_all |>
   filter(sample == "Validation", recalib == "None") |>
   arrange(desc(ici)) |>
-  slice_head(n = 1) |>
+  #slice_head(n = 1) |>
+  filter(nb_iter == 10 & ind == 1) |>
   select(ind, nb_iter, recalib) |>
   mutate(result_type = "mediocre_ici")
 
@@ -1358,6 +1361,12 @@ models_of_interest_metrics <-
     )
   )
 
+```
+
+```{r}
+#| tbl-cap: "Metrics for spambase dataset"
+#| label: tbl-results-xgb-spambase
+DT::datatable(models_of_interest_metrics)
 ```
 
 ### Metrics vs Number of Iterations
@@ -1628,4 +1637,71 @@ plot_bp_xgb <- function(paper_version = FALSE) {
   }
 }
 ```
+
+```{r}
+#| fig-cap: Distribution of scores on the test set (spambase)
+#| label: fig-xgb-spambase-scores
+#| code-fold: true
+#| fig-height: 6
+#| fig-width: 14
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb()
+```
+```{r}
+
+table_models_interest <- 
+  models_of_interest_metrics |> 
+  filter(sample == "Test") |> 
+  select(
+    recalib, sample, result_type, 
+    brier, ici, kl = KL_20_true_probas
+  ) |> 
+  filter(
+    result_type %in% c("AUC*", "KL*", "Largest")
+  )
+
+
+initial_points <- table_models_interest |> 
+  filter(recalib == "None")
+
+points_after_c <- initial_points |> 
+  select(result_type, ici, kl) |> 
+  left_join(
+    table_models_interest |> 
+      filter(recalib %in% c("Platt", "Isotonic")) |> 
+      select(recalib, result_type, ici, kl) |> 
+      rename(ici_end = ici, kl_end = kl),
+    relationship = "many-to-many" # (Platt and Isotonic)
+  )
+
+
+ggplot() +
+  geom_point(
+    data = initial_points,
+    mapping = aes(x = ici, y = kl, shape = result_type),
+    size = 2
+    ) +
+  geom_segment(
+    data = points_after_c,
+    mapping = aes(
+      x = ici, y = kl, xend = ici_end, yend = kl_end,
+      colour = recalib, linetype = recalib
+      ),
+    arrow = arrow(length=unit(.2, 'cm'))
+  ) +
+  scale_shape_manual(
+    NULL,
+    values = c(
+      # "Smallest" = 1,
+      "Largest" = 2,
+      "AUC*" = 19,
+      "KL*" = 15
+    )
+  ) +
+  labs(x = "ICI", y = "KL Divergence") +
+  scale_colour_manual("Recalibration", values = colour_recalib) +
+  scale_linetype_discrete("Recalibration") +
+  theme_paper()
+```
+
 

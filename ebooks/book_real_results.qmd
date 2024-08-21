@@ -1,0 +1,89 @@
+# Real-data Results {#sec-real-data-xgb-resul}
+
+
+:::{.callout-note}
+
+This chapter investigates the results of XGBoost estimations for the 10 real datasets.
+
+:::
+
+```{r load-libraries}
+library(tidyverse)
+library(ggh4x)
+library(ggrepel)
+library(rpart)
+library(locfit)
+library(philentropy)
+library(stringr)
+library(purrr)
+
+# Colours for train/validation/test
+colour_samples <- c(
+  "Train" = "#0072B2",
+  "Validation" = "#009E73",
+  "Calibration" = "#CC79A7",
+  "Test" = "#D55E00"
+)
+
+colour_recalib <- c(
+  "None" = "#88CCEE",
+  "Platt" = "#44AA99",
+  "Isotonic" = "#882255"
+)
+```
+
+
+
+```{r define-theme_paper}
+#| code-fold: true
+#| code-summary: definition of the `theme_paper()` function (for ggplot2 graphs)
+#' Theme for ggplot2
+#'
+#' @param ... arguments passed to the theme function
+#' @export
+#' @importFrom ggplot2 element_rect element_text element_blank element_line unit
+#'   rel
+theme_paper <- function (...) {
+  ggthemes::theme_base() +
+    theme(
+      plot.background = element_blank(),
+      legend.background = element_rect(
+        fill = "transparent", linetype="solid", colour ="black"),
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      legend.box = "horizontal",
+      legend.key = element_blank()
+    )
+}
+```
+
+## Data
+
+The list of datasets and the name of the target variable:
+```{r define-datasets}
+datasets <- tribble(
+  ~name, ~target_name,
+  "abalone", "Sex",
+  "adult", "high_income",
+  "bank", "y",
+  "default", "default",
+  "drybean", "is_dermason",
+  "coupon", "y",
+  "mushroom", "edible",
+  "occupancy", "Occupancy",
+  "winequality", "high_quality",
+  "spambase", "is_spam"
+)
+
+load(str_c("output/real-data/xgb_resul_", name, ".rda"))
+```
+
+```{r load-resul_xgb, eval=FALSE}
+files <- str_c("output/real-data/xgb_resul_", datasets$name, ".rda")
+# Loop through each file and load it with a new name
+walk2(files, datasets$name, ~{
+  loaded_object_name <- load(.x)
+  new_name <- str_c("xgb_resul_", .y)
+  assign(new_name, get(loaded_object_name), envir = .GlobalEnv)
+})
+```
