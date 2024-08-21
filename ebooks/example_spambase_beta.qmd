@@ -1,0 +1,161 @@
+# Illustration on Abalone dataset I {#sec-real-example-beta}
+
+:::{.callout-note}
+
+This chapter illustrates the application of the method using one example of real-world datasets. We train one model --a Generalized Additive Model with model selection (GAMSEL)-- on a binary variable to estimate the underlying event probabilities using available covariates. For this model, we derive scores from the  test set and fit a Beta distribution via maximum likelihood estimation. This process yields one prior for the true probability distribution of the event.
+
+:::
+
+
+:::{.callout-warning}
+
+## Code Availability
+
+The functions for data preprocessing, model estimation, and Beta distribution fitting are stored in `functions/real-data.R` and will be used in subsequent chapters.
+
+:::
+
+```{r load-libraries}
+library(tidyverse)
+library(gamsel)
+
+# Colours for train/validation/calibration/test
+library(tidyverse)
+colour_samples <- c(
+  "Train" = "#0072B2",
+  "Test" = "#D55E00"
+)
+
+# Functions
+source("functions/real-data.R")
+```
+
+
+## Raw Data
+
+To illustrate the process, we use the `spambase` dataset (available on [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/94/spambase)). The dataset contains 4,601 rows. The target variable, `is_spam` will be explained using the 57 continuous predictors.
+
+The dataset can be downloaded as follows:
+```{r download-spambase, eval=FALSE}
+if (!dir.exists("data")) dir.create("data")
+download.file(
+  url = "https://archive.ics.uci.edu/static/public/94/spambase.zip", 
+  destfile = "data/spambase.zip"
+)
+```
+
+The names of the columns are given in the `spambase.names` file in that archive.
+```{r, eval=FALSE}
+# This chunk is not run
+info_data <- scan(
+  unz("data/spambase.zip", "spambase.names"), what = "character", sep = "\n"
+)
+# Print the names for this dataset (not very convenient...)
+str_extract(info_data[31:length(info_data)], "^(.*):") |> 
+  str_remove(":$") |> 
+  (\(.x) str_c('"', .x, '",'))() |> 
+  cat()
+```
+
+
+Then, we can import the dataset:
+```{r import-spambase-data}
+dataset <- read_csv(
+  file = unz("data/spambase.zip", "spambase.data"),
+  col_names = c(
+    "word_freq_make", "word_freq_address", "word_freq_all", "word_freq_3d",
+    "word_freq_our", "word_freq_over", "word_freq_remove", "word_freq_internet",
+    "word_freq_order", "word_freq_mail", "word_freq_receive", "word_freq_will",
+    "word_freq_people", "word_freq_report", "word_freq_addresses", 
+    "word_freq_free", "word_freq_business", "word_freq_email", "word_freq_you",
+    "word_freq_credit", "word_freq_your", "word_freq_font", "word_freq_000",
+    "word_freq_money", "word_freq_hp", "word_freq_hpl", "word_freq_george",
+    "word_freq_650", "word_freq_lab", "word_freq_labs", "word_freq_telnet",
+    "word_freq_857", "word_freq_data", "word_freq_415", "word_freq_85",
+    "word_freq_technology", "word_freq_1999", "word_freq_parts", "word_freq_pm",
+    "word_freq_direct", "word_freq_cs", "word_freq_meeting", 
+    "word_freq_original", "word_freq_project", "word_freq_re", "word_freq_edu",
+    "word_freq_table", "word_freq_conference", "char_freq_;", "char_freq_(",
+    "char_freq_[", "char_freq_!", "char_freq_$", "char_freq_#",
+    "capital_run_length_average", "capital_run_length_longest",
+    "capital_run_length_total", "is_spam"
+  )
+)
+
+```
+The target variable is `is_spam`.
+```{r define-target_name}
+target_name <- "is_spam"
+```
+
+## Data Pre-processing
+
+We start by splitting the dataset into train and test sets in order calculate the prior distribution.
+
+With the current dataset:
+```{r define-data}
+data <- split_train_test(data = dataset, prop_train = .8, seed = 1234)
+names(data)
+```
+
+
+Some of the models we use need the data to be numerical. We thus use the function `encode_dataset()`{.R} that transforms the categorical columns into sets of dummy variables. For each categorical variable, we remove one of the levels to avoid colinearity in the predictor matrix. This step is made using the convenient functions from the {recipes} package. In addition, the spline function from the {gam} package does not support variables with names that do not respect the R naming conventions. We thus rename all the variables and keep track of the changes.
+
+Let us use the `encode_dataset()`{.R} function to rename the columns here. As there is no categorical variable among the predictors, no dummy variable will be created.
+```{r define-data_dmy}
+data_dmy <- encode_dataset(
+  data_train = data$train,
+  data_test = data$test,
+  target_name = target_name,
+  intercept = FALSE
+)
+```
+
+
+## Estimation Functions: GAMSEL
+
+We first estimate the probability that the event occurs (the email is a spam) using a Generalized Additive Model with model selection. We use the helper function `train_gamsel()`{.R}, which can be used in a very simple way. This function first splits the target variable and the predictors in distinct objects. Then, we check that all variables obtained after using the `encode_dataset()`{.R} function are coded as `numeric`: the estimation function from {gamsel} does not allow `integer` variables. The formula to fit the GAMSEL model is then built (We need to create a vector that gives the maximum spline basis function to use for each variable. For dummy variables, this needs to be set to 1. For other variables, let us use either 6 or the minimum number of distinct values minus 1.). Then, we fit the model. The penalty parameter $\lambda$ is selected by 10-fold cross validation. We use the value of lambda which gives the minimum cross validation metric. Note that we could also use the largest value of lambda such that the error is within 1 standard error of the minimum (using `lambda = gamsel_cv$lambda.1se`). Lastly, we get the predicted scores. 
+
+```{r define-scores_gamsel}
+scores_gamsel <- train_gamsel(
+    data_train = data$train, data_test = data$test, target_name = target_name,
+    degrees = 6
+  )
+```
+
+## Fitting a Beta Distribution
+
+Once the scores from the models have been estimated, we fit a Beta distribution to them. This will provide a prior distribution of the true probabilities in the exercise.
+
+To avoid crashing the ML estimation of the two parameters of the Beta distribution, let us make sure that any score is in $(0,1)$ and not exactly equal to 0 or 1.
+```{r}
+x_gamsel <- (scores_gamsel$scores_test * (1 - 1e-6)) + 1e-6 / 2
+```
+
+To estimate the two parameters of the Beta distribution, we apply the function, `fit_beta_scores()`{.R} that calls the `fitdistr()`{.R} function from {MASS}.
+
+```{r define-mle_gamsel-example, message=FALSE, warning=FALSE}
+(mle_gamsel <- fit_beta_scores(scores = x_gamsel[!is.na(x_gamsel)]))
+```
+
+## Wrapper Functions
+
+For convenience, we use a wrapper function, `get_beta_fit()`{.R} that takes a dataset as an input, the name of the target variable and possibly a seed. From these arguments, the function splits the dataset into a training and a test set. It then fits the GAMSEL model to the train set, and fit a Beta distribution on the scores estimated in the test set. This function returns a list with 2 elements: the estimated scores of the GAMSEL, the the parameters of the Beta distribution estimated using the scores of this model.
+
+These two functions can be called as follows:
+```{r, warning = FALSE}
+resul <- get_beta_fit(dataset = dataset, target_name = "is_spam", seed = 1234)
+```
+
+We also use the function, `plot_hist_scores_beta()`{.R} to plot the distribution of scores obtained with the GAMSEL model and the density functions of the Beta distribution whose parameters were estimated based on the scores of the GAMSEL model.
+
+```{r, warning = FALSE}
+plot_hist_scores_beta(resul, "spambase")
+```
+We save the results:
+```{r}
+save(resul, file = "output/real-data/priors_spambase.rda")
+save(dataset, file = "output/real-data/tb_spambase.rda")
+```
+
+

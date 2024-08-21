@@ -1,0 +1,852 @@
+# Estimations {#sec-real-estimations}
+
+
+:::{.callout-note}
+
+This chapter estimates the binary events from the datasets introduced in [Chapter -@sec-priors-beta] using extreme gradient boosting models. For this model, we perform a grid search. For each set of hyperparameters of the grid search, we compute the estimated scores by the model and calculate performance, calibration, and divergence metrics. For the divergence metrics, we assume that the underlying probabilities are distributed according to a Beta distribution whose parameters were estimated in [Chapter -@sec-priors-beta].
+
+:::
+
+
+```{r load-libraries}
+library(tidyverse)
+library(philentropy)
+library(ranger)
+library(xgboost)
+library(pbapply)
+library(parallel)
+library(gam)
+library(gamsel)
+
+# Colours for train/validation/calibration/test
+colour_samples <- c(
+  "Train" = "#0072B2",
+  "Validation" = "#009E73",
+  "Calibration" = "#CC79A7",
+  "Test" = "#D55E00"
+)
+
+colour_recalib <- c(
+  "None" = "#88CCEE",
+  "Platt" = "#44AA99",
+  "Isotonic" = "#882255"
+)
+
+# Functions
+source("functions/real-data.R")
+source("../scripts/functions/metrics.R")
+```
+
+```{r define-theme_paper}
+#| code-fold: true
+#| code-summary: definition of the `theme_paper()` function (for ggplot2 graphs)
+#' Theme for ggplot2
+#'
+#' @param ... arguments passed to the theme function
+#' @export
+#' @importFrom ggplot2 element_rect element_text element_blank element_line unit
+#'   rel
+theme_paper <- function (...) {
+  ggthemes::theme_base() +
+    theme(
+      plot.background = element_blank(),
+      legend.background = element_rect(
+        fill = "transparent", linetype="solid", colour ="black"),
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      legend.box = "horizontal",
+      legend.key = element_blank()
+    )
+}
+```
+
+## Functions
+
+### Recalibration
+
+```{r define-recalibrate}
+#' Recalibrates scores using a calibration
+#' 
+#' @param obs_calib vector of observed events in the calibration set
+#' @param scores_calib vector of predicted probabilities in the calibration set
+#' @param obs_test vector of observed events in the test set
+#' @param scores_test vector of predicted probabilities in the test set
+#' @param method recalibration method (`"platt"` for Platt scaling, 
+#'   `"isotonic"` for isotonic regression)
+#' @returns list of two elements: recalibrated scores on the calibration set,
+#'   recalibrated scores on the test set
+recalibrate <- function(obs_calib,
+                        obs_test,
+                        pred_calib,
+                        pred_test,
+                        method = c("platt", "isotonic")) {
+  data_calib <- tibble(d = obs_calib, scores = pred_calib)
+  data_test <- tibble(d = obs_test, scores = pred_test)
+  
+  if (method == "platt") {
+    lr <- glm(d ~ scores, family = binomial(link = 'logit'), data = data_calib)
+    score_c_calib <- predict(lr, newdata = data_calib, type = "response")
+    score_c_test <- predict(lr, newdata = data_test, type = "response")
+  } else if (method == "isotonic") {
+    iso <- isoreg(x = data_calib$scores, y = data_calib$d)
+    fit_iso <- as.stepfun(iso)
+    score_c_calib <- fit_iso(data_calib$scores)
+    score_c_test <- fit_iso(data_test$scores)
+    
+  } else {
+    stop("Unrecognized method: platt or isotonic only")
+  }
+  # Format results in tibbles:
+  # For calibration set
+  tb_score_c_calib <- tibble(
+    d = obs_calib,
+    p_u = pred_calib,
+    p_c = score_c_calib
+  )
+  # For test set
+  tb_score_c_test <- tibble(
+    d = obs_test,
+    p_u = pred_test,
+    p_c = score_c_test
+  )
+  
+  list(
+    tb_score_c_calib = tb_score_c_calib,
+    tb_score_c_test = tb_score_c_test
+  )
+  
+}
+```
+
+### Dispersion Metrics with Beta prior
+
+```{r}
+#| code-fold: true
+#| code-summary: Function `dispersion_metrics_beta()`{.R}
+#' Computes the dispersion and divergence metrics for a vector of scores and
+#' a Beta distribution
+#'
+#' @param shape_1 first parameter of the beta distribution
+#' @param shape_2 second parameter of the beta distribution
+#' @param scores predicted scores
+#'
+#' @returns
+#' \itemize{
+#'   \item \code{inter_quantile_25_75}: Difference of inter-quantile between 25% and 75%
+#'   \item \code{inter_quantile_10_90}: Difference of inter-quantile between 10% and 90%
+#'   \item \code{KL_10_true_probas}: KL of of predicted probabilities w.r. to true probabilities with 10 bins
+#'   \item \code{KL_10_scores}: KL of of true probabilities w.r. to predicted probabilities with 10 bins
+#'   \item \code{KL_20_true_probas}: KL of of predicted probabilities w.r. to true probabilities with 20 bins
+#'   \item \code{KL_20_scores}: KL of of true probabilities w.r. to predicted probabilities with 20 bins
+#'   \item \code{ind_cov}: Difference between the variance of true probabilities and the covariance between true probabilities and predicted scores
+#' }
+dispersion_metrics_beta <- function(shape_1 = 1, shape_2 = 1, scores){
+
+  # Inter-quantiles
+  inter_q_80 <- diff(quantile(scores, c(.9, .1))) /
+    diff(qbeta(c(.9, .1), shape_1, shape_2))
+  inter_q_50 <- diff(quantile(scores, c(.75,.25))) /
+    diff(qbeta(c(.75,.25), shape_1, shape_1))
+
+  # KL divergences
+  m <- 10 # Number of bins
+  h_phat <- hist(scores, breaks = seq(0, 1, length = m + 1), plot = FALSE)
+  h_p <- list(breaks = h_phat$breaks, mids = h_phat$mids)
+  h_p$density = diff(pbeta(h_p$breaks, shape_1, shape_2))
+  h_p$counts =  h_p$density*length(scores)
+
+  # Densities
+  h1 <- rbind(h_phat$density / m, h_p$density / m) # Reference : true probabilities
+  h2 <- rbind(h_p$density / m, h_phat$density / m) # Reference : predicted scores
+  KL_10_true_probas <- distance(
+    h1, method = "kullback-leibler", unit = "log2", mute.message = TRUE)
+  KL_10_scores <- distance(
+    h2, method = "kullback-leibler", unit = "log2", mute.message = TRUE)
+
+
+  m <- 20 # Number of bins
+  h_phat <- hist(scores, breaks = seq(0, 1, length = m + 1), plot = FALSE)
+  h_p <- list(breaks = h_phat$breaks, mids = h_phat$mids)
+  h_p$density = diff(pbeta(h_p$breaks, shape_1, shape_2))
+  h_p$counts =  h_p$density * length(scores)
+  # Densities
+  h1 <- rbind(h_phat$density / m, h_p$density) # Reference : true probabilities
+  h2 <- rbind(h_p$density, h_phat$density / m) # Reference : predicted scores
+  KL_20_true_probas <- distance(
+    h1, method = "kullback-leibler", unit = "log2", mute.message = TRUE)
+  KL_20_scores <- distance(
+    h2, method = "kullback-leibler", unit = "log2", mute.message = TRUE)
+
+  # Indicator of the difference between variance and covariance
+  var_p <- shape_1 * shape_2 / ((shape_1 + shape_2)^2 * (shape_1 + shape_2 + 1))
+  cov_p_phat <- cov(
+    qbeta(
+      rank(scores, ties.method = "average") / (1 + length(scores)),
+      shape_1,
+      shape_2),
+    scores
+  )
+  ind_cov <- abs(cov_p_phat - var_p)
+
+  # Collection
+  dispersion_metrics <- tibble(
+    "inter_quantile_25_75" = as.numeric(inter_q_50),
+    "inter_quantile_10_90" = as.numeric(inter_q_80),
+    "KL_10_true_probas" = as.numeric(KL_10_true_probas),
+    "KL_10_scores" = as.numeric(KL_10_scores),
+    "KL_20_true_probas" = as.numeric(KL_20_true_probas),
+    "KL_20_scores" = as.numeric(KL_20_scores),
+    "ind_cov" = ind_cov
+  )
+
+  dispersion_metrics
+}
+
+disp_metrics_dataset <- function(prior, scores) {
+  # GAMSEL prior
+  shape_1 <- prior$mle_gamsel$estimate["shape1"]
+  shape_2 <- prior$mle_gamsel$estimate["shape2"]
+
+  # Divergence metrics
+  dist_prior_gamsel <- dispersion_metrics_beta(
+    shape_1 = shape_1, shape_2 = shape_2, scores = scores
+  )
+
+  dist_prior_gamsel |>
+    mutate(
+      prior = "gamsel", shape_1 = shape_1, shape_2 = shape_2
+      )
+}
+```
+
+### Extreme Gradient Boosting
+
+```{r define-get_metrics_xgb_iter}
+#| code-fold: true
+#| code-summary: Function `get_metrics_xgb_iter()`{.R}
+#' Get the metrics based on scores estimated at a given boosting iteration
+#'
+#' @param scores scores estimated a boosting iteration `nb_iter` (list with
+#'   train and test scores, returned by `predict_score_iter()`)
+#' @param data_train train set
+#' @param data_valid validation set
+#' @param data_calib calibration set
+#' @param data_test test set
+#' @param target_name name of the target variable
+#' @param ind index of the grid search
+#' @param nb_iter boosting iteration to consider
+#' @param params hyperparameters to consider
+#'
+#' @returns A list with 4 elements:
+#'  - `tb_metrics`: performance / calibration metrics
+#'  - `tb_disp_metrics`: disp and div metrics
+#'  - `tb_prop_scores`: table with P(q1 < score < q2)
+#'  - `scores_hist`: histogram of scores
+get_metrics_xgb_iter <- function(scores,
+                                 prior,
+                                 data_train,
+                                 data_valid,
+                                 data_calib,
+                                 data_test,
+                                 target_name,
+                                 ind,
+                                 nb_iter,
+                                 params) {
+
+  scores_train <- scores$scores_train
+  scores_valid <- scores$scores_valid
+  scores_calib <- scores$scores_calib
+  scores_test <- scores$scores_test
+  
+  # Recalibration
+  # Platt scaling
+  res_recalibration_platt <- recalibrate(
+    obs_calib = data_calib |> dplyr::pull(!!target_name), 
+    obs_test = data_test |> dplyr::pull(!!target_name), 
+    pred_calib = scores_calib, 
+    pred_test = scores_test, 
+    method = "platt"
+  )
+  scores_c_platt_calib <- res_recalibration_platt$tb_score_c_calib$p_c
+  scores_c_platt_test <- res_recalibration_platt$tb_score_c_test$p_c
+  
+  # Isotonic regression
+  res_recalibration_iso <- recalibrate(
+    obs_calib = data_calib |> dplyr::pull(!!target_name), 
+    obs_test = data_test |> dplyr::pull(!!target_name), 
+    pred_calib = scores_calib, 
+    pred_test = scores_test, 
+    method = "isotonic"
+  )
+  scores_c_iso_calib <- res_recalibration_iso$tb_score_c_calib$p_c
+  scores_c_iso_test <- res_recalibration_iso$tb_score_c_test$p_c
+
+  ## Metrics----
+  ## Histogram of scores----
+  breaks <- seq(0, 1, by = .05)
+  scores_train_hist <- hist(scores_train, breaks = breaks, plot = FALSE)
+  scores_calib_hist <- hist(scores_calib, breaks = breaks, plot = FALSE)
+  scores_valid_hist <- hist(scores_valid, breaks = breaks, plot = FALSE)
+  scores_test_hist <- hist(scores_test, breaks = breaks, plot = FALSE)
+  scores_c_platt_calib_hist <- hist(scores_c_platt_calib, breaks = breaks, plot = FALSE)
+  scores_c_platt_test_hist <- hist(scores_c_platt_test, breaks = breaks, plot = FALSE)
+  scores_c_iso_calib_hist <- hist(scores_c_iso_calib, breaks = breaks, plot = FALSE)
+  scores_c_iso_test_hist <- hist(scores_c_iso_test, breaks = breaks, plot = FALSE)
+  
+  scores_hist <- list(
+    train = scores_train_hist,
+    valid = scores_valid_hist,
+    calib = scores_calib_hist,
+    test = scores_test_hist,
+    calib_c_platt = scores_c_platt_calib_hist,
+    test_c_platt = scores_c_platt_test_hist,
+    calib_c_iso = scores_c_iso_calib_hist,
+    test_c_iso = scores_c_iso_test_hist,
+    ind = ind,
+    nb_iter = nb_iter,
+    max_depth = params$max_depth
+    
+  )
+  
+  ## Estimation of P(q1 < score < q2)----
+  prop_btw_q_h <- function(s, sample_name, recalib_name) {
+    map(
+      c(.1, .2, .3, .4),
+      ~prop_btw_quantiles(s = s, q1 = .x)
+    ) |>
+      list_rbind() |>
+      mutate(sample = sample_name, recalib = recalib_name)
+  }
+  
+  proq_scores_train <- prop_btw_q_h(
+    scores_train, sample_name = "train", recalib_name = "none"
+  )
+  proq_scores_valid <- prop_btw_q_h(
+    scores_valid, sample_name = "valid", recalib_name = "none"
+  )
+  proq_scores_calib <- prop_btw_q_h(
+    scores_calib, sample_name = "calib", recalib_name = "none"
+  )
+  proq_scores_test <- prop_btw_q_h(
+    scores_test, sample_name = "test", recalib_name = "none"
+  )
+  proq_scores_c_platt_calib <- prop_btw_q_h(
+    scores_c_platt_calib, sample_name = "calib", recalib_name = "platt"
+  )
+  proq_scores_c_platt_test <- prop_btw_q_h(
+    scores_c_platt_test, sample_name = "test", recalib_name = "platt"
+  )
+  proq_scores_c_iso_calib <- prop_btw_q_h(
+    scores_c_iso_calib, sample_name = "calib", recalib_name = "isotonic"
+  )
+  proq_scores_c_iso_test <- prop_btw_q_h(
+    scores_c_iso_test, sample_name = "test", recalib_name = "isotonic"
+  )
+
+  ## Dispersion Metrics----
+  disp_train <- disp_metrics_dataset(
+    prior = prior, scores = scores_train
+  ) |> 
+    mutate(sample = "train", recalib = "none")
+  
+  disp_valid <- disp_metrics_dataset(
+    prior = prior, scores = scores_valid
+  ) |>
+    mutate(sample = "valid", recalib = "none")
+  
+  disp_calib <- disp_metrics_dataset(
+    prior = prior, scores = scores_calib
+  ) |> 
+    mutate(sample = "calib", recalib = "none")
+  
+  disp_test <- disp_metrics_dataset(
+    prior = prior, scores = scores_test
+  ) |> 
+    mutate(sample = "test", recalib = "none")
+  
+  disp_c_platt_calib <- disp_metrics_dataset(
+    prior = prior, scores = scores_c_platt_calib
+  ) |>
+    mutate(sample = "calib", recalib = "platt")
+  
+  disp_c_platt_test <- disp_metrics_dataset(
+    prior = prior, scores = scores_c_platt_test
+  ) |>
+    mutate(sample = "test", recalib = "platt")
+  
+  disp_c_iso_calib <- disp_metrics_dataset(
+    prior = prior, scores = scores_c_iso_calib
+  ) |>
+    mutate(sample = "calib", recalib = "isotonic")
+  
+  disp_c_iso_test <- disp_metrics_dataset(
+    prior = prior, scores = scores_c_iso_test
+  ) |>
+    mutate(sample = "test", recalib = "isotonic")
+
+  # Performance and Calibration Metrics----
+  # We add very small noise to predicted scores
+  # otherwise the local regression may crash
+  scores_train_noise <- scores_train +
+    runif(n = length(scores_train), min = 0, max = 0.01)
+  scores_train_noise[scores_train_noise > 1] <- 1
+  metrics_train <- compute_metrics(
+    obs = data_train |> pull(!!target_name),
+    scores = scores_train_noise, true_probas = NULL
+  ) |> mutate(sample = "train", recalib = "none")
+
+  scores_valid_noise <- scores_valid +
+    runif(n = length(scores_valid), min = 0, max = 0.01)
+  scores_valid_noise[scores_valid_noise > 1] <- 1
+  metrics_valid <- compute_metrics(
+    obs = data_valid |> pull(!!target_name),
+    scores = scores_valid_noise, true_probas = NULL
+  ) |> mutate(sample = "valid", recalib = "none")
+  
+  scores_calib_noise <- scores_calib +
+    runif(n = length(scores_calib), min = 0, max = 0.01)
+  scores_calib_noise[scores_calib_noise > 1] <- 1
+  metrics_calib <- compute_metrics(
+    obs = data_calib |> pull(!!target_name),
+    scores = scores_calib_noise, true_probas = NULL
+  ) |> mutate(sample = "calib", recalib = "none")
+  
+  scores_test_noise <- scores_test +
+    runif(n = length(scores_test), min = 0, max = 0.01)
+  scores_test_noise[scores_test_noise > 1] <- 1
+  metrics_test <- compute_metrics(
+    obs = data_test |> pull(!!target_name),
+    scores = scores_test_noise, true_probas = NULL
+  ) |> mutate(sample = "test", recalib = "none")
+  
+  # With recalibrated scores (platt)
+  scores_c_platt_calib_noise <- scores_c_platt_calib +
+    runif(n = length(scores_calib), min = 0, max = 0.01)
+  scores_c_platt_calib_noise[scores_c_platt_calib_noise > 1] <- 1
+  metrics_c_platt_calib <- compute_metrics(
+    obs = data_calib |> pull(!!target_name),
+    scores = scores_c_platt_calib_noise, true_probas = NULL
+  ) |> mutate(sample = "calib", recalib = "platt")
+  
+  scores_c_platt_test_noise <- scores_c_platt_test +
+    runif(n = length(scores_test), min = 0, max = 0.01)
+  scores_c_platt_test_noise[scores_c_platt_test_noise > 1] <- 1
+  metrics_c_platt_test <- compute_metrics(
+    obs = data_test |> pull(!!target_name),
+    scores = scores_c_platt_test_noise, true_probas = NULL
+  ) |> mutate(sample = "test", recalib = "platt")
+  
+  # With recalibrated scores (isotonic)
+  scores_c_iso_calib_noise <- scores_c_iso_calib +
+    runif(n = length(scores_c_iso_calib), min = 0, max = 0.01)
+  scores_c_iso_calib_noise[scores_c_iso_calib_noise > 1] <- 1
+  metrics_c_iso_calib <- compute_metrics(
+    obs = data_calib |> pull(!!target_name),
+    scores = scores_c_iso_calib_noise, true_probas = NULL
+  ) |> mutate(sample = "calib", recalib = "isotonic")
+  
+  scores_c_iso_test_noise <- scores_c_iso_test +
+    runif(n = length(scores_c_iso_test), min = 0, max = 0.01)
+  scores_c_iso_test_noise[scores_c_iso_test_noise > 1] <- 1
+  metrics_c_iso_test <- compute_metrics(
+    obs = data_test |> pull(!!target_name),
+    scores = scores_c_iso_test_noise, true_probas = NULL
+  ) |> mutate(sample = "test", recalib = "isotonic")
+  
+  tb_metrics <- metrics_train |>
+    bind_rows(metrics_valid) |>
+    bind_rows(metrics_calib) |>
+    bind_rows(metrics_test) |>
+    bind_rows(metrics_c_platt_calib) |>
+    bind_rows(metrics_c_platt_test) |>
+    bind_rows(metrics_c_iso_calib) |>
+    bind_rows(metrics_c_iso_test) |>
+    mutate(ind = ind, nb_iter = nb_iter, max_depth = params$max_depth) |>
+    select(-c(mse, mae))
+  
+  tb_disp_metrics <- disp_train |>
+    bind_rows(disp_valid) |> 
+    bind_rows(disp_calib) |> 
+    bind_rows(disp_test) |> 
+    bind_rows(disp_c_platt_calib) |> 
+    bind_rows(disp_c_platt_test) |> 
+    bind_rows(disp_c_iso_calib) |> 
+    bind_rows(disp_c_iso_test) |>
+    mutate(ind = ind, nb_iter = nb_iter, max_depth = params$max_depth)
+  
+  tb_metrics <- tb_metrics |> left_join(
+    tb_disp_metrics, by = c("sample", "recalib", "ind", "nb_iter", "max_depth")
+  )
+
+  tb_prop_scores <- proq_scores_train |>
+    bind_rows(proq_scores_valid) |>
+    bind_rows(proq_scores_calib) |>
+    bind_rows(proq_scores_test) |>
+    bind_rows(proq_scores_c_platt_calib) |>
+    bind_rows(proq_scores_c_platt_test) |>
+    bind_rows(proq_scores_c_iso_calib) |>
+    bind_rows(proq_scores_c_iso_test) |>
+    mutate(ind = ind, nb_iter = nb_iter, max_depth = params$max_depth)
+  
+   list(
+    ind = ind,                         # index for grid
+    nb_iter = nb_iter,                 # number of boosting iterations
+    max_depth = params$max_depth,      # max depth of used trees
+    tb_metrics = tb_metrics,           # # table with performance/calib/divergence
+    tb_prop_scores = tb_prop_scores,   # table with P(q1 < score < q2)
+    scores_hist = scores_hist          # histogram of scores
+  )
+}
+```
+
+
+```{r define-predict_score_iter}
+#| code-fold: true
+#| code-summary: Function `predict_score_iter()`{.R}
+#' Predicts the scores at a given iteration of the XGB model
+#'
+#' @param fit_xgb estimated XGB model
+#' @param tb_train_xgb train set
+#' @param tb_valid_xgb validation set
+#' @param tb_test_xgb test set
+#' @param ind index of the grid search
+#' @param nb_iter boosting iteration to consider
+#'
+#' @returns A list with three elements: `scores_train`, `scores_valid`, and
+#'  `scores_train` which contain the estimated scores on the train and on the 
+#'  test score, resp.
+predict_score_iter <- function(fit_xgb,
+                               tb_train_xgb,
+                               tb_valid_xgb,
+                               tb_calib_xgb,
+                               tb_test_xgb,
+                               nb_iter) {
+
+  ## Predicted scores----
+  scores_train <- predict(fit_xgb, tb_train_xgb, iterationrange = c(1, nb_iter))
+  scores_valid <- predict(fit_xgb, tb_valid_xgb, iterationrange = c(1, nb_iter))
+  scores_calib <- predict(fit_xgb, tb_calib_xgb, iterationrange = c(1, nb_iter))
+  scores_test <- predict(fit_xgb, tb_test_xgb, iterationrange = c(1, nb_iter))
+
+  list(
+    scores_train = scores_train,
+    scores_valid = scores_valid,
+    scores_calib = scores_calib,
+    scores_test = scores_test
+  )
+}
+```
+
+
+```{r define-simul_xgb_helper}
+#| code-fold: true
+#| code-summary: Function `simul_xgb_helper()`{.R}
+#' Fit an XGB and returns metrics based on scores. The divergence metrics are
+#' obtained using the prior distributions.
+#'
+#' @param data_train train set
+#' @param data_valid validation set
+#' @param data_test test set
+#' @param target_name name of the target variable
+#' @param parms tibble with hyperparameters for the current estimation
+#' @param prior prior obtained with `get_beta_fit()`
+#'
+#' @returns A list with 4 elements:
+#'  - `tb_metrics`: performance / calibration metrics
+#'  - `tb_disp_metrics`: disp and div metrics
+#'  - `tb_prop_scores`: table with P(q1 < score < q2)
+#'  - `scores_hist`: histogram of scores
+simul_xgb_helper <- function(data_train,
+                             data_valid,
+                             data_calib,
+                             data_test,
+                             target_name,
+                             params,
+                             prior) {
+
+  ## Format data for xgboost----
+  tb_train_xgb <- xgb.DMatrix(
+    data = data_train |> dplyr::select(-!!target_name) |> as.matrix(),
+    label = data_train |> dplyr::pull(!!target_name) |> as.matrix()
+  )
+  tb_valid_xgb <- xgb.DMatrix(
+    data = data_valid |> dplyr::select(-!!target_name) |> as.matrix(),
+    label = data_valid |> dplyr::pull(!!target_name) |> as.matrix()
+  )
+  tb_calib_xgb <- xgb.DMatrix(
+    data = data_calib |> dplyr::select(-!!target_name) |> as.matrix(),
+    label = data_calib |> dplyr::pull(!!target_name) |> as.matrix()
+  )
+  tb_test_xgb <- xgb.DMatrix(
+    data = data_test |> dplyr::select(-!!target_name) |> as.matrix(),
+    label = data_test |> dplyr::pull(!!target_name) |> as.matrix()
+  )
+  # Parameters for the algorithm
+  param <- list(
+    max_depth = params$max_depth, #Note: root node is indexed 0
+    eta = params$eta,
+    nthread = 1,
+    objective = "binary:logistic",
+    eval_metric = "auc"
+  )
+  watchlist <- list(train = tb_train_xgb, eval = tb_valid_xgb)
+  ## Estimation----
+  fit_xgb <- xgb.train(
+    param, tb_train_xgb,
+    nrounds = params$nb_iter_total,
+    watchlist,
+    verbose = 0
+  )
+
+  # First, we estimate the scores at each boosting iteration
+  # As the xgb.Dmatrix objects cannot be easily serialised, we first estimate
+  # these scores in a classical way, without parallelism...
+  scores_iter <- vector(mode = "list", length = params$nb_iter_total)
+  for (i_iter in 1:params$nb_iter_total) {
+    scores_iter[[i_iter]] <- predict_score_iter(
+      fit_xgb = fit_xgb,
+      tb_train_xgb = tb_train_xgb,
+      tb_valid_xgb = tb_valid_xgb,
+      tb_calib_xgb = tb_calib_xgb,
+      tb_test_xgb = tb_test_xgb,
+      nb_iter = i_iter)
+  }
+
+  # Then, to compute the metrics, as it is a bit slower, we can use parallelism
+
+  ncl <- detectCores() - 1
+  (cl <- makeCluster(ncl))
+  clusterEvalQ(cl, {
+    library(tidyverse)
+    library(locfit)
+    library(philentropy)
+  }) |>
+    invisible()
+
+  clusterExport(cl, c(
+    "scores_iter", "prior", "data_train", "data_valid", "data_calib", "data_test", "params", 
+    "target_name"
+  ), envir = environment())
+  clusterExport(cl, c(
+    "get_metrics_xgb_iter",
+    "brier_score",
+    "compute_metrics",
+    "disp_metrics_dataset", "dispersion_metrics_beta",
+    "recalibrate", "prop_btw_quantiles"
+  ))
+
+  metrics_iter <-
+    pbapply::pblapply(
+      X = seq_len(params$nb_iter_total),
+      FUN = function(i_iter) {
+        get_metrics_xgb_iter(
+          scores = scores_iter[[i_iter]],
+          prior = prior,
+          data_train = data_train,
+          data_valid = data_valid,
+          data_calib = data_calib,
+          data_test = data_test,
+          target_name = target_name,
+          ind = params$ind,
+          nb_iter = i_iter,
+          params = params
+        )
+      },
+      cl = cl
+    )
+  stopCluster(cl)
+  
+  # Merge tibbles from each iteration into a single one
+  tb_metrics <-
+    map(metrics_iter, "tb_metrics") |>
+    list_rbind()
+  tb_prop_scores <-
+    map(metrics_iter, "tb_prop_scores") |>
+    list_rbind()
+  scores_hist <- map(metrics_iter, "scores_hist")
+
+  list(
+    tb_metrics = tb_metrics,
+    tb_prop_scores = tb_prop_scores,
+    scores_hist = scores_hist
+  )
+}
+```
+
+```{r define-simul_xgb_real}
+#| code-fold: true
+#| code-summary: Function `simul_xgb_real()`{.R}
+#' Train an XGB on a dataset for a binary task for various
+#' hyperparameters and computes metrics based on scores and on a set of prior
+#' distributions of the underlying probability
+#'
+#' @param data dataset
+#' @param target_name name of the target variable
+#' @param prior prior obtained with `get_beta_fit()`
+#' @param seed desired seed (default to `NULL`)
+#'
+#' @returns A list with two elements:
+#'  - `res`: results for each estimated model of the grid. Each element is a
+#'  list with the following elements:
+#'      - `tb_metrics`: performance / calibration metrics
+#'      - `tb_disp_metrics`: disp and div metrics
+#'      - `tb_prop_scores`: table with P(q1 < score < q2)
+#'      - `scores_hist`: histogram of scores.
+#'  - `grid`: the grid search.
+simul_xgb_real <- function(data,
+                           target_name,
+                           prior,
+                           seed = NULL) {
+
+  if (!is.null(seed)) set.seed(seed)
+
+  # Split data into train and test set
+  data_splitted <- split_train_test(data = data, prop_train = .5, seed = seed)
+  data_encoded <- encode_dataset(
+    data_train = data_splitted$train,
+    data_test = data_splitted$test,
+    target_name = target_name,
+    intercept = FALSE
+  )
+
+  # Further split train into two samples (train/valid)
+  data_splitted_train <- 
+    split_train_test(data = data_encoded$train, prop_train = .8, seed = seed)
+  
+  # Further split test into two samples (calib/test)
+  data_splitted_test <- 
+    split_train_test(data = data_encoded$test, prop_train = .8, seed = seed)
+  
+  res_grid <- vector(mode = "list", length = nrow(grid))
+  for (i_grid in 1:nrow(grid)) {
+    res_grid[[i_grid]] <- simul_xgb_helper(
+      data_train = data_splitted_train$train,
+      data_valid = data_splitted_train$test,
+      data_calib = data_splitted_test$train,
+      data_test = data_splitted_test$test,
+      target_name = target_name,
+      params = grid |> dplyr::slice(i_grid),
+      prior = prior
+    )
+  }
+  
+  # The metrics computed for all set of hyperparameters (identified with `ind`)
+  # and for each number of boosting iterations (`nb_iter`)
+  metrics_simul <- map(res_grid, "tb_metrics") |> 
+    list_rbind()
+  
+  # P(q_1<s(x)<q_2)
+  prop_scores_simul <- map(res_grid, "tb_prop_scores") |> 
+    list_rbind()
+  
+  # Histogram of estimated scores
+  scores_hist <- map(res_grid, "scores_hist")
+
+  list(
+    metrics_simul = metrics_simul,
+    scores_hist = scores_hist,
+    prop_scores_simul = prop_scores_simul
+  )
+}
+```
+
+
+## Grid
+
+We consider the following grid:
+```{r define-grid-xgb}
+grid <- expand_grid(
+  max_depth = c(2, 4, 6),
+  nb_iter_total = 500,
+  eta = 0.3
+) |>
+  mutate(ind = row_number())
+```
+
+The different configurations are reported in @tbl-grid-values-xgb-real-data.
+```{r}
+#| tbl-cap: "Grid Search Values"
+#| label: tbl-grid-values-xgb-real-data
+DT::datatable(grid)
+```
+
+## Data
+
+In [Chapter -@sec-priors-beta], we estimated the shapes of Beta distributions using fitted scores from a GAMSEL model applied to various datasets from the UCI Machine Learning Repository. We saved these estimated priors and the datasets in R data files, which can now be easily loaded.
+
+The list of datasets and the name of the target variable:
+```{r define-datasets}
+datasets <- tribble(
+  ~name, ~target_name,
+  "abalone", "Sex",
+  "adult", "high_income",
+  "bank", "y",
+  "default", "default",
+  "drybean", "is_dermason",
+  "coupon", "y",
+  "mushroom", "edible",
+  "occupancy", "Occupancy",
+  "winequality", "high_quality",
+  "spambase", "is_spam"
+)
+```
+
+
+```{r load-data}
+for (name in datasets$name) {
+  # The data
+  load(str_c("output/real-data/tb_", name, ".rda"))
+  # The Prior on the distribution of the scores
+  load(str_c("output/real-data/priors_", name, ".rda"))
+}
+```
+
+
+## Estimations: Extreme Gradient Boosting 
+
+The models are estimated in parallel. The number of available cores can be determined using the following command:
+```{r define-nb_cores}
+library(future)
+nb_cores <- future::availableCores() - 1
+```
+
+We use the following loop to estimate all the models across each dataset:
+
+```{r estim, eval=FALSE}
+seed <- 1234
+#plan(multisession, workers = nb_cores)
+
+#library(future.apply)
+#future_lapply(datasets$name, function(name) {
+#  print(name)
+#  print(str_c("tb_", name))
+#  current_data <- get(str_c("tb_", name))
+#  current_priors <- get(str_c("priors_", name))
+#  current_target_name <- datasets |>
+#    filter(name == !!name) |> pull(target_name)
+  
+  ## Extreme Gradient Boosting----
+#  xgb_resul <- simul_xgb_real(data = current_data,
+#                              target_name = current_target_name,
+#                              prior = current_priors,
+#                              seed = seed)
+  
+  # Save the result
+#  save(xgb_resul, file = str_c("output/real-data/xgb_resul_", name, ".rda"))
+#})
+
+for (name in datasets$name) {
+  plan(multisession, workers = nb_cores)
+  current_data <- get(str_c("tb_", name))
+  current_priors <- get(str_c("priors_", name))
+  current_target_name <- datasets |>
+    filter(name == !!name) |> pull(target_name)
+  ## Extreme Gradient Boosting----
+  xgb_resul <- simul_xgb_real(data = current_data,
+                              target_name = current_target_name,
+                              prior = current_priors,
+                              seed = seed)
+  save(xgb_resul, file = str_c("output/real-data/xgb_resul_", name, ".rda"))
+}
+
+```

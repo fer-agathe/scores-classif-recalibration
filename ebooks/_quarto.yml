@@ -38,6 +38,13 @@ book:
       chapters:
       - simul-data.qmd
       - simul-xgb.qmd
+    - part: "IV. Real Data"
+      chapters:
+      - example_spambase_beta.qmd
+      - book_real_beta.qmd
+      - example_spambase_xgb.qmd
+      - book_real_xgb.qmd
+      - book_real_results.qmd
     - references.qmd
   navbar:
     right:

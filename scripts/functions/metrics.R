@@ -51,7 +51,8 @@ compute_metrics <- function(obs,
   }
 
   # Log loss
-  log_loss <- -mean(obs * log(scores) + (1 - obs) * log(1 - scores))
+  scores_pred <- pmin(pmax(scores, 1e-15), 1 - 1e-15)
+  log_loss <- -mean(obs * log(scores_pred) + (1 - obs) * log(1 - scores_pred))
 
   # AUC
   AUC <- pROC::auc(obs, scores, levels = c("0", "1"), quiet = TRUE) |>
