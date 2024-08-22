@@ -287,6 +287,47 @@ window.Quarto = {
 </li>
       </ul>
   </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true">
+ <span class="menu-text">IV. Real Data</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./example_spambase_beta.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset I</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./book_real_beta.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Datasets and Priors</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./example_spambase_xgb.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset II</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./book_real_xgb.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Estimations</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./book_real_results.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Real-data Results</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
@@ -304,7 +345,7 @@ window.Quarto = {
    
   <ul>
   <li><a href="#performance-and-calibration-metrics" id="toc-performance-and-calibration-metrics" class="nav-link active" data-scroll-target="#performance-and-calibration-metrics"><span class="header-section-number">3.1</span> Performance and Calibration Metrics</a></li>
-  <li><a href="#dispersion-metrics" id="toc-dispersion-metrics" class="nav-link" data-scroll-target="#dispersion-metrics"><span class="header-section-number">3.2</span> Dispersion Metrics</a></li>
+  <li><a href="#divergence-and-dispersion-metrics" id="toc-divergence-and-dispersion-metrics" class="nav-link" data-scroll-target="#divergence-and-dispersion-metrics"><span class="header-section-number">3.2</span> Divergence and Dispersion Metrics</a></li>
   </ul>
 </nav>
     </div>
@@ -498,8 +539,8 @@ Integrated Calibration Index
 <span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="dispersion-metrics" class="level2" data-number="3.2">
-<h2 data-number="3.2" class="anchored" data-anchor-id="dispersion-metrics"><span class="header-section-number">3.2</span> Dispersion Metrics</h2>
+<section id="divergence-and-dispersion-metrics" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="divergence-and-dispersion-metrics"><span class="header-section-number">3.2</span> Divergence and Dispersion Metrics</h2>
 <p>We compute the Kullback-Leibler divergence <span class="citation" data-cites="Kullback_1951">Kullback and Leibler (<a href="references.html#ref-Kullback_1951" role="doc-biblioref">1951</a>)</span> between the distribution of the estimated scores and the distribution of the true probabilities. Denoting (Q) the distribution of the scores and (P) the distribution of the true probabilities, the Kullback Leibler divergence of <span class="math inline">\(Q\)</span> with respect to <span class="math inline">\(P\)</span> is :% <span class="math display">\[\begin{equation}
 D_{KL}(Q || P) = \sum_{i} Q(i) \log \frac{Q(i)}{P(i)}.
 \end{equation}\]</span></p>

@@ -33,7 +33,7 @@ colour_recalib <- c(
 )
 
 # Functions
-source("functions/real-data.R")
+source("../scripts/functions/real-data.R")
 source("../scripts/functions/metrics.R")
 ```
 
@@ -795,9 +795,9 @@ datasets <- tribble(
 ```{r load-data}
 for (name in datasets$name) {
   # The data
-  load(str_c("output/real-data/tb_", name, ".rda"))
+  load(str_c("../output/real-data/tb_", name, ".rda"))
   # The Prior on the distribution of the scores
-  load(str_c("output/real-data/priors_", name, ".rda"))
+  load(str_c("../output/real-data/priors_", name, ".rda"))
 }
 ```
 
@@ -813,28 +813,8 @@ nb_cores <- future::availableCores() - 1
 We use the following loop to estimate all the models across each dataset:
 
 ```{r estim, eval=FALSE}
+
 seed <- 1234
-#plan(multisession, workers = nb_cores)
-
-#library(future.apply)
-#future_lapply(datasets$name, function(name) {
-#  print(name)
-#  print(str_c("tb_", name))
-#  current_data <- get(str_c("tb_", name))
-#  current_priors <- get(str_c("priors_", name))
-#  current_target_name <- datasets |>
-#    filter(name == !!name) |> pull(target_name)
-  
-  ## Extreme Gradient Boosting----
-#  xgb_resul <- simul_xgb_real(data = current_data,
-#                              target_name = current_target_name,
-#                              prior = current_priors,
-#                              seed = seed)
-  
-  # Save the result
-#  save(xgb_resul, file = str_c("output/real-data/xgb_resul_", name, ".rda"))
-#})
-
 for (name in datasets$name) {
   plan(multisession, workers = nb_cores)
   current_data <- get(str_c("tb_", name))
@@ -846,7 +826,7 @@ for (name in datasets$name) {
                               target_name = current_target_name,
                               prior = current_priors,
                               seed = seed)
-  save(xgb_resul, file = str_c("output/real-data/xgb_resul_", name, ".rda"))
+  save(xgb_resul, file = str_c("../output/real-data/xgb_resul_", name, ".rda"))
 }
 
 ```

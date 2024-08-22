@@ -16,5 +16,20 @@
   },
   "simul-xgb.qmd": {
     "simul-xgb.html": "dd64cc85"
+  },
+  "example_spambase_beta.qmd": {
+    "example_spambase_beta.html": "849a5d80"
+  },
+  "book_real_beta.qmd": {
+    "book_real_beta.html": "20480b67"
+  },
+  "example_spambase_xgb.qmd": {
+    "example_spambase_xgb.html": "3b17f377"
+  },
+  "book_real_xgb.qmd": {
+    "book_real_xgb.html": "8f5e51dd"
+  },
+  "book_real_results.qmd": {
+    "book_real_results.html": "966ef168"
   }
 }

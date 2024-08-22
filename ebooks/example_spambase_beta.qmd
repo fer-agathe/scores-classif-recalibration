@@ -17,6 +17,7 @@ The functions for data preprocessing, model estimation, and Beta distribution fi
 
 ```{r load-libraries}
 library(tidyverse)
+library(gam)
 library(gamsel)
 
 # Colours for train/validation/calibration/test
@@ -27,7 +28,7 @@ colour_samples <- c(
 )
 
 # Functions
-source("functions/real-data.R")
+source("../scripts/functions/real-data.R")
 ```
 
 
@@ -37,10 +38,10 @@ To illustrate the process, we use the `spambase` dataset (available on [UCI Mach
 
 The dataset can be downloaded as follows:
 ```{r download-spambase, eval=FALSE}
-if (!dir.exists("data")) dir.create("data")
+if (!dir.exists("../data")) dir.create("../data")
 download.file(
   url = "https://archive.ics.uci.edu/static/public/94/spambase.zip", 
-  destfile = "data/spambase.zip"
+  destfile = "../data/spambase.zip"
 )
 ```
 
@@ -48,7 +49,7 @@ The names of the columns are given in the `spambase.names` file in that archive.
 ```{r, eval=FALSE}
 # This chunk is not run
 info_data <- scan(
-  unz("data/spambase.zip", "spambase.names"), what = "character", sep = "\n"
+  unz("../data/spambase.zip", "spambase.names"), what = "character", sep = "\n"
 )
 # Print the names for this dataset (not very convenient...)
 str_extract(info_data[31:length(info_data)], "^(.*):") |> 
@@ -61,7 +62,7 @@ str_extract(info_data[31:length(info_data)], "^(.*):") |>
 Then, we can import the dataset:
 ```{r import-spambase-data}
 dataset <- read_csv(
-  file = unz("data/spambase.zip", "spambase.data"),
+  file = unz("../data/spambase.zip", "spambase.data"),
   col_names = c(
     "word_freq_make", "word_freq_address", "word_freq_all", "word_freq_3d",
     "word_freq_our", "word_freq_over", "word_freq_remove", "word_freq_internet",
@@ -151,11 +152,6 @@ We also use the function, `plot_hist_scores_beta()`{.R} to plot the distribution
 
 ```{r, warning = FALSE}
 plot_hist_scores_beta(resul, "spambase")
-```
-We save the results:
-```{r}
-save(resul, file = "output/real-data/priors_spambase.rda")
-save(dataset, file = "output/real-data/tb_spambase.rda")
 ```
 
 

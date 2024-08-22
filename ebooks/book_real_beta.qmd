@@ -23,12 +23,12 @@ colour_samples <- c(
 
 Let us load the functions defined in [Chapter -@sec-real-example-beta]:
 ```{r}
-source("functions/real-data.R")
+source("../scripts/functions/real-data.R")
 ```
 
 We will store the results obtained from the estimations in the `output/real-data/` folder.
 ```{r}
-if (!dir.exists("output/real-data/")) dir.create("output/real-data/")
+if (!dir.exists("../output/real-data/")) dir.create("../output/real-data/")
 ```
 
 
@@ -53,10 +53,10 @@ The dataset needs to be download.
 #| code-fold: true
 #| code-summary: Code to download the data
 
-if (!dir.exists("data")) dir.create("data")
+if (!dir.exists("../data")) dir.create("../data")
 download.file(
   url = str_c("https://archive.ics.uci.edu/static/public/1/", name, ".zip"), 
-  destfile = str_c("data/", name, ".zip")
+  destfile = str_c("../data/", name, ".zip")
 )
 ```
 
@@ -65,7 +65,7 @@ Then, we can import the dataset:
 #| code-fold: true
 #| code-summary: Code to import the data
 tb_abalone <- read_csv(
-  file = unz(str_c("data/", name, ".zip"), str_c(name, ".data")), 
+  file = unz(str_c("../data/", name, ".zip"), str_c(name, ".data")), 
   col_names = c(
     "Sex", "Length", "Diameter", "Height", "Whole_weight", 
   "Shucked_weight", "Viscera_weight", "Shell_weight", "Rings"),
@@ -88,12 +88,12 @@ priors_abalone <- get_beta_fit(
 
 Let us save the results and the dataset:
 ```{r, eval=FALSE}
-save(priors_abalone, file = "output/real-data/priors_abalone.rda")
-save(tb_abalone, file = "output/real-data/tb_abalone.rda")
+save(priors_abalone, file = "../output/real-data/priors_abalone.rda")
+save(tb_abalone, file = "../output/real-data/tb_abalone.rda")
 ```
 
 ```{r, echo=FALSE}
-load("output/real-data/priors_abalone.rda")
+load("../output/real-data/priors_abalone.rda")
 ```
 
 
@@ -123,14 +123,14 @@ The dataset needs to be download.
 #| code-fold: true
 #| code-summary: Code to download the data
 
-if (!dir.exists("data")) dir.create("data")
+if (!dir.exists("../data")) dir.create("../data")
 download.file(
   url = str_c("https://archive.ics.uci.edu/static/public/2/", name, ".zip"), 
-  destfile = str_c("data/", name, ".zip")
+  destfile = str_c("../data/", name, ".zip")
 )
 
 info_data <- scan(
-  unz(str_c("data/", name, ".zip"), str_c(name, ".names")), 
+  unz(str_c("../data/", name, ".zip"), str_c(name, ".names")), 
   what = "character", sep = "\n"
 )
 # Print the names for this dataset (not very convenient...)
@@ -145,7 +145,7 @@ Then, we can import the dataset:
 #| code-fold: true
 #| code-summary: Code to import the data
 tb_adult <- read_csv(
-  file = unz(str_c("data/", name, ".zip"), str_c(name, ".data")), 
+  file = unz(str_c("../data/", name, ".zip"), str_c(name, ".data")), 
   col_names = c(
     "age", "workclass", "fnlwgt", "education", "education-num",
     "marital-status", "occupation", "relationship", "race", "sex",
@@ -172,12 +172,12 @@ priors_adult <- get_beta_fit(
 
 Let us save the results and the dataset:
 ```{r, eval=FALSE}
-save(priors_adult, file = "output/real-data/priors_adult.rda")
-save(tb_adult, file = "output/real-data/tb_adult.rda")
+save(priors_adult, file = "../output/real-data/priors_adult.rda")
+save(tb_adult, file = "../output/real-data/tb_adult.rda")
 ```
 
 ```{r, echo=FALSE}
-load("output/real-data/priors_adult.rda")
+load("../output/real-data/priors_adult.rda")
 ```
 
 
@@ -187,91 +187,6 @@ load("output/real-data/priors_adult.rda")
 #| fig-width: 5
 plot_hist_scores_beta(priors_adult, "adult")
 ```
-
-<!-- ### Appartment for Rent Classified -->
-
-<!-- URL to the data: <https://archive.ics.uci.edu/dataset/555/apartment+for+rent+classified> -->
-<!-- This is a dataset of classified for apartments for rent in USA. -->
-<!-- Number of instances: 10,000 -->
-<!-- Features: 21 -->
-
-<!-- ```{r define-name-appartment} -->
-<!-- name <- "appartment" -->
-<!-- ``` -->
-
-<!-- The dataset needs to be download. -->
-<!-- ```{r download-appartment, eval=FALSE} -->
-<!-- #| code-fold: true -->
-<!-- #| code-summary: Code to download the data -->
-
-<!-- if (!dir.exists("data")) dir.create("data") -->
-<!-- download.file( -->
-<!--   url = str_c( -->
-<!--     "https://archive.ics.uci.edu/static/public/555/",  -->
-<!--     "apartment+for+rent+classified.zip" -->
-<!--   ),  -->
-<!--   destfile = str_c("data/", name, ".zip") -->
-<!-- ) -->
-<!-- ``` -->
-
-<!-- Then, we can import the dataset: -->
-<!-- ```{r import-appartment-data} -->
-<!-- #| code-fold: true -->
-<!-- #| code-summary: Code to import the data -->
-
-<!-- # Extract ZIP file -->
-<!-- unzip("data/appartment.zip", exdir = "data/appartment") -->
-<!-- # Extract the 7z file -->
-<!-- system("7z x data/appartment/apartments_for_rent_classified_100K.7z -odata/appartment") -->
-<!-- csv_file_path <- "data/appartment/apartments_for_rent_classified_100K.csv" -->
-<!-- tb_appartment <- read_csv2(csv_file_path, show_col_types = FALSE) |>  -->
-<!--   select(-id, -title, -body, -price_display, -address, -time, -price_type, -currency, -amenities, -fee) -->
-<!-- system("rm -rf data/appartment/") -->
-<!-- ``` -->
-<!-- The target variable is `sex`. Let us turn it in a $\{0,1\}$` variable. -->
-<!-- ```{r tb_appartment-target} -->
-<!-- tb_appartment <- tb_appartment |> -->
-<!--   mutate( -->
-<!--     cityname = fct_lump(cityname, prop = 0.01), -->
-<!--     state = fct_lump(state, prop = 0.02), -->
-<!--     source = fct_lump(source, prop = 0.01), -->
-<!--     latitude = as.numeric(latitude), -->
-<!--     longitude = as.numeric(longitude) -->
-<!--   ) |>  -->
-<!--   mutate(across(where(is.character), ~as.factor(as.numeric(as.factor(.x))))) |>  -->
-<!--   mutate( -->
-<!--     high_square_feet = square_feet > median(square_feet) -->
-<!--   ) |>  -->
-<!--   select(-square_feet) -->
-<!-- tb_appartment <- na.omit(tb_appartment) -->
-<!-- nrow(tb_appartment) -->
-<!-- target_name <- "high_square_feet" -->
-<!-- ``` -->
-
-<!-- Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors. -->
-<!-- ```{r estim-appartment, eval=FALSE} -->
-<!-- priors_appartment <- get_beta_fit( -->
-<!--   dataset = tb_appartment, target_name = target_name, seed = 1234 -->
-<!-- ) -->
-<!-- ``` -->
-
-<!-- Let us save the results and the dataset: -->
-<!-- ```{r, eval=FALSE} -->
-<!-- save(priors_appartment, file = "output/real-data/priors_appartment.rda") -->
-<!-- save(tb_appartment, file = "output/real-data/tb_appartment.rda") -->
-<!-- ``` -->
-
-<!-- ```{r, echo=FALSE} -->
-<!-- load("output/real-data/priors_appartment.rda") -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- #| fig-cap: Distribution of estimated probabilities by the GAMSEL model and Beta distribution fitted to the scores of each of the three models, for the Appartment dataset. -->
-<!-- #| label: fig-example-beta-appartment -->
-<!-- plot_hist_scores_beta(priors_appartment, "appartment") -->
-<!-- ``` -->
-
 
 ### Bank Marketing
 
@@ -290,7 +205,7 @@ The dataset needs to be download.
 #| code-fold: true
 #| code-summary: Code to download the data
 
-if (!dir.exists("data")) dir.create("data")
+if (!dir.exists("../data")) dir.create("../data")
 download.file(
   url = "https://archive.ics.uci.edu/static/public/222/bank+marketing.zip", 
   destfile = str_c("data/", name, ".zip")
@@ -301,11 +216,11 @@ Then, we can import the dataset:
 ```{r import-bank-data}
 #| code-fold: true
 #| code-summary: Code to import the data
-dir.create("data/bank/")
-system("unzip data/bank.zip -d data/bank/")
-system("unzip data/bank/bank.zip -d data/bank/")
+dir.create("../data/bank/")
+system("unzip ../data/bank.zip -d ../data/bank/")
+system("unzip ../data/bank/bank.zip -d ../data/bank/")
 tb_bank <- read_csv2(
-  file = unz(str_c("data/bank/", name, ".zip"), str_c("bank-full.csv")), 
+  file = unz(str_c("../data/bank/", name, ".zip"), str_c("bank-full.csv")), 
   skip = 1,
   col_names = c(
     "age", "job", "marital", "education", "default", "balance", "housing", 
@@ -314,7 +229,7 @@ tb_bank <- read_csv2(
   ),
   show_col_types = FALSE
 )
-system("rm -rf data/bank/")
+system("rm -rf ../data/bank/")
 ```
 The target variable is `y` (whether the client will subscribe a term deposit). Let us turn it in a $\{0,1\}$ variable.
 ```{r tb_bank-target}
@@ -332,12 +247,12 @@ priors_bank <- get_beta_fit(
 
 Let us save the results and the dataset:
 ```{r, eval=FALSE}
-save(priors_bank, file = "output/real-data/priors_bank.rda")
-save(tb_bank, file = "output/real-data/tb_bank.rda")
+save(priors_bank, file = "../output/real-data/priors_bank.rda")
+save(tb_bank, file = "../output/real-data/tb_bank.rda")
 ```
 
 ```{r, echo=FALSE}
-load("output/real-data/priors_bank.rda")
+load("../output/real-data/priors_bank.rda")
 ```
 
 
@@ -365,12 +280,12 @@ The dataset needs to be download.
 #| code-fold: true
 #| code-summary: Code to download the data
 
-if (!dir.exists("data")) dir.create("data")
+if (!dir.exists("../data")) dir.create("../data")
 download.file(
   url = str_c("https://archive.ics.uci.edu/static/public/350/",
               "default+of+credit+card+clients.zip"
   ), 
-  destfile = str_c("data/", name, ".zip")
+  destfile = str_c("../data/", name, ".zip")
 )
 ```
 
@@ -378,14 +293,14 @@ Then, we can import the dataset:
 ```{r import-default-data}
 #| code-fold: true
 #| code-summary: Code to import the data
-dir.create("data/default/")
-system("unzip data/default.zip -d data/default/")
+dir.create("../data/default/")
+system("unzip ../data/default.zip -d ../data/default/")
 tb_default <- readxl::read_excel(
-  path = "data/default/default of credit card clients.xls",
+  path = "../data/default/default of credit card clients.xls",
   skip = 1
 ) |> 
   select(-ID)
-system("rm -rf data/default")
+system("rm -rf ../data/default")
 ```
 The target variable is `defalut` (1 if default, 0 otherwise).
 ```{r tb_default-target}
@@ -415,12 +330,12 @@ priors_default <- get_beta_fit(
 
 Let us save the results and the dataset:
 ```{r, eval=FALSE}
-save(priors_default, file = "output/real-data/priors_default.rda")
-save(tb_default, file = "output/real-data/tb_default.rda")
+save(priors_default, file = "../output/real-data/priors_default.rda")
+save(tb_default, file = "../output/real-data/tb_default.rda")
 ```
 
 ```{r, echo=FALSE}
-load("output/real-data/priors_default.rda")
+load("../output/real-data/priors_default.rda")
 ```
 
 
@@ -449,10 +364,10 @@ The dataset needs to be download.
 #| code-fold: true
 #| code-summary: Code to download the data
 
-if (!dir.exists("data")) dir.create("data")
+if (!dir.exists("../data")) dir.create("../data")
 download.file(
   url = "https://archive.ics.uci.edu/static/public/602/dry+bean+dataset.zip", 
-  destfile = str_c("data/", name, ".zip")
+  destfile = str_c("../data/", name, ".zip")
 )
 ```
 
@@ -460,12 +375,12 @@ Then, we can import the dataset:
 ```{r import-drybean-data}
 #| code-fold: true
 #| code-summary: Code to import the data
-dir.create("data/drybean/")
-system("unzip data/drybean.zip -d data/drybean/")
+dir.create("../data/drybean/")
+system("unzip ../data/drybean.zip -d ../data/drybean/")
 tb_drybean <- readxl::read_excel(
-  path = "data/drybean/DryBeanDataset/Dry_Bean_Dataset.xlsx"
+  path = "../data/drybean/DryBeanDataset/Dry_Bean_Dataset.xlsx"
 )
-system("rm -rf data/drybean")
+system("rm -rf ../data/drybean")
 ```
 The target variable is `sex`. Let us turn it in a $\{0,1\}$ variable.
 ```{r tb_drybean-target}
@@ -484,12 +399,12 @@ priors_drybean <- get_beta_fit(
 
 Let us save the results and the dataset:
 ```{r, eval=FALSE}
-save(priors_drybean, file = "output/real-data/priors_drybean.rda")
-save(tb_drybean, file = "output/real-data/tb_drybean.rda")
+save(priors_drybean, file = "../output/real-data/priors_drybean.rda")
+save(tb_drybean, file = "../output/real-data/tb_drybean.rda")
 ```
 
 ```{r, echo=FALSE}
-load("output/real-data/priors_drybean.rda")
+load("../output/real-data/priors_drybean.rda")
 ```
 
 
@@ -517,11 +432,11 @@ The dataset needs to be download.
 #| code-fold: true
 #| code-summary: Code to download the data
 
-if (!dir.exists("data")) dir.create("data")
+if (!dir.exists("../data")) dir.create("../data")
 download.file(
   url = str_c("https://archive.ics.uci.edu/static/public/603/", 
               "in+vehicle+coupon+recommendation.zip"), 
-  destfile = str_c("data/", name, ".zip")
+  destfile = str_c("../data/", name, ".zip")
 )
 ```
 
@@ -530,7 +445,7 @@ Then, we can import the dataset:
 #| code-fold: true
 #| code-summary: Code to import the data
 tb_coupon <- read_csv(
-  file = unz(str_c("data/", name, ".zip"), "in-vehicle-coupon-recommendation.csv"),
+  file = unz(str_c("../data/", name, ".zip"), "in-vehicle-coupon-recommendation.csv"),
   show_col_types = FALSE
 )
 ```
@@ -562,12 +477,12 @@ priors_coupon <- get_beta_fit(
 
 Let us save the results and the dataset:
 ```{r, eval=FALSE}
-save(priors_coupon, file = "output/real-data/priors_coupon.rda")
-save(tb_coupon, file = "output/real-data/tb_coupon.rda")
+save(priors_coupon, file = "../output/real-data/priors_coupon.rda")
+save(tb_coupon, file = "../output/real-data/tb_coupon.rda")
 ```
 
 ```{r, echo=FALSE}
-load("output/real-data/priors_coupon.rda")
+load("../output/real-data/priors_coupon.rda")
 ```
 
 
@@ -578,76 +493,7 @@ load("output/real-data/priors_coupon.rda")
 plot_hist_scores_beta(priors_coupon, "coupon")
 ```
 
-<!-- ### Letter Recognition -->
 
-<!-- URL to the data: <https://archive.ics.uci.edu/dataset/59/letter+recognition> -->
-<!-- Description: Database of character image features; try to identify the letter. -->
-<!-- Number of instances: 20,000 -->
-<!-- Features: 16 -->
-
-<!-- ```{r define-name-letterecognition} -->
-<!-- name <- "letterecognition" -->
-<!-- ``` -->
-
-<!-- The dataset needs to be download. -->
-<!-- ```{r download-letterecognition, eval=FALSE} -->
-<!-- #| code-fold: true -->
-<!-- #| code-summary: Code to download the data -->
-
-<!-- if (!dir.exists("data")) dir.create("data") -->
-<!-- download.file( -->
-<!--   url = "https://archive.ics.uci.edu/static/public/59/letter+recognition.zip",  -->
-<!--   destfile = str_c("data/", name, ".zip") -->
-<!-- ) -->
-<!-- ``` -->
-
-<!-- Then, we can import the dataset: -->
-<!-- ```{r import-letterecognition-data} -->
-<!-- #| code-fold: true -->
-<!-- #| code-summary: Code to import the data -->
-<!-- tb_letterecognition <- read_csv( -->
-<!--   file = unz(str_c("data/", name, ".zip"), "letter-recognition.data"),  -->
-<!--   col_names = c( -->
-<!--     "lettr", "x-box", "y-box", "width", "high", "onpix", "x-bar", "y-bar",  -->
-<!--     "x2bar", "y2bar", "xybar", "x2ybr", "xy2br", "x-ege", "xegvy", "y-ege",  -->
-<!--     "yegvx" -->
-<!--   ), -->
-<!--   show_col_types = FALSE -->
-<!-- ) -->
-<!-- ``` -->
-<!-- The target variable is `lettr`. Let us turn create a $\{0,1\}$` variable where whe predict whether the letter is "U" or not. -->
-<!-- ```{r tb_letterecognition-target} -->
-<!-- tb_letterecognition <-  -->
-<!--   tb_letterecognition |>  -->
-<!--   mutate(across(where(is.numeric), ~as.factor(.x))) |>  -->
-<!--   mutate(is_u = ifelse(lettr == "U", 1, 0)) |>  -->
-<!--   select(-lettr) -->
-<!-- target_name <- "is_u" -->
-<!-- ``` -->
-
-<!-- Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors. -->
-<!-- ```{r estim-letterecognition, eval=FALSE} -->
-<!-- priors_letterecognition <- get_beta_fit( -->
-<!--   dataset = tb_letterecognition, target_name = target_name, seed = 1234 -->
-<!-- ) -->
-<!-- ``` -->
-
-<!-- Let us save the results and the dataset: -->
-<!-- ```{r, eval=FALSE} -->
-<!-- save(priors_letterecognition, file = "output/real-data/priors_letterecognition.rda") -->
-<!-- save(tb_letterecognition, file = "output/real-data/tb_letterecognition.rda") -->
-<!-- ``` -->
-
-<!-- ```{r, echo=FALSE} -->
-<!-- load("output/real-data/priors_letterecognition.rda") -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- #| fig-cap: Distribution of estimated probabilities by the GAMSEL model and Beta distribution fitted to the scores of each of the three models, for the Letter Recognition dataset. -->
-<!-- #| label: fig-example-beta-letterecognition -->
-<!-- plot_hist_scores_beta(priors_letterecognition, "letterecognition") -->
-<!-- ``` -->
 
 ### Mushroom
 
@@ -666,10 +512,10 @@ The dataset needs to be download.
 #| code-fold: true
 #| code-summary: Code to download the data
 
-if (!dir.exists("data")) dir.create("data")
+if (!dir.exists("../data")) dir.create("../data")
 download.file(
   url = str_c("https://archive.ics.uci.edu/static/public/73/mushroom.zip"), 
-  destfile = str_c("data/", name, ".zip")
+  destfile = str_c("../data/", name, ".zip")
 )
 ```
 
@@ -678,7 +524,7 @@ Then, we can import the dataset:
 #| code-fold: true
 #| code-summary: Code to import the data
 tb_mushroom <- read_csv(
-  file = unz(str_c("data/", name, ".zip"), "agaricus-lepiota.data"), 
+  file = unz(str_c("../data/", name, ".zip"), "agaricus-lepiota.data"), 
   col_names = c(
     "edible",
     "cap_shape", "cap_surface", "cap_color", "bruises", "odor", 
@@ -709,12 +555,12 @@ priors_mushroom <- get_beta_fit(
 
 Let us save the results and the dataset:
 ```{r, eval=FALSE}
-save(priors_mushroom, file = "output/real-data/priors_mushroom.rda")
-save(tb_mushroom, file = "output/real-data/tb_mushroom.rda")
+save(priors_mushroom, file = "../output/real-data/priors_mushroom.rda")
+save(tb_mushroom, file = "../output/real-data/tb_mushroom.rda")
 ```
 
 ```{r, echo=FALSE}
-load("output/real-data/priors_mushroom.rda")
+load("../output/real-data/priors_mushroom.rda")
 ```
 
 
@@ -742,11 +588,11 @@ The dataset needs to be download.
 #| code-fold: true
 #| code-summary: Code to download the data
 
-if (!dir.exists("data")) dir.create("data")
+if (!dir.exists("../data")) dir.create("../data")
 download.file(
   url = str_c("https://archive.ics.uci.edu/static/public/357/",
               "occupancy+detection.zip"), 
-  destfile = str_c("data/", name, ".zip")
+  destfile = str_c("../data/", name, ".zip")
 )
 ```
 
@@ -755,7 +601,7 @@ Then, we can import the dataset:
 #| code-fold: true
 #| code-summary: Code to import the data
 tb_occupancy <- read_csv(
-  file = unz(str_c("data/", name, ".zip"), "datatraining.txt"), 
+  file = unz(str_c("../data/", name, ".zip"), "datatraining.txt"), 
   col_names = c(
     "id", "date","Temperature","Humidity","Light","CO2",
     "HumidityRatio","Occupancy"
@@ -764,7 +610,7 @@ tb_occupancy <- read_csv(
 ) |> 
   bind_rows(
     read_csv(
-      file = unz(str_c("data/", name, ".zip"), "datatest.txt"), 
+      file = unz(str_c("../data/", name, ".zip"), "datatest.txt"), 
       col_names = c(
         "id", "date","Temperature","Humidity","Light","CO2",
         "HumidityRatio","Occupancy"
@@ -774,7 +620,7 @@ tb_occupancy <- read_csv(
   ) |> 
   bind_rows(
     read_csv(
-      file = unz(str_c("data/", name, ".zip"), "datatest2.txt"), 
+      file = unz(str_c("../data/", name, ".zip"), "datatest2.txt"), 
       show_col_types = FALSE, skip = 1,
       col_names = c(
         "id", "date","Temperature","Humidity","Light","CO2",
@@ -800,12 +646,12 @@ priors_occupancy <- get_beta_fit(
 
 Let us save the results and the dataset:
 ```{r, eval=FALSE}
-save(priors_occupancy, file = "output/real-data/priors_occupancy.rda")
-save(tb_occupancy, file = "output/real-data/tb_occupancy.rda")
+save(priors_occupancy, file = "../output/real-data/priors_occupancy.rda")
+save(tb_occupancy, file = "../output/real-data/tb_occupancy.rda")
 ```
 
 ```{r, echo=FALSE}
-load("output/real-data/priors_occupancy.rda")
+load("../output/real-data/priors_occupancy.rda")
 ```
 
 
@@ -815,175 +661,6 @@ load("output/real-data/priors_occupancy.rda")
 #| fig-width: 5
 plot_hist_scores_beta(priors_occupancy, "occupancy")
 ```
-
-<!-- ### Online Shoppers Purchasing Intention -->
-
-<!-- URL to the data: <https://archive.ics.uci.edu/dataset/468/online+shoppers+purchasing+intention+dataset> -->
-<!-- Description: Of the 12,330 sessions in the dataset, 84.5% (10,422) were negative class samples that did not end with shopping, and the rest (1908) were positive class samples ending with shopping. -->
-<!-- Number of instances: 12,330 -->
-<!-- Features: 17 -->
-
-<!-- ```{r define-name-onlineshoppers} -->
-<!-- name <- "onlineshoppers" -->
-<!-- ``` -->
-
-<!-- The dataset needs to be download. -->
-<!-- ```{r download-onlineshoppers, eval=FALSE} -->
-<!-- #| code-fold: true -->
-<!-- #| code-summary: Code to download the data -->
-
-<!-- if (!dir.exists("data")) dir.create("data") -->
-<!-- download.file( -->
-<!--   url = str_c("https://archive.ics.uci.edu/static/public/468/", -->
-<!--               "online+shoppers+purchasing+intention+dataset.zip"),  -->
-<!--   destfile = str_c("data/", name, ".zip") -->
-<!-- ) -->
-<!-- ``` -->
-
-<!-- Then, we can import the dataset: -->
-<!-- ```{r import-onlineshoppers-data} -->
-<!-- #| code-fold: true -->
-<!-- #| code-summary: Code to import the data -->
-<!-- tb_onlineshoppers <- read_csv( -->
-<!--   file = unz(str_c("data/", name, ".zip"), "online_shoppers_intention.csv"), -->
-<!--   show_col_types = FALSE -->
-<!-- ) -->
-<!-- ``` -->
-<!-- The target variable is `sex`. Let us turn it in a $\{0,1\}$` variable. -->
-<!-- ```{r tb_onlineshoppers-target} -->
-<!-- tb_onlineshoppers <-  -->
-<!--   tb_onlineshoppers |>  -->
-<!--   mutate(across(where(is.character), ~as.factor(.x))) |>  -->
-<!--   mutate(across(where(is.logical), ~as.factor(.x))) |>  -->
-<!--   mutate(across(all_of(c( -->
-<!--     "Administrative", "OperatingSystems", "Browser", "Region" -->
-<!--   )), ~as.factor(.x))) |>  -->
-<!--   mutate((across(all_of(c( -->
-<!--     "Informational", "SpecialDay", "TrafficType", "Informational_Duration", -->
-<!--     "Administrative_Duration", "PageValues", "BounceRates", "ProductRelated_Duration", "ProductRelated", "ExitRates" -->
-<!--   )), ~jitter(.x, 0.1))) -->
-<!--   ) |>  -->
-<!--   mutate(Revenue = ifelse(Revenue == TRUE, 1, 0)) |>  -->
-<!--   rename(revenue = Revenue) -->
-<!-- target_name <- "revenue" -->
-<!-- ``` -->
-
-<!-- Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors. -->
-<!-- ```{r estim-onlineshoppers, eval=FALSE} -->
-<!-- priors_onlineshoppers <- get_beta_fit( -->
-<!--   dataset = tb_onlineshoppers, target_name = target_name, seed = 1234 -->
-<!-- ) -->
-<!-- ``` -->
-
-<!-- Let us save the results and the dataset: -->
-<!-- ```{r, eval=FALSE} -->
-<!-- save(priors_onlineshoppers, file = "output/real-data/priors_onlineshoppers.rda") -->
-<!-- save(tb_onlineshoppers, file = "output/real-data/tb_onlineshoppers.rda") -->
-<!-- ``` -->
-
-<!-- ```{r, echo=FALSE} -->
-<!-- load("output/real-data/priors_onlineshoppers.rda") -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- #| fig-cap: Distribution of estimated probabilities by the GAMSEL model and Beta distribution fitted to the scores of each of the three models, for the Online Shoppers Purchasing Intention dataset. -->
-<!-- #| label: fig-example-beta-onlineshoppers -->
-<!-- plot_hist_scores_beta(priors_onlineshoppers, "onlineshoppers") -->
-<!-- ``` -->
-
-<!-- ### Online News Popularity -->
-
-<!-- URL to the data: <https://archive.ics.uci.edu/dataset/332/online+news+popularity> -->
-<!-- Description: Predict the age of newspopularity from physical measurements. -->
-<!-- Number of instances: 39,797 -->
-<!-- Features: 58 -->
-
-<!-- ```{r define-name-newspopularity} -->
-<!-- name <- "newspopularity" -->
-<!-- ``` -->
-
-<!-- The dataset needs to be download. -->
-<!-- ```{r download-newspopularity, eval=FALSE} -->
-<!-- #| code-fold: true -->
-<!-- #| code-summary: Code to download the data -->
-
-<!-- if (!dir.exists("data")) dir.create("data") -->
-<!-- download.file( -->
-<!--   url = str_c("https://archive.ics.uci.edu/static/public/332/", -->
-<!--               "online+news+popularity.zip"),  -->
-<!--   destfile = str_c("data/", name, ".zip") -->
-<!-- ) -->
-<!-- ``` -->
-
-<!-- Then, we can import the dataset: -->
-<!-- ```{r import-newspopularity-data} -->
-<!-- #| code-fold: true -->
-<!-- #| code-summary: Code to import the data -->
-<!-- dir.create("data/newspopularity") -->
-<!-- unzip("data/newspopularity.zip", exdir = "data/newspopularity") -->
-<!-- tb_newspopularity <- read_csv( -->
-<!--   file = str_c("data/newspopularity/OnlineNewsPopularity/", -->
-<!--                "OnlineNewsPopularity.csv"),  -->
-<!--   show_col_types = FALSE -->
-<!-- ) -->
-<!-- system("rm -rf data/newspopularity") -->
-<!-- ``` -->
-
-<!-- We define the target variable, `high_shares` as a binary variable which is equal to 1 if the number of shares is higher than the median value found in the sample, and 0 otherwise. -->
-
-<!-- ```{r tb_newspopularity-target} -->
-<!-- tb_newspopularity <-  -->
-<!--   tb_newspopularity |>  -->
-<!--   select(-url) |>  -->
-<!--   mutate( -->
-<!--     across( -->
-<!--       all_of(c( -->
-<!--         "data_channel_is_lifestyle", "data_channel_is_entertainment", -->
-<!--         "data_channel_is_bus", "data_channel_is_socmed",  -->
-<!--         "data_channel_is_tech", "data_channel_is_world", -->
-<!--         "weekday_is_monday", "weekday_is_tuesday", "weekday_is_wednesday", -->
-<!--         "weekday_is_thursday", "weekday_is_friday", "weekday_is_saturday", "is_weekend" -->
-<!--       )), -->
-<!--       ~as.factor(.x) -->
-<!--     ), -->
-<!--     high_shares = ifelse(shares > median(shares), yes = 1, no = 0), -->
-<!--     across(all_of(c( -->
-<!--       "n_non_stop_words", "num_keywords", "kw_min_min", "n_tokens_title", "kw_max_max", "min_positive_polarity", "max_positive_polarity", "max_negative_polarity", "num_self_hrefs", "num_imgs", "num_hrefs" -->
-<!--       )), ~jitter(.x, factor = 0.01)) -->
-<!--   ) |>  -->
-<!--   select( -->
-<!--     -shares, -weekday_is_sunday, -is_weekend, -global_rate_positive_words, -->
-<!--     -global_rate_negative_words, -rate_positive_words, -abs_title_subjectivity, -->
-<!--     -abs_title_sentiment_polarity -->
-<!--   ) -->
-<!-- target_name <- "high_shares" -->
-<!-- ``` -->
-
-<!-- Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors. -->
-<!-- ```{r estim-newspopularity, eval=FALSE} -->
-<!-- priors_newspopularity <- get_beta_fit( -->
-<!--   dataset = tb_newspopularity, target_name = target_name, seed = 1234 -->
-<!-- ) -->
-<!-- ``` -->
-
-<!-- Let us save the results and the dataset: -->
-<!-- ```{r, eval=FALSE} -->
-<!-- save(priors_newspopularity, file = "output/real-data/priors_newspopularity.rda") -->
-<!-- save(tb_newspopularity, file = "output/real-data/tb_newspopularity.rda") -->
-<!-- ``` -->
-
-<!-- ```{r, echo=FALSE} -->
-<!-- load("output/real-data/priors_newspopularity.rda") -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- #| fig-cap: Distribution of estimated probabilities by the GAMSEL model and Beta distribution fitted to the scores of each of the three models, for the Online News Popularity dataset. -->
-<!-- #| label: fig-example-beta-newspopularity -->
-<!-- plot_hist_scores_beta(priors_newspopularity, "newspopularity") -->
-<!-- ``` -->
-
 
 ### Wine Quality
 
@@ -1002,11 +679,11 @@ The dataset needs to be download.
 #| code-fold: true
 #| code-summary: Code to download the data
 
-if (!dir.exists("data")) dir.create("data")
+if (!dir.exists("../data")) dir.create("../data")
 download.file(
   url = str_c("https://archive.ics.uci.edu/static/public/186/",
               "wine+quality.zip"), 
-  destfile = str_c("data/", name, ".zip")
+  destfile = str_c("../data/", name, ".zip")
 )
 ```
 
@@ -1015,11 +692,11 @@ Then, we can import the dataset:
 #| code-fold: true
 #| code-summary: Code to import the data
 red_wine <- read_csv2(
-  file = unz(str_c("data/", name, ".zip"), "winequality-red.csv"),
+  file = unz(str_c("../data/", name, ".zip"), "winequality-red.csv"),
   show_col_types = FALSE) |>
   mutate(wine_type = "red")
 white_wine <- read_csv2(
-  file = unz(str_c("data/", name, ".zip"), "winequality-white.csv"),
+  file = unz(str_c("../data/", name, ".zip"), "winequality-white.csv"),
   show_col_types = FALSE) |> 
   mutate(wine_type = "white") |> 
   mutate(`residual sugar` = as.numeric(`residual sugar`))
@@ -1047,12 +724,12 @@ priors_winequality <- get_beta_fit(
 
 Let us save the results and the dataset:
 ```{r, eval=FALSE}
-save(priors_winequality, file = "output/real-data/priors_winequality.rda")
-save(tb_winequality, file = "output/real-data/tb_winequality.rda")
+save(priors_winequality, file = "../output/real-data/priors_winequality.rda")
+save(tb_winequality, file = "../output/real-data/tb_winequality.rda")
 ```
 
 ```{r, echo=FALSE}
-load("output/real-data/priors_winequality.rda")
+load("../output/real-data/priors_winequality.rda")
 ```
 
 
@@ -1082,14 +759,14 @@ The dataset needs to be download.
 #| code-fold: true
 #| code-summary: Code to download the data
 
-if (!dir.exists("data")) dir.create("data")
+if (!dir.exists("../data")) dir.create("../data")
 download.file(
   url = "https://archive.ics.uci.edu/static/public/94/spambase.zip", 
-  destfile = "data/spambase.zip"
+  destfile = "../data/spambase.zip"
 )
 
 info_data <- scan(
-  unz("data/spambase.zip", "spambase.names"), what = "character", sep = "\n"
+  unz("../data/spambase.zip", "spambase.names"), what = "character", sep = "\n"
 )
 # Print the names for this dataset (not very convenient...)
 str_extract(info_data[31:length(info_data)], "^(.*):") |> 
@@ -1103,7 +780,7 @@ Then, we can import the dataset:
 #| code-fold: true
 #| code-summary: Code to import the data
 tb_spambase <- read_csv(
-  file = unz(str_c("data/", name, ".zip"), str_c(name, ".data")),
+  file = unz(str_c("../data/", name, ".zip"), str_c(name, ".data")),
   col_names = c(
     "word_freq_make", "word_freq_address", "word_freq_all", "word_freq_3d",
     "word_freq_our", "word_freq_over", "word_freq_remove", "word_freq_internet",
@@ -1141,12 +818,12 @@ priors_spambase <- get_beta_fit(
 
 Let us save the results and the dataset:
 ```{r, eval=FALSE}
-save(priors_spambase, file = str_c("output/real-data/priors_spambase.rda"))
-save(tb_spambase, file = "output/real-data/tb_spambase.rda")
+save(priors_spambase, file = str_c("../output/real-data/priors_spambase.rda"))
+save(tb_spambase, file = "../output/real-data/tb_spambase.rda")
 ```
 
 ```{r, echo=FALSE}
-load(str_c("output/real-data/priors_", name, ".rda"))
+load("../output/real-data/priors_spambase.rda")
 ```
 
 

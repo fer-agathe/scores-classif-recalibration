@@ -992,7 +992,7 @@ mediocre_ici_xgb <-
   arrange(ici) |> 
   slice_head(n = 1) |> 
   select(scenario, repn, ind, nb_iter, recalib) |>
-  mutate(result_type = "mediocre_ici") |>
+  mutate(result_type = "high_ici") |>
   ungroup()
 
 # Merge these
@@ -1033,10 +1033,10 @@ models_of_interest_metrics <-
       result_type,
       levels = c(
         "smallest", "largest", "lowest_mse", "largest_auc",
-        "lowest_brier", "lowest_ici", "lowest_kl", "mediocre_ici_xgb"),
+        "lowest_brier", "lowest_ici", "lowest_kl", "high_ici"),
       labels = c(
         "Smallest", "Largest", "MSE*", "AUC*",
-        "Brier*", "ICI*", "KL*", "Mediocre ICI"
+        "Brier*", "ICI*", "KL*", "High ICI"
       )
     )
   )
@@ -1055,13 +1055,23 @@ TBD
 
 Let us extract all the histogram information computed over the simulations and put that in a single object, `scores_hist_all`.
 
-```{r define-scores_hist_all}
+```{r define-scores_hist_all, eval=FALSE}
 scores_hist_all <-
   map(
     resul_xgb,
     function(resul_xgb_sc) map(resul_xgb_sc, "scores_hist")
   )
 ```
+
+```{r save-scores_hist_all, eval = FALSE, echo=FALSE}
+save(scores_hist_all, file = "../output/simul/scores_hist_all.rda")
+```
+
+```{r load-scores_hist_all, echo=FALSE}
+load("../output/simul/scores_hist_all.rda")
+```
+
+
 
 We then define a function, `plot_bp_xgb()`{.R} which plots the distribution of scores on the test set for a single replication (`repn`), for a scenario, (`scenario`). We also define a helper function, `plot_bp_interest()`, which plots the histogram of the scores at a specific iteration number. We will then be able to plot the distributions at the beginning of the boosting iterations, at the end, at a point where the AUC was the highest on the validation set, and at a point where the KL divergence between the distribution of scores on the validation set and the distribution of the true probabilities was the lowest. We will plot the distributions of the scores returned by the classifier, as well as those obtained with the reclibrators.
 
@@ -1318,7 +1328,7 @@ plot_bp_xgb <- function(scenario,
     plot_bp_interest(
       metrics_interest = metrics_mici,
       scores_hist_interest = scores_hist_mici,
-      label = "Med. ICI",
+      label = "High ICI",
       recalib_method = recalib_method
     )
   }
@@ -1505,6 +1515,7 @@ plot_bp_xgb(scenario = 16, repn = 1)
 ```{r, eval=FALSE}
 #| code-fold: true
 #| code-summary: Code to create PDF figures
+if(!dir.exists("../figs/")) dir.create("../figs/")
 for (scenario in 1:16) {
   pdf(
     file = str_c("../figs/bp_synthetic_xbg_", scenario, ".pdf"),
@@ -1653,6 +1664,9 @@ p_ici
 
 ### Tables
 
+
+We examine the average values of various metrics across 100 replications for the "best" model selected according to different criteria: AUC* for the model with hyperparameters chosen to maximize AUC on the validation set, ICI* for the model with hyperparameters selected to minimize ICI, Brier* for minimizing the Brier Score, KL* for minimizing the KL divergence between the distribution of scores on the validation set and the true probability distribution, smallest for the model with only 2 boosting iterations, largest for the model with 400 boosting iterations, and mediocre ICI for the model chosen to illustrate the effects of score recalibration when initial calibration is mediocre.
+
 ```{r}
 #| code-fold: true
 #| code-summary: Display the R codes to produce the table
@@ -1710,7 +1724,7 @@ table_models_interest_mean <-
     brier, ici, kl = KL_20_true_probas,
   ) |> 
   filter(
-    result_type %in% c("AUC*", "KL*", "Mediocre ICI", "Smallest", "Largest")
+    result_type %in% c("AUC*", "KL*", "High ICI", "Smallest", "Largest")
   ) |> 
   mutate(value_type = "mean")
 
@@ -1724,7 +1738,7 @@ table_models_interest_sd <-
     kl = KL_20_true_probas_sd,
   ) |> 
   filter(
-    result_type %in% c("AUC*", "KL*", "Mediocre ICI", "Smallest", "Largest")
+    result_type %in% c("AUC*", "KL*", "High ICI", "Smallest", "Largest")
   ) |> 
   mutate(value_type = "sd")
 
@@ -1760,6 +1774,34 @@ table_models_interest_mean |>
 
 ```{r, echo=FALSE}
 # Latex version for paper
+table_models_interest_mean <- 
+  models_interest_xgb |> 
+  filter(sample == "test") |> 
+  select(
+    dgp, no_noise, recalib, sample, result_type, 
+    brier, ici, kl = KL_20_true_probas,
+  ) |> 
+  filter(
+    result_type %in% c("AUC*", "KL*", "High ICI")
+  ) |> 
+  mutate(value_type = "mean")
+
+
+table_models_interest_sd <- 
+  models_interest_xgb |> 
+  filter(sample == "test") |> 
+  select(
+    dgp, no_noise, recalib, sample, result_type, 
+    brier = brier_sd, ici = ici_sd, 
+    kl = KL_20_true_probas_sd,
+  ) |> 
+  filter(
+    result_type %in% c("AUC*", "KL*", "High ICI")
+  ) |> 
+  mutate(value_type = "sd")
+
+digits <- 2
+
 table_models_interest_mean |> 
   bind_rows(table_models_interest_sd) |> 
   pivot_longer(cols = c(brier, ici, kl)) |> 
@@ -1786,64 +1828,109 @@ table_models_interest_mean |>
 ```
 
 
-### Draft
+### Before vs. After Recalibration
+
+Let us visualize how the KL divergence and the ICI of a selected model changes after the scores are recalibrated, either using Platt scaling or isotonic regression.
+
 
 ```{r}
-
+#| code-fold: true
+#| fig-width: 12
+#| fig-height: 8
+#| fig-cap: Average KL divergence and ICI before and after recalibration of the estimated scores for DGP 1, for selected models.
+#| label: fig-kl-vs-ici-recalib-dgp-1
 table_models_interest_mean <- 
-  models_interest_xgb |> 
-  filter(sample == "test") |> 
-  select(
-    scenario, dgp, no_noise, recalib, sample, result_type, 
-    brier, ici, kl = KL_20_true_probas
-  ) |> 
-  filter(
-    result_type %in% c("AUC*", "KL*", "Largest")
-  ) |> 
-  mutate(value_type = "mean")
-
+  table_models_interest_mean |> 
+  mutate(
+    no_noise = fct_recode(no_noise, `0 noise variable` = "0 noise variables"),
+    dgp = str_c("DGP ", dgp)
+  )
 
 initial_points <- table_models_interest_mean |> 
-  filter(dgp == 1, recalib == "None")
+  filter(recalib == "None")
 
 points_after_c <- initial_points |> 
-  select(scenario, dgp, no_noise, result_type, ici, kl) |> 
+  select(dgp, no_noise, result_type, ici, kl) |> 
   left_join(
     table_models_interest_mean |> 
       filter(recalib %in% c("Platt", "Isotonic")) |> 
-      select(scenario, dgp, no_noise, recalib, result_type, ici, kl) |> 
+      select(dgp, no_noise, recalib, result_type, ici, kl) |> 
       rename(ici_end = ici, kl_end = kl),
     relationship = "many-to-many" # (Platt and Isotonic)
   )
 
-
-ggplot() +
+p_kl_vs_ici_recalib <- 
+  ggplot() +
   geom_point(
     data = initial_points,
     mapping = aes(x = ici, y = kl, shape = result_type),
     size = 2
-    ) +
+  ) +
   geom_segment(
     data = points_after_c,
     mapping = aes(
       x = ici, y = kl, xend = ici_end, yend = kl_end,
       colour = recalib, linetype = recalib
-      ),
+    ),
     arrow = arrow(length=unit(.2, 'cm'))
   ) +
-  facet_wrap(~no_noise, ncol = 4) +
+  facet_grid(dgp~no_noise, scales = "free") +
   scale_shape_manual(
     NULL,
     values = c(
       # "Smallest" = 1,
-      "Largest" = 2,
       "AUC*" = 19,
-      "KL*" = 15
+      "KL*" = 15,
+      "High ICI" = 17
     )
   ) +
   labs(x = "ICI", y = "KL Divergence") +
   scale_colour_manual("Recalibration", values = colour_recalib) +
   scale_linetype_discrete("Recalibration") +
   theme_paper()
+
+ggsave(p_kl_vs_ici_recalib, file = "../figs/kl_vs_ici_recalib.pdf", width = 12, height = 8)
+p_kl_vs_ici_recalib
+```
+
+
+```{r, eval=FALSE, echo=FALSE}
+## With DGP 1 only (for paper)
+
+p_kl_vs_ici_recalib_dgp_1 <- 
+  ggplot() +
+  geom_point(
+    data = initial_points |> filter(dgp == "DGP 1"),
+    mapping = aes(x = ici, y = kl, shape = result_type),
+    size = 2
+  ) +
+  geom_segment(
+    data = points_after_c |> filter(dgp == "DGP 1"),
+    mapping = aes(
+      x = ici, y = kl, xend = ici_end, yend = kl_end,
+      colour = recalib, linetype = recalib
+    ),
+    arrow = arrow(length=unit(.2, 'cm'))
+  ) +
+  facet_grid(dgp~no_noise, scales = "free") +
+  scale_shape_manual(
+    NULL,
+    values = c(
+      # "Smallest" = 1,
+      "AUC*" = 19,
+      "KL*" = 15,
+      "High ICI" = 17
+    )
+  ) +
+  labs(x = "ICI", y = "KL Divergence") +
+  scale_colour_manual("Recalibration", values = colour_recalib) +
+  scale_linetype_discrete("Recalibration") +
+  theme_paper()
+
+
+ggsave(
+  p_kl_vs_ici_recalib_dgp_1, 
+  file = "../figs/kl_vs_ici_recalib_dgp_1.pdf", width = 12, height = 4
+)
 ```
 

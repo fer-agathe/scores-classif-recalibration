@@ -84,7 +84,7 @@ div.csl-indent {
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<link href="./references.html" rel="next">
+<link href="./example_spambase_beta.html" rel="next">
 <link href="./simul-data.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
@@ -299,6 +299,47 @@ window.Quarto = {
 </li>
       </ul>
   </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true">
+ <span class="menu-text">IV. Real Data</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./example_spambase_beta.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset I</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./book_real_beta.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Datasets and Priors</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./example_spambase_xgb.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset II</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./book_real_xgb.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Estimations</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./book_real_results.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Real-data Results</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
@@ -328,6 +369,7 @@ window.Quarto = {
   <li><a href="#distribution-of-scores" id="toc-distribution-of-scores" class="nav-link" data-scroll-target="#distribution-of-scores"><span class="header-section-number">5.5.2</span> Distribution of Scores</a></li>
   <li><a href="#kl-divergence-and-calibration-along-boosting-iterations" id="toc-kl-divergence-and-calibration-along-boosting-iterations" class="nav-link" data-scroll-target="#kl-divergence-and-calibration-along-boosting-iterations"><span class="header-section-number">5.5.3</span> KL Divergence and Calibration along Boosting Iterations</a></li>
   <li><a href="#tables" id="toc-tables" class="nav-link" data-scroll-target="#tables"><span class="header-section-number">5.5.4</span> Tables</a></li>
+  <li><a href="#before-vs.-after-recalibration" id="toc-before-vs.-after-recalibration" class="nav-link" data-scroll-target="#before-vs.-after-recalibration"><span class="header-section-number">5.5.5</span> Before vs.&nbsp;After Recalibration</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -1052,12 +1094,11 @@ Attaching package: 'xgboost'</code></pre>
 <p>We consider the following grid:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>grid <span class="ot">&lt;-</span> <span class="fu">expand_grid</span>(</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># max_depth = c(2, 4, 6),</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">max_depth =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>),</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">nb_iter_total =</span> <span class="dv">400</span>,</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">eta =</span> <span class="fl">0.3</span></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ind =</span> <span class="fu">row_number</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">max_depth =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>),</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">nb_iter_total =</span> <span class="dv">400</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">eta =</span> <span class="fl">0.3</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ind =</span> <span class="fu">row_number</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The desired number of replications for each scenario needs to be set:</p>
 <div class="cell">
@@ -1073,8 +1114,8 @@ Table&nbsp;5.1: Grid Search Values
 </figcaption>
 <div aria-describedby="tbl-grid-values-xgb-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<div class="datatables html-widget html-fill-item" id="htmlwidget-7794ec11f6cf3dc1fcf6" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-7794ec11f6cf3dc1fcf6">{"x":{"filter":"none","vertical":false,"data":[["1","2","3"],[2,4,6],[400,400,400],[0.3,0.3,0.3],[1,2,3]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>max_depth<\/th>\n      <th>nb_iter_total<\/th>\n      <th>eta<\/th>\n      <th>ind<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[1,2,3,4]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"max_depth","targets":1},{"name":"nb_iter_total","targets":2},{"name":"eta","targets":3},{"name":"ind","targets":4}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-caa334dd8b7130614cc0" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-caa334dd8b7130614cc0">{"x":{"filter":"none","vertical":false,"data":[["1","2","3"],[2,4,6],[400,400,400],[0.3,0.3,0.3],[1,2,3]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>max_depth<\/th>\n      <th>nb_iter_total<\/th>\n      <th>eta<\/th>\n      <th>ind<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[1,2,3,4]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"max_depth","targets":1},{"name":"nb_iter_total","targets":2},{"name":"eta","targets":3},{"name":"ind","targets":4}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 </figure>
@@ -1191,7 +1232,7 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"../output/simul/"</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i_scenario <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">16</span>) {</span>
+<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i_scenario <span class="cf">in</span> <span class="dv">13</span><span class="sc">:</span><span class="dv">16</span>) {</span>
 <span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a>  scenario <span class="ot">&lt;-</span> i_scenario</span>
 <span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">str_c</span>(<span class="st">"Scenario "</span>, scenario, <span class="st">"/"</span>, <span class="fu">nrow</span>(params_df)))</span>
 <span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clusterExport</span>(cl, <span class="fu">c</span>(<span class="st">"scenario"</span>))</span>
@@ -1212,7 +1253,7 @@ Table&nbsp;5.1: Grid Search Values
 </div>
 <p>The results can be loaded as follows:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>scenarios <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">16</span> </span>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>scenarios <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">16</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>files <span class="ot">&lt;-</span> <span class="fu">str_c</span>(</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"../output/simul/resul_xgb_scenario_"</span>, scenarios, <span class="st">".rda"</span></span>
 <span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -1345,53 +1386,74 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb26-76"><a href="#cb26-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">result_type =</span> <span class="st">"lowest_kl"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb26-77"><a href="#cb26-77" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
 <span id="cb26-78"><a href="#cb26-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-79"><a href="#cb26-79" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge these</span></span>
-<span id="cb26-80"><a href="#cb26-80" aria-hidden="true" tabindex="-1"></a>models_of_interest_xgb <span class="ot">&lt;-</span></span>
-<span id="cb26-81"><a href="#cb26-81" aria-hidden="true" tabindex="-1"></a>  smallest_xgb <span class="sc">|&gt;</span></span>
-<span id="cb26-82"><a href="#cb26-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(largest_xgb) <span class="sc">|&gt;</span></span>
-<span id="cb26-83"><a href="#cb26-83" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(highest_auc_xgb) <span class="sc">|&gt;</span></span>
-<span id="cb26-84"><a href="#cb26-84" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(lowest_mse_xgb) <span class="sc">|&gt;</span></span>
-<span id="cb26-85"><a href="#cb26-85" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(lowest_brier_xgb) <span class="sc">|&gt;</span></span>
-<span id="cb26-86"><a href="#cb26-86" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(lowest_ici_xgb) <span class="sc">|&gt;</span></span>
-<span id="cb26-87"><a href="#cb26-87" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(lowest_kl_xgb)</span>
-<span id="cb26-88"><a href="#cb26-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-89"><a href="#cb26-89" aria-hidden="true" tabindex="-1"></a>models_of_interest_metrics <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb26-90"><a href="#cb26-90" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (recalibration_method <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"None"</span>, <span class="st">"Platt"</span>, <span class="st">"Isotonic"</span>)) {</span>
-<span id="cb26-91"><a href="#cb26-91" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add metrics now</span></span>
-<span id="cb26-92"><a href="#cb26-92" aria-hidden="true" tabindex="-1"></a>  models_of_interest_metrics <span class="ot">&lt;-</span></span>
-<span id="cb26-93"><a href="#cb26-93" aria-hidden="true" tabindex="-1"></a>    models_of_interest_metrics <span class="sc">|&gt;</span></span>
-<span id="cb26-94"><a href="#cb26-94" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bind_rows</span>(</span>
-<span id="cb26-95"><a href="#cb26-95" aria-hidden="true" tabindex="-1"></a>      models_of_interest_xgb <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>recalib) <span class="sc">|&gt;</span></span>
-<span id="cb26-96"><a href="#cb26-96" aria-hidden="true" tabindex="-1"></a>        <span class="fu">left_join</span>(</span>
-<span id="cb26-97"><a href="#cb26-97" aria-hidden="true" tabindex="-1"></a>          metrics_xgb_all <span class="sc">|&gt;</span></span>
-<span id="cb26-98"><a href="#cb26-98" aria-hidden="true" tabindex="-1"></a>            <span class="fu">filter</span>(</span>
-<span id="cb26-99"><a href="#cb26-99" aria-hidden="true" tabindex="-1"></a>              recalib <span class="sc">==</span> recalibration_method,</span>
-<span id="cb26-100"><a href="#cb26-100" aria-hidden="true" tabindex="-1"></a>              sample <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Validation"</span>, <span class="st">"Test"</span>)</span>
-<span id="cb26-101"><a href="#cb26-101" aria-hidden="true" tabindex="-1"></a>            ),</span>
-<span id="cb26-102"><a href="#cb26-102" aria-hidden="true" tabindex="-1"></a>          <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"scenario"</span>, <span class="st">"repn"</span>, <span class="st">"ind"</span>, <span class="st">"nb_iter"</span>),</span>
-<span id="cb26-103"><a href="#cb26-103" aria-hidden="true" tabindex="-1"></a>          <span class="at">relationship =</span> <span class="st">"many-to-many"</span> <span class="co"># (calib, test)</span></span>
-<span id="cb26-104"><a href="#cb26-104" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb26-105"><a href="#cb26-105" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb26-106"><a href="#cb26-106" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb26-107"><a href="#cb26-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-108"><a href="#cb26-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-109"><a href="#cb26-109" aria-hidden="true" tabindex="-1"></a>models_of_interest_metrics <span class="ot">&lt;-</span></span>
-<span id="cb26-110"><a href="#cb26-110" aria-hidden="true" tabindex="-1"></a>  models_of_interest_metrics <span class="sc">|&gt;</span></span>
-<span id="cb26-111"><a href="#cb26-111" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb26-112"><a href="#cb26-112" aria-hidden="true" tabindex="-1"></a>    <span class="at">result_type =</span> <span class="fu">factor</span>(</span>
-<span id="cb26-113"><a href="#cb26-113" aria-hidden="true" tabindex="-1"></a>      result_type,</span>
-<span id="cb26-114"><a href="#cb26-114" aria-hidden="true" tabindex="-1"></a>      <span class="at">levels =</span> <span class="fu">c</span>(</span>
-<span id="cb26-115"><a href="#cb26-115" aria-hidden="true" tabindex="-1"></a>        <span class="st">"smallest"</span>, <span class="st">"largest"</span>, <span class="st">"lowest_mse"</span>, <span class="st">"largest_auc"</span>,</span>
-<span id="cb26-116"><a href="#cb26-116" aria-hidden="true" tabindex="-1"></a>        <span class="st">"lowest_brier"</span>, <span class="st">"lowest_ici"</span>, <span class="st">"lowest_kl"</span>),</span>
-<span id="cb26-117"><a href="#cb26-117" aria-hidden="true" tabindex="-1"></a>      <span class="at">labels =</span> <span class="fu">c</span>(</span>
-<span id="cb26-118"><a href="#cb26-118" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Smallest"</span>, <span class="st">"Largest"</span>, <span class="st">"MSE*"</span>, <span class="st">"AUC*"</span>,</span>
-<span id="cb26-119"><a href="#cb26-119" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Brier*"</span>, <span class="st">"ICI*"</span>, <span class="st">"KL*"</span></span>
-<span id="cb26-120"><a href="#cb26-120" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb26-121"><a href="#cb26-121" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb26-122"><a href="#cb26-122" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb26-123"><a href="#cb26-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-124"><a href="#cb26-124" aria-hidden="true" tabindex="-1"></a><span class="co"># Sanity check</span></span>
-<span id="cb26-125"><a href="#cb26-125" aria-hidden="true" tabindex="-1"></a><span class="co"># models_of_interest_metrics |&gt; count(scenario, sample, result_type)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb26-79"><a href="#cb26-79" aria-hidden="true" tabindex="-1"></a>mediocre_ici_xgb <span class="ot">&lt;-</span> </span>
+<span id="cb26-80"><a href="#cb26-80" aria-hidden="true" tabindex="-1"></a>  metrics_xgb_all <span class="sc">|&gt;</span></span>
+<span id="cb26-81"><a href="#cb26-81" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(sample <span class="sc">==</span> <span class="st">"Validation"</span>, recalib <span class="sc">==</span> <span class="st">"None"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb26-82"><a href="#cb26-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(scenario, repn) <span class="sc">|&gt;</span></span>
+<span id="cb26-83"><a href="#cb26-83" aria-hidden="true" tabindex="-1"></a>  <span class="co"># For each replication for a scenario, we select a model with a mediocre </span></span>
+<span id="cb26-84"><a href="#cb26-84" aria-hidden="true" tabindex="-1"></a>  <span class="co"># calibration</span></span>
+<span id="cb26-85"><a href="#cb26-85" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb26-86"><a href="#cb26-86" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_ici =</span> <span class="fu">mean</span>(ici),</span>
+<span id="cb26-87"><a href="#cb26-87" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_ici =</span> <span class="fu">sd</span>(ici),</span>
+<span id="cb26-88"><a href="#cb26-88" aria-hidden="true" tabindex="-1"></a>    <span class="at">upb_ici =</span> mean_ici <span class="sc">+</span> sd_ici,</span>
+<span id="cb26-89"><a href="#cb26-89" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb26-90"><a href="#cb26-90" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ici <span class="sc">&gt;</span>  upb_ici) <span class="sc">|&gt;</span> </span>
+<span id="cb26-91"><a href="#cb26-91" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Among the configurations for which the calibration is not within 1-sd of the</span></span>
+<span id="cb26-92"><a href="#cb26-92" aria-hidden="true" tabindex="-1"></a>  <span class="co"># average calibration, we select the model with the lowest ICI</span></span>
+<span id="cb26-93"><a href="#cb26-93" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(ici) <span class="sc">|&gt;</span> </span>
+<span id="cb26-94"><a href="#cb26-94" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb26-95"><a href="#cb26-95" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(scenario, repn, ind, nb_iter, recalib) <span class="sc">|&gt;</span></span>
+<span id="cb26-96"><a href="#cb26-96" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">result_type =</span> <span class="st">"high_ici"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb26-97"><a href="#cb26-97" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb26-98"><a href="#cb26-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-99"><a href="#cb26-99" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge these</span></span>
+<span id="cb26-100"><a href="#cb26-100" aria-hidden="true" tabindex="-1"></a>models_of_interest_xgb <span class="ot">&lt;-</span></span>
+<span id="cb26-101"><a href="#cb26-101" aria-hidden="true" tabindex="-1"></a>  smallest_xgb <span class="sc">|&gt;</span></span>
+<span id="cb26-102"><a href="#cb26-102" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(largest_xgb) <span class="sc">|&gt;</span></span>
+<span id="cb26-103"><a href="#cb26-103" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(highest_auc_xgb) <span class="sc">|&gt;</span></span>
+<span id="cb26-104"><a href="#cb26-104" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(lowest_mse_xgb) <span class="sc">|&gt;</span></span>
+<span id="cb26-105"><a href="#cb26-105" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(lowest_brier_xgb) <span class="sc">|&gt;</span></span>
+<span id="cb26-106"><a href="#cb26-106" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(lowest_ici_xgb) <span class="sc">|&gt;</span></span>
+<span id="cb26-107"><a href="#cb26-107" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(lowest_kl_xgb) <span class="sc">|&gt;</span> </span>
+<span id="cb26-108"><a href="#cb26-108" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(mediocre_ici_xgb)</span>
+<span id="cb26-109"><a href="#cb26-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-110"><a href="#cb26-110" aria-hidden="true" tabindex="-1"></a>models_of_interest_metrics <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb26-111"><a href="#cb26-111" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (recalibration_method <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"None"</span>, <span class="st">"Platt"</span>, <span class="st">"Isotonic"</span>)) {</span>
+<span id="cb26-112"><a href="#cb26-112" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add metrics now</span></span>
+<span id="cb26-113"><a href="#cb26-113" aria-hidden="true" tabindex="-1"></a>  models_of_interest_metrics <span class="ot">&lt;-</span></span>
+<span id="cb26-114"><a href="#cb26-114" aria-hidden="true" tabindex="-1"></a>    models_of_interest_metrics <span class="sc">|&gt;</span></span>
+<span id="cb26-115"><a href="#cb26-115" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bind_rows</span>(</span>
+<span id="cb26-116"><a href="#cb26-116" aria-hidden="true" tabindex="-1"></a>      models_of_interest_xgb <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>recalib) <span class="sc">|&gt;</span></span>
+<span id="cb26-117"><a href="#cb26-117" aria-hidden="true" tabindex="-1"></a>        <span class="fu">left_join</span>(</span>
+<span id="cb26-118"><a href="#cb26-118" aria-hidden="true" tabindex="-1"></a>          metrics_xgb_all <span class="sc">|&gt;</span></span>
+<span id="cb26-119"><a href="#cb26-119" aria-hidden="true" tabindex="-1"></a>            <span class="fu">filter</span>(</span>
+<span id="cb26-120"><a href="#cb26-120" aria-hidden="true" tabindex="-1"></a>              recalib <span class="sc">==</span> recalibration_method,</span>
+<span id="cb26-121"><a href="#cb26-121" aria-hidden="true" tabindex="-1"></a>              sample <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Validation"</span>, <span class="st">"Test"</span>)</span>
+<span id="cb26-122"><a href="#cb26-122" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb26-123"><a href="#cb26-123" aria-hidden="true" tabindex="-1"></a>          <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"scenario"</span>, <span class="st">"repn"</span>, <span class="st">"ind"</span>, <span class="st">"nb_iter"</span>),</span>
+<span id="cb26-124"><a href="#cb26-124" aria-hidden="true" tabindex="-1"></a>          <span class="at">relationship =</span> <span class="st">"many-to-many"</span> <span class="co"># (calib, test)</span></span>
+<span id="cb26-125"><a href="#cb26-125" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb26-126"><a href="#cb26-126" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb26-127"><a href="#cb26-127" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb26-128"><a href="#cb26-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-129"><a href="#cb26-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-130"><a href="#cb26-130" aria-hidden="true" tabindex="-1"></a>models_of_interest_metrics <span class="ot">&lt;-</span></span>
+<span id="cb26-131"><a href="#cb26-131" aria-hidden="true" tabindex="-1"></a>  models_of_interest_metrics <span class="sc">|&gt;</span></span>
+<span id="cb26-132"><a href="#cb26-132" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb26-133"><a href="#cb26-133" aria-hidden="true" tabindex="-1"></a>    <span class="at">result_type =</span> <span class="fu">factor</span>(</span>
+<span id="cb26-134"><a href="#cb26-134" aria-hidden="true" tabindex="-1"></a>      result_type,</span>
+<span id="cb26-135"><a href="#cb26-135" aria-hidden="true" tabindex="-1"></a>      <span class="at">levels =</span> <span class="fu">c</span>(</span>
+<span id="cb26-136"><a href="#cb26-136" aria-hidden="true" tabindex="-1"></a>        <span class="st">"smallest"</span>, <span class="st">"largest"</span>, <span class="st">"lowest_mse"</span>, <span class="st">"largest_auc"</span>,</span>
+<span id="cb26-137"><a href="#cb26-137" aria-hidden="true" tabindex="-1"></a>        <span class="st">"lowest_brier"</span>, <span class="st">"lowest_ici"</span>, <span class="st">"lowest_kl"</span>, <span class="st">"high_ici"</span>),</span>
+<span id="cb26-138"><a href="#cb26-138" aria-hidden="true" tabindex="-1"></a>      <span class="at">labels =</span> <span class="fu">c</span>(</span>
+<span id="cb26-139"><a href="#cb26-139" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Smallest"</span>, <span class="st">"Largest"</span>, <span class="st">"MSE*"</span>, <span class="st">"AUC*"</span>,</span>
+<span id="cb26-140"><a href="#cb26-140" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Brier*"</span>, <span class="st">"ICI*"</span>, <span class="st">"KL*"</span>, <span class="st">"High ICI"</span></span>
+<span id="cb26-141"><a href="#cb26-141" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb26-142"><a href="#cb26-142" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb26-143"><a href="#cb26-143" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb26-144"><a href="#cb26-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-145"><a href="#cb26-145" aria-hidden="true" tabindex="-1"></a><span class="co"># Sanity check</span></span>
+<span id="cb26-146"><a href="#cb26-146" aria-hidden="true" tabindex="-1"></a><span class="co"># models_of_interest_metrics |&gt; count(scenario, sample, result_type)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="metrics-vs-number-of-iterations" class="level3" data-number="5.5.1">
@@ -1464,7 +1526,7 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb28-49"><a href="#cb28-49" aria-hidden="true" tabindex="-1"></a>  max_depth_val <span class="ot">&lt;-</span> <span class="fu">map_dbl</span>(scores_hist_repn, <span class="sc">~</span>.x[[<span class="dv">1</span>]]<span class="sc">$</span>max_depth)</span>
 <span id="cb28-50"><a href="#cb28-50" aria-hidden="true" tabindex="-1"></a>  <span class="co"># i_max_depth &lt;- which(max_depth_val == max_depth)</span></span>
 <span id="cb28-51"><a href="#cb28-51" aria-hidden="true" tabindex="-1"></a>  <span class="co"># scores_hist &lt;- scores_hist_repn[[i_max_depth]]</span></span>
-<span id="cb28-52"><a href="#cb28-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-52"><a href="#cb28-52" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb28-53"><a href="#cb28-53" aria-hidden="true" tabindex="-1"></a>  <span class="co"># True Probabilities</span></span>
 <span id="cb28-54"><a href="#cb28-54" aria-hidden="true" tabindex="-1"></a>  simu_data <span class="ot">&lt;-</span> <span class="fu">simulate_data_wrapper</span>(</span>
 <span id="cb28-55"><a href="#cb28-55" aria-hidden="true" tabindex="-1"></a>    <span class="at">scenario =</span> scenario,</span>
@@ -1472,12 +1534,12 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb28-57"><a href="#cb28-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">repn =</span> repn <span class="co"># only one replication here</span></span>
 <span id="cb28-58"><a href="#cb28-58" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb28-59"><a href="#cb28-59" aria-hidden="true" tabindex="-1"></a>  true_prob <span class="ot">&lt;-</span> simu_data<span class="sc">$</span>data<span class="sc">$</span>probs_train</span>
-<span id="cb28-60"><a href="#cb28-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-60"><a href="#cb28-60" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb28-61"><a href="#cb28-61" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (recalib_method <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"none"</span>, <span class="st">"platt"</span>, <span class="st">"iso"</span>)) {</span>
-<span id="cb28-62"><a href="#cb28-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-62"><a href="#cb28-62" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb28-63"><a href="#cb28-63" aria-hidden="true" tabindex="-1"></a>    i_method <span class="ot">&lt;-</span> <span class="fu">match</span>(recalib_method, <span class="fu">c</span>(<span class="st">"none"</span>, <span class="st">"platt"</span>, <span class="st">"iso"</span>))</span>
 <span id="cb28-64"><a href="#cb28-64" aria-hidden="true" tabindex="-1"></a>    recalib_method_lab <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"None"</span>, <span class="st">"Platt"</span>, <span class="st">"Isotonic"</span>)[i_method]</span>
-<span id="cb28-65"><a href="#cb28-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-65"><a href="#cb28-65" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb28-66"><a href="#cb28-66" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The metrics for the corresponding simulations, on the validation set</span></span>
 <span id="cb28-67"><a href="#cb28-67" aria-hidden="true" tabindex="-1"></a>    metrics_xgb_current_valid <span class="ot">&lt;-</span></span>
 <span id="cb28-68"><a href="#cb28-68" aria-hidden="true" tabindex="-1"></a>      metrics_xgb_all <span class="sc">|&gt;</span></span>
@@ -1496,7 +1558,7 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb28-81"><a href="#cb28-81" aria-hidden="true" tabindex="-1"></a>        sample <span class="sc">==</span> <span class="st">"Test"</span>,</span>
 <span id="cb28-82"><a href="#cb28-82" aria-hidden="true" tabindex="-1"></a>        recalib <span class="sc">==</span> recalib_method_lab</span>
 <span id="cb28-83"><a href="#cb28-83" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb28-84"><a href="#cb28-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-84"><a href="#cb28-84" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb28-85"><a href="#cb28-85" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (paper_version <span class="sc">==</span> <span class="cn">FALSE</span>) {</span>
 <span id="cb28-86"><a href="#cb28-86" aria-hidden="true" tabindex="-1"></a>      <span class="fu">hist</span>(</span>
 <span id="cb28-87"><a href="#cb28-87" aria-hidden="true" tabindex="-1"></a>        true_prob,</span>
@@ -1517,14 +1579,14 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb28-102"><a href="#cb28-102" aria-hidden="true" tabindex="-1"></a>          nb_iter <span class="sc">==</span> scores_hist_start<span class="sc">$</span>nb_iter,</span>
 <span id="cb28-103"><a href="#cb28-103" aria-hidden="true" tabindex="-1"></a>          max_depth <span class="sc">==</span> scores_hist_start<span class="sc">$</span>max_depth</span>
 <span id="cb28-104"><a href="#cb28-104" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb28-105"><a href="#cb28-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-105"><a href="#cb28-105" aria-hidden="true" tabindex="-1"></a>      </span>
 <span id="cb28-106"><a href="#cb28-106" aria-hidden="true" tabindex="-1"></a>      <span class="fu">plot_bp_interest</span>(</span>
 <span id="cb28-107"><a href="#cb28-107" aria-hidden="true" tabindex="-1"></a>        <span class="at">metrics_interest =</span> metrics_start,</span>
 <span id="cb28-108"><a href="#cb28-108" aria-hidden="true" tabindex="-1"></a>        <span class="at">scores_hist_interest =</span> scores_hist_start,</span>
 <span id="cb28-109"><a href="#cb28-109" aria-hidden="true" tabindex="-1"></a>        <span class="at">label =</span> <span class="st">"Start"</span>,</span>
 <span id="cb28-110"><a href="#cb28-110" aria-hidden="true" tabindex="-1"></a>        <span class="at">recalib_method =</span> recalib_method</span>
 <span id="cb28-111"><a href="#cb28-111" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb28-112"><a href="#cb28-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-112"><a href="#cb28-112" aria-hidden="true" tabindex="-1"></a>      </span>
 <span id="cb28-113"><a href="#cb28-113" aria-hidden="true" tabindex="-1"></a>      <span class="do">## End of iterations</span></span>
 <span id="cb28-114"><a href="#cb28-114" aria-hidden="true" tabindex="-1"></a>      scores_hist_end <span class="ot">&lt;-</span> scores_hist_repn[[<span class="dv">1</span>]][[<span class="fu">length</span>(scores_hist_repn[[<span class="dv">1</span>]])]]</span>
 <span id="cb28-115"><a href="#cb28-115" aria-hidden="true" tabindex="-1"></a>      metrics_end <span class="ot">&lt;-</span> metrics_xgb_current_test <span class="sc">|&gt;</span></span>
@@ -1538,7 +1600,7 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb28-123"><a href="#cb28-123" aria-hidden="true" tabindex="-1"></a>        <span class="at">label =</span> <span class="st">"End"</span>,</span>
 <span id="cb28-124"><a href="#cb28-124" aria-hidden="true" tabindex="-1"></a>        <span class="at">recalib_method =</span> recalib_method</span>
 <span id="cb28-125"><a href="#cb28-125" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb28-126"><a href="#cb28-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-126"><a href="#cb28-126" aria-hidden="true" tabindex="-1"></a>      </span>
 <span id="cb28-127"><a href="#cb28-127" aria-hidden="true" tabindex="-1"></a>      <span class="do">## Iteration with min MSE on validation set</span></span>
 <span id="cb28-128"><a href="#cb28-128" aria-hidden="true" tabindex="-1"></a>      metrics_valid_mse_star <span class="ot">&lt;-</span> metrics_xgb_current_valid <span class="sc">|&gt;</span> <span class="fu">arrange</span>(mse) <span class="sc">|&gt;</span></span>
 <span id="cb28-129"><a href="#cb28-129" aria-hidden="true" tabindex="-1"></a>        dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>)</span>
@@ -1568,7 +1630,7 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb28-153"><a href="#cb28-153" aria-hidden="true" tabindex="-1"></a>    nb_iter_auc <span class="ot">&lt;-</span> metrics_valid_auc_star<span class="sc">$</span>nb_iter</span>
 <span id="cb28-154"><a href="#cb28-154" aria-hidden="true" tabindex="-1"></a>    max_depth_auc_star <span class="ot">&lt;-</span> metrics_valid_auc_star<span class="sc">$</span>max_depth</span>
 <span id="cb28-155"><a href="#cb28-155" aria-hidden="true" tabindex="-1"></a>    i_max_depth_auc_star <span class="ot">&lt;-</span> <span class="fu">which</span>(max_depth_val <span class="sc">==</span> max_depth_auc_star)</span>
-<span id="cb28-156"><a href="#cb28-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-156"><a href="#cb28-156" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb28-157"><a href="#cb28-157" aria-hidden="true" tabindex="-1"></a>    metrics_max_auc <span class="ot">&lt;-</span></span>
 <span id="cb28-158"><a href="#cb28-158" aria-hidden="true" tabindex="-1"></a>      metrics_xgb_current_test <span class="sc">|&gt;</span></span>
 <span id="cb28-159"><a href="#cb28-159" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(nb_iter <span class="sc">==</span> <span class="sc">!!</span>nb_iter_auc, max_depth <span class="sc">==</span> max_depth_auc_star)</span>
@@ -1587,14 +1649,14 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb28-172"><a href="#cb28-172" aria-hidden="true" tabindex="-1"></a>        <span class="at">font.lab =</span> <span class="dv">2</span></span>
 <span id="cb28-173"><a href="#cb28-173" aria-hidden="true" tabindex="-1"></a>      )</span>
 <span id="cb28-174"><a href="#cb28-174" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb28-175"><a href="#cb28-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-175"><a href="#cb28-175" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb28-176"><a href="#cb28-176" aria-hidden="true" tabindex="-1"></a>    <span class="do">## Min Brier on validation set</span></span>
 <span id="cb28-177"><a href="#cb28-177" aria-hidden="true" tabindex="-1"></a>    metrics_valid_brier_star <span class="ot">&lt;-</span></span>
 <span id="cb28-178"><a href="#cb28-178" aria-hidden="true" tabindex="-1"></a>      metrics_xgb_current_valid <span class="sc">|&gt;</span> <span class="fu">arrange</span>(brier) <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>)</span>
 <span id="cb28-179"><a href="#cb28-179" aria-hidden="true" tabindex="-1"></a>    nb_iter_brier <span class="ot">&lt;-</span> metrics_valid_brier_star<span class="sc">$</span>nb_iter</span>
 <span id="cb28-180"><a href="#cb28-180" aria-hidden="true" tabindex="-1"></a>    max_depth_brier_star <span class="ot">&lt;-</span> metrics_valid_brier_star<span class="sc">$</span>max_depth</span>
 <span id="cb28-181"><a href="#cb28-181" aria-hidden="true" tabindex="-1"></a>    i_max_depth_brier_star <span class="ot">&lt;-</span> <span class="fu">which</span>(max_depth_val <span class="sc">==</span> max_depth_brier_star)</span>
-<span id="cb28-182"><a href="#cb28-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-182"><a href="#cb28-182" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb28-183"><a href="#cb28-183" aria-hidden="true" tabindex="-1"></a>    metrics_min_brier <span class="ot">&lt;-</span></span>
 <span id="cb28-184"><a href="#cb28-184" aria-hidden="true" tabindex="-1"></a>      metrics_xgb_current_test <span class="sc">|&gt;</span></span>
 <span id="cb28-185"><a href="#cb28-185" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(nb_iter <span class="sc">==</span> <span class="sc">!!</span>nb_iter_brier, max_depth <span class="sc">==</span> max_depth_brier_star)</span>
@@ -1606,14 +1668,14 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb28-191"><a href="#cb28-191" aria-hidden="true" tabindex="-1"></a>      <span class="at">label =</span> <span class="st">"Brier*"</span>,</span>
 <span id="cb28-192"><a href="#cb28-192" aria-hidden="true" tabindex="-1"></a>      <span class="at">recalib_method =</span> recalib_method</span>
 <span id="cb28-193"><a href="#cb28-193" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb28-194"><a href="#cb28-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-194"><a href="#cb28-194" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb28-195"><a href="#cb28-195" aria-hidden="true" tabindex="-1"></a>    <span class="do">## Min ICI on validation set</span></span>
 <span id="cb28-196"><a href="#cb28-196" aria-hidden="true" tabindex="-1"></a>    metrics_valid_ici_star <span class="ot">&lt;-</span></span>
 <span id="cb28-197"><a href="#cb28-197" aria-hidden="true" tabindex="-1"></a>      metrics_xgb_current_valid <span class="sc">|&gt;</span> <span class="fu">arrange</span>(ici) <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>)</span>
 <span id="cb28-198"><a href="#cb28-198" aria-hidden="true" tabindex="-1"></a>    nb_iter_ici <span class="ot">&lt;-</span>   metrics_valid_ici_star<span class="sc">$</span>nb_iter</span>
 <span id="cb28-199"><a href="#cb28-199" aria-hidden="true" tabindex="-1"></a>    max_depth_ici_star <span class="ot">&lt;-</span> metrics_valid_ici_star<span class="sc">$</span>max_depth</span>
 <span id="cb28-200"><a href="#cb28-200" aria-hidden="true" tabindex="-1"></a>    i_max_depth_ici_star <span class="ot">&lt;-</span> <span class="fu">which</span>(max_depth_val <span class="sc">==</span> max_depth_ici_star)</span>
-<span id="cb28-201"><a href="#cb28-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-201"><a href="#cb28-201" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb28-202"><a href="#cb28-202" aria-hidden="true" tabindex="-1"></a>    metrics_min_ici <span class="ot">&lt;-</span></span>
 <span id="cb28-203"><a href="#cb28-203" aria-hidden="true" tabindex="-1"></a>      metrics_xgb_current_test <span class="sc">|&gt;</span></span>
 <span id="cb28-204"><a href="#cb28-204" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(nb_iter <span class="sc">==</span> <span class="sc">!!</span>nb_iter_ici, max_depth <span class="sc">==</span> max_depth_ici_star)</span>
@@ -1625,14 +1687,14 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb28-210"><a href="#cb28-210" aria-hidden="true" tabindex="-1"></a>      <span class="at">label =</span> <span class="st">"ICI*"</span>,</span>
 <span id="cb28-211"><a href="#cb28-211" aria-hidden="true" tabindex="-1"></a>      <span class="at">recalib_method =</span> recalib_method</span>
 <span id="cb28-212"><a href="#cb28-212" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb28-213"><a href="#cb28-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-213"><a href="#cb28-213" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb28-214"><a href="#cb28-214" aria-hidden="true" tabindex="-1"></a>    <span class="do">## Min KL on validation set</span></span>
 <span id="cb28-215"><a href="#cb28-215" aria-hidden="true" tabindex="-1"></a>    metrics_valid_kl_star <span class="ot">&lt;-</span></span>
 <span id="cb28-216"><a href="#cb28-216" aria-hidden="true" tabindex="-1"></a>      metrics_xgb_current_valid <span class="sc">|&gt;</span> <span class="fu">arrange</span>(KL_20_true_probas) <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">slice</span>(<span class="dv">1</span>)</span>
-<span id="cb28-217"><a href="#cb28-217" aria-hidden="true" tabindex="-1"></a>    nb_iter_kl <span class="ot">&lt;-</span>   metrics_valid_kl_star<span class="sc">$</span>nb_iter</span>
+<span id="cb28-217"><a href="#cb28-217" aria-hidden="true" tabindex="-1"></a>    nb_iter_kl <span class="ot">&lt;-</span> metrics_valid_kl_star<span class="sc">$</span>nb_iter</span>
 <span id="cb28-218"><a href="#cb28-218" aria-hidden="true" tabindex="-1"></a>    max_depth_kl_star <span class="ot">&lt;-</span> metrics_valid_kl_star<span class="sc">$</span>max_depth</span>
 <span id="cb28-219"><a href="#cb28-219" aria-hidden="true" tabindex="-1"></a>    i_max_depth_kl_star <span class="ot">&lt;-</span> <span class="fu">which</span>(max_depth_val <span class="sc">==</span> max_depth_kl_star)</span>
-<span id="cb28-220"><a href="#cb28-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-220"><a href="#cb28-220" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb28-221"><a href="#cb28-221" aria-hidden="true" tabindex="-1"></a>    metrics_min_kl <span class="ot">&lt;-</span></span>
 <span id="cb28-222"><a href="#cb28-222" aria-hidden="true" tabindex="-1"></a>      metrics_xgb_current_test <span class="sc">|&gt;</span></span>
 <span id="cb28-223"><a href="#cb28-223" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(nb_iter <span class="sc">==</span> <span class="sc">!!</span>nb_iter_kl, max_depth <span class="sc">==</span> max_depth_kl_star)</span>
@@ -1644,8 +1706,30 @@ Table&nbsp;5.1: Grid Search Values
 <span id="cb28-229"><a href="#cb28-229" aria-hidden="true" tabindex="-1"></a>      <span class="at">label =</span> <span class="st">"KL*"</span>,</span>
 <span id="cb28-230"><a href="#cb28-230" aria-hidden="true" tabindex="-1"></a>      <span class="at">recalib_method =</span> recalib_method</span>
 <span id="cb28-231"><a href="#cb28-231" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb28-232"><a href="#cb28-232" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb28-233"><a href="#cb28-233" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb28-232"><a href="#cb28-232" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb28-233"><a href="#cb28-233" aria-hidden="true" tabindex="-1"></a>    <span class="do">## Mediocre ICI on validation set</span></span>
+<span id="cb28-234"><a href="#cb28-234" aria-hidden="true" tabindex="-1"></a>    identified_mici <span class="ot">&lt;-</span> </span>
+<span id="cb28-235"><a href="#cb28-235" aria-hidden="true" tabindex="-1"></a>      mediocre_ici_xgb <span class="sc">|&gt;</span> <span class="fu">filter</span>(scenario <span class="sc">==</span> <span class="sc">!!</span>scenario, repn <span class="sc">==</span> <span class="sc">!!</span>repn)</span>
+<span id="cb28-236"><a href="#cb28-236" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb28-237"><a href="#cb28-237" aria-hidden="true" tabindex="-1"></a>    metrics_valid_mici_star <span class="ot">&lt;-</span> metrics_xgb_current_valid <span class="sc">|&gt;</span> </span>
+<span id="cb28-238"><a href="#cb28-238" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(ind <span class="sc">==</span> identified_mici<span class="sc">$</span>ind, nb_iter <span class="sc">==</span> identified_mici<span class="sc">$</span>nb_iter)</span>
+<span id="cb28-239"><a href="#cb28-239" aria-hidden="true" tabindex="-1"></a>    nb_iter_mici <span class="ot">&lt;-</span> metrics_valid_mici_star<span class="sc">$</span>nb_iter</span>
+<span id="cb28-240"><a href="#cb28-240" aria-hidden="true" tabindex="-1"></a>    max_depth_mici_star <span class="ot">&lt;-</span> metrics_valid_mici_star<span class="sc">$</span>max_depth</span>
+<span id="cb28-241"><a href="#cb28-241" aria-hidden="true" tabindex="-1"></a>    i_max_depth_mici_star <span class="ot">&lt;-</span> <span class="fu">which</span>(max_depth_val <span class="sc">==</span> max_depth_mici_star)</span>
+<span id="cb28-242"><a href="#cb28-242" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb28-243"><a href="#cb28-243" aria-hidden="true" tabindex="-1"></a>    metrics_mici <span class="ot">&lt;-</span></span>
+<span id="cb28-244"><a href="#cb28-244" aria-hidden="true" tabindex="-1"></a>      metrics_xgb_current_test <span class="sc">|&gt;</span></span>
+<span id="cb28-245"><a href="#cb28-245" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(nb_iter <span class="sc">==</span> <span class="sc">!!</span>nb_iter_mici, max_depth <span class="sc">==</span> max_depth_mici_star)</span>
+<span id="cb28-246"><a href="#cb28-246" aria-hidden="true" tabindex="-1"></a>    ind_mici <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">map_dbl</span>(scores_hist_repn[[i_max_depth_mici_star]], <span class="st">"nb_iter"</span>) <span class="sc">==</span> nb_iter_mici)</span>
+<span id="cb28-247"><a href="#cb28-247" aria-hidden="true" tabindex="-1"></a>    scores_hist_mici <span class="ot">&lt;-</span> scores_hist_repn[[i_max_depth_mici_star]][[ind_mici]]</span>
+<span id="cb28-248"><a href="#cb28-248" aria-hidden="true" tabindex="-1"></a>    <span class="fu">plot_bp_interest</span>(</span>
+<span id="cb28-249"><a href="#cb28-249" aria-hidden="true" tabindex="-1"></a>      <span class="at">metrics_interest =</span> metrics_mici,</span>
+<span id="cb28-250"><a href="#cb28-250" aria-hidden="true" tabindex="-1"></a>      <span class="at">scores_hist_interest =</span> scores_hist_mici,</span>
+<span id="cb28-251"><a href="#cb28-251" aria-hidden="true" tabindex="-1"></a>      <span class="at">label =</span> <span class="st">"High ICI"</span>,</span>
+<span id="cb28-252"><a href="#cb28-252" aria-hidden="true" tabindex="-1"></a>      <span class="at">recalib_method =</span> recalib_method</span>
+<span id="cb28-253"><a href="#cb28-253" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb28-254"><a href="#cb28-254" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb28-255"><a href="#cb28-255" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
@@ -1659,7 +1743,7 @@ Table&nbsp;5.1: Grid Search Values
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">1</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1669,7 +1753,7 @@ Table&nbsp;5.1: Grid Search Values
 Figure&nbsp;5.1: Distribution of scores on the test set (DGP 1, 0 noise variable)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-1-0-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-1-0-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-1-0-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1680,7 +1764,7 @@ Figure&nbsp;5.1: Distribution of scores on the test set (DGP 1, 0 noise variable
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">2</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1690,7 +1774,7 @@ Figure&nbsp;5.1: Distribution of scores on the test set (DGP 1, 0 noise variable
 Figure&nbsp;5.2: Distribution of scores on the test set (DGP 1, 10 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-1-10-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-1-10-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-1-10-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1701,7 +1785,7 @@ Figure&nbsp;5.2: Distribution of scores on the test set (DGP 1, 10 noise variabl
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">3</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1711,7 +1795,7 @@ Figure&nbsp;5.2: Distribution of scores on the test set (DGP 1, 10 noise variabl
 Figure&nbsp;5.3: Distribution of scores on the test set (DGP 1, 50 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-1-50-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-1-50-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-1-50-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1722,7 +1806,7 @@ Figure&nbsp;5.3: Distribution of scores on the test set (DGP 1, 50 noise variabl
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">4</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1732,7 +1816,7 @@ Figure&nbsp;5.3: Distribution of scores on the test set (DGP 1, 50 noise variabl
 Figure&nbsp;5.4: Distribution of scores on the test set (DGP 1, 100 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-1-100-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-1-100-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-1-100-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1750,7 +1834,7 @@ Figure&nbsp;5.4: Distribution of scores on the test set (DGP 1, 100 noise variab
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">5</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1760,7 +1844,7 @@ Figure&nbsp;5.4: Distribution of scores on the test set (DGP 1, 100 noise variab
 Figure&nbsp;5.5: Distribution of scores on the test set (DGP 2, 0 noise variable)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-2-0-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-2-0-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-2-0-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1771,7 +1855,7 @@ Figure&nbsp;5.5: Distribution of scores on the test set (DGP 2, 0 noise variable
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">6</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1781,7 +1865,7 @@ Figure&nbsp;5.5: Distribution of scores on the test set (DGP 2, 0 noise variable
 Figure&nbsp;5.6: Distribution of scores on the test set (DGP 2, 10 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-2-10-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-2-10-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-2-10-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1792,7 +1876,7 @@ Figure&nbsp;5.6: Distribution of scores on the test set (DGP 2, 10 noise variabl
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">7</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1802,7 +1886,7 @@ Figure&nbsp;5.6: Distribution of scores on the test set (DGP 2, 10 noise variabl
 Figure&nbsp;5.7: Distribution of scores on the test set (DGP 2, 50 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-2-50-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-2-50-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-2-50-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1813,7 +1897,7 @@ Figure&nbsp;5.7: Distribution of scores on the test set (DGP 2, 50 noise variabl
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">8</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1823,7 +1907,7 @@ Figure&nbsp;5.7: Distribution of scores on the test set (DGP 2, 50 noise variabl
 Figure&nbsp;5.8: Distribution of scores on the test set (DGP 2, 100 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-2-100-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-2-100-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-2-100-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1841,7 +1925,7 @@ Figure&nbsp;5.8: Distribution of scores on the test set (DGP 2, 100 noise variab
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">9</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1851,7 +1935,7 @@ Figure&nbsp;5.8: Distribution of scores on the test set (DGP 2, 100 noise variab
 Figure&nbsp;5.9: Distribution of scores on the test set (DGP 3, 0 noise variable)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-3-0-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-3-0-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-3-0-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1862,7 +1946,7 @@ Figure&nbsp;5.9: Distribution of scores on the test set (DGP 3, 0 noise variable
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">10</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1872,7 +1956,7 @@ Figure&nbsp;5.9: Distribution of scores on the test set (DGP 3, 0 noise variable
 Figure&nbsp;5.10: Distribution of scores on the test set (DGP 3, 10 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-3-10-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-3-10-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-3-10-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1883,7 +1967,7 @@ Figure&nbsp;5.10: Distribution of scores on the test set (DGP 3, 10 noise variab
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">11</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1893,7 +1977,7 @@ Figure&nbsp;5.10: Distribution of scores on the test set (DGP 3, 10 noise variab
 Figure&nbsp;5.11: Distribution of scores on the test set (DGP 3, 50 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-3-50-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-3-50-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-3-50-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1904,7 +1988,7 @@ Figure&nbsp;5.11: Distribution of scores on the test set (DGP 3, 50 noise variab
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">12</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1914,7 +1998,7 @@ Figure&nbsp;5.11: Distribution of scores on the test set (DGP 3, 50 noise variab
 Figure&nbsp;5.12: Distribution of scores on the test set (DGP 3, 100 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-3-100-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-3-100-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-3-100-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1932,7 +2016,7 @@ Figure&nbsp;5.12: Distribution of scores on the test set (DGP 3, 100 noise varia
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">13</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1942,7 +2026,7 @@ Figure&nbsp;5.12: Distribution of scores on the test set (DGP 3, 100 noise varia
 Figure&nbsp;5.13: Distribution of scores on the test set (DGP 4, 0 noise variable)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-4-0-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-4-0-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-4-0-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1953,7 +2037,7 @@ Figure&nbsp;5.13: Distribution of scores on the test set (DGP 4, 0 noise variabl
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">14</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1963,7 +2047,7 @@ Figure&nbsp;5.13: Distribution of scores on the test set (DGP 4, 0 noise variabl
 Figure&nbsp;5.14: Distribution of scores on the test set (DGP 4, 10 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-4-10-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-4-10-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-4-10-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1974,7 +2058,7 @@ Figure&nbsp;5.14: Distribution of scores on the test set (DGP 4, 10 noise variab
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">15</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -1984,7 +2068,7 @@ Figure&nbsp;5.14: Distribution of scores on the test set (DGP 4, 10 noise variab
 Figure&nbsp;5.15: Distribution of scores on the test set (DGP 4, 50 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-4-50-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-4-50-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-4-50-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -1995,7 +2079,7 @@ Figure&nbsp;5.15: Distribution of scores on the test set (DGP 4, 50 noise variab
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">8</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> <span class="dv">16</span>, <span class="at">repn =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
@@ -2005,7 +2089,7 @@ Figure&nbsp;5.15: Distribution of scores on the test set (DGP 4, 50 noise variab
 Figure&nbsp;5.16: Distribution of scores on the test set (DGP 4, 100 noise variables)
 </figcaption>
 <div aria-describedby="fig-xgb-bp-4-100-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="simul-xgb_files/figure-html/fig-xgb-bp-4-100-1.png" class="img-fluid figure-img" width="1152">
+<img src="simul-xgb_files/figure-html/fig-xgb-bp-4-100-1.png" class="img-fluid figure-img" width="1344">
 </div>
 </figure>
 </div>
@@ -2020,15 +2104,16 @@ Figure&nbsp;5.16: Distribution of scores on the test set (DGP 4, 100 noise varia
 <div class="cell">
 <details class="code-fold">
 <summary>Code to create PDF figures</summary>
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (scenario <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">16</span>) {</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pdf</span>(</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> <span class="fu">str_c</span>(<span class="st">"../figs/bp_synthetic_xbg_"</span>, scenario, <span class="st">".pdf"</span>),</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">height =</span> <span class="fl">4.5</span>, <span class="at">width =</span> <span class="dv">10</span></span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">4</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> scenario, <span class="at">repn =</span> <span class="dv">1</span>, <span class="at">paper_version =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dev.off</span>()</span>
-<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">dir.exists</span>(<span class="st">"../figs/"</span>)) <span class="fu">dir.create</span>(<span class="st">"../figs/"</span>)</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (scenario <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">16</span>) {</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pdf</span>(</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> <span class="fu">str_c</span>(<span class="st">"../figs/bp_synthetic_xbg_"</span>, scenario, <span class="st">".pdf"</span>),</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">height =</span> <span class="fl">4.5</span>, <span class="at">width =</span> <span class="dv">10</span></span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">5</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.1</span>, <span class="dv">4</span>, <span class="fl">3.5</span>, <span class="fl">1.5</span>))</span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bp_xgb</span>(<span class="at">scenario =</span> scenario, <span class="at">repn =</span> <span class="dv">1</span>, <span class="at">paper_version =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dev.off</span>()</span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -2106,7 +2191,7 @@ Figure&nbsp;5.16: Distribution of scores on the test set (DGP 4, 100 noise varia
 <span id="cb47-22"><a href="#cb47-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb47-23"><a href="#cb47-23" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(</span>
 <span id="cb47-24"><a href="#cb47-24" aria-hidden="true" tabindex="-1"></a>  p_brier, <span class="at">file =</span> <span class="st">"../figs/xgb-kl-calib-brier-leaves-all.pdf"</span>,</span>
-<span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a>       <span class="at">width =</span> <span class="dv">10</span>, <span class="at">height =</span> <span class="dv">8</span></span>
+<span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a>       <span class="at">width =</span> <span class="dv">13</span>, <span class="at">height =</span> <span class="dv">8</span></span>
 <span id="cb47-26"><a href="#cb47-26" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb47-27"><a href="#cb47-27" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb47-28"><a href="#cb47-28" aria-hidden="true" tabindex="-1"></a>p_brier</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -2153,7 +2238,7 @@ Figure&nbsp;5.17: KL Divergence and Calibration (Brier) across increasing boosti
 <span id="cb48-22"><a href="#cb48-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb48-23"><a href="#cb48-23" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(</span>
 <span id="cb48-24"><a href="#cb48-24" aria-hidden="true" tabindex="-1"></a>  p_ici, <span class="at">file =</span> <span class="st">"../figs/xgb-kl-calib-ici-leaves-all.pdf"</span>,</span>
-<span id="cb48-25"><a href="#cb48-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">width =</span> <span class="dv">10</span>, <span class="at">height =</span> <span class="dv">8</span></span>
+<span id="cb48-25"><a href="#cb48-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">width =</span> <span class="dv">13</span>, <span class="at">height =</span> <span class="dv">8</span></span>
 <span id="cb48-26"><a href="#cb48-26" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb48-27"><a href="#cb48-27" aria-hidden="true" tabindex="-1"></a>p_ici</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
@@ -2176,6 +2261,7 @@ Figure&nbsp;5.18: KL Divergence and Calibration (ICI) across increasing boosting
 </section>
 <section id="tables" class="level3" data-number="5.5.4">
 <h3 data-number="5.5.4" class="anchored" data-anchor-id="tables"><span class="header-section-number">5.5.4</span> Tables</h3>
+<p>We examine the average values of various metrics across 100 replications for the “best” model selected according to different criteria: AUC* for the model with hyperparameters chosen to maximize AUC on the validation set, ICI* for the model with hyperparameters selected to minimize ICI, Brier* for minimizing the Brier Score, KL* for minimizing the KL divergence between the distribution of scores on the validation set and the true probability distribution, smallest for the model with only 2 boosting iterations, largest for the model with 400 boosting iterations, and mediocre ICI for the model chosen to illustrate the effects of score recalibration when initial calibration is mediocre.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Display the R codes to produce the table</summary>
@@ -2228,10 +2314,10 @@ Figure&nbsp;5.18: KL Divergence and Calibration (ICI) across increasing boosting
 <span id="cb49-47"><a href="#cb49-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(sample <span class="sc">==</span> <span class="st">"test"</span>) <span class="sc">|&gt;</span> </span>
 <span id="cb49-48"><a href="#cb49-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
 <span id="cb49-49"><a href="#cb49-49" aria-hidden="true" tabindex="-1"></a>    dgp, no_noise, recalib, sample, result_type, </span>
-<span id="cb49-50"><a href="#cb49-50" aria-hidden="true" tabindex="-1"></a>    brier, ici, <span class="at">kl =</span> KL_20_true_probas</span>
+<span id="cb49-50"><a href="#cb49-50" aria-hidden="true" tabindex="-1"></a>    brier, ici, <span class="at">kl =</span> KL_20_true_probas,</span>
 <span id="cb49-51"><a href="#cb49-51" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
 <span id="cb49-52"><a href="#cb49-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
-<span id="cb49-53"><a href="#cb49-53" aria-hidden="true" tabindex="-1"></a>    result_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"AUC*"</span>, <span class="st">"KL*"</span>, <span class="st">"Smallest"</span>, <span class="st">"Largest"</span>)</span>
+<span id="cb49-53"><a href="#cb49-53" aria-hidden="true" tabindex="-1"></a>    result_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"AUC*"</span>, <span class="st">"KL*"</span>, <span class="st">"High ICI"</span>, <span class="st">"Smallest"</span>, <span class="st">"Largest"</span>)</span>
 <span id="cb49-54"><a href="#cb49-54" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
 <span id="cb49-55"><a href="#cb49-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">value_type =</span> <span class="st">"mean"</span>)</span>
 <span id="cb49-56"><a href="#cb49-56" aria-hidden="true" tabindex="-1"></a></span>
@@ -2242,10 +2328,10 @@ Figure&nbsp;5.18: KL Divergence and Calibration (ICI) across increasing boosting
 <span id="cb49-61"><a href="#cb49-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
 <span id="cb49-62"><a href="#cb49-62" aria-hidden="true" tabindex="-1"></a>    dgp, no_noise, recalib, sample, result_type, </span>
 <span id="cb49-63"><a href="#cb49-63" aria-hidden="true" tabindex="-1"></a>    <span class="at">brier =</span> brier_sd, <span class="at">ici =</span> ici_sd, </span>
-<span id="cb49-64"><a href="#cb49-64" aria-hidden="true" tabindex="-1"></a>    <span class="at">kl =</span> KL_20_true_probas_sd</span>
+<span id="cb49-64"><a href="#cb49-64" aria-hidden="true" tabindex="-1"></a>    <span class="at">kl =</span> KL_20_true_probas_sd,</span>
 <span id="cb49-65"><a href="#cb49-65" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
 <span id="cb49-66"><a href="#cb49-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
-<span id="cb49-67"><a href="#cb49-67" aria-hidden="true" tabindex="-1"></a>    result_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"AUC*"</span>, <span class="st">"KL*"</span>, <span class="st">"Smallest"</span>, <span class="st">"Largest"</span>)</span>
+<span id="cb49-67"><a href="#cb49-67" aria-hidden="true" tabindex="-1"></a>    result_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"AUC*"</span>, <span class="st">"KL*"</span>, <span class="st">"High ICI"</span>, <span class="st">"Smallest"</span>, <span class="st">"Largest"</span>)</span>
 <span id="cb49-68"><a href="#cb49-68" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
 <span id="cb49-69"><a href="#cb49-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">value_type =</span> <span class="st">"sd"</span>)</span>
 <span id="cb49-70"><a href="#cb49-70" aria-hidden="true" tabindex="-1"></a></span>
@@ -2330,8 +2416,8 @@ Isotonic
 </thead>
 <tbody>
 <tr class="odd">
-<td rowspan="16" style="text-align: center; vertical-align: top !important;">1</td>
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">0 noise variables</td>
+<td rowspan="20" style="text-align: center; vertical-align: top !important;">1</td>
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">0 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.23 (0)</td>
 <td style="text-align: center;">0.12 (0.01)</td>
@@ -2345,33 +2431,143 @@ Isotonic
 </tr>
 <tr class="even">
 <td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.03 (0.01)</td>
-<td style="text-align: center;">0.2 (0.03)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.19 (0.04)</td>
-<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.05 (0.01)</td>
+<td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.34 (0.12)</td>
+<td style="text-align: center;">0.1 (0.01)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.31 (0.11)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">AUC*</td>
 <td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.13 (0.06)</td>
+<td style="text-align: center;">0.01 (0.01)</td>
+<td style="text-align: center;">0.05 (0.04)</td>
 <td style="text-align: center;">0.2 (0)</td>
 <td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.15 (0.03)</td>
+<td style="text-align: center;">0.13 (0.03)</td>
 <td style="text-align: center;">0.2 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.31 (0.09)</td>
+<td style="text-align: center;">0.3 (0.1)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">KL*</td>
 <td style="text-align: center;">0.2 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.08 (0.02)</td>
+<td style="text-align: center;">0.02 (0.01)</td>
+<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.11 (0.02)</td>
+<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.31 (0.1)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.06 (0.01)</td>
+<td style="text-align: center;">0.17 (0.1)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.02 (0.01)</td>
+<td style="text-align: center;">0.2 (0.06)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.36 (0.12)</td>
+</tr>
+<tr class="even">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">10 noise variables</td>
+<td style="text-align: center;">Smallest</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.12 (0.01)</td>
+<td style="text-align: center;">1.88 (0.06)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">2.04 (0.05)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">2.04 (0.06)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">Largest</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.04 (0.01)</td>
+<td style="text-align: center;">0.04 (0.01)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.15 (0.03)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.31 (0.12)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">AUC*</td>
+<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.01 (0.01)</td>
+<td style="text-align: center;">0.07 (0.03)</td>
+<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.14 (0.03)</td>
+<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.3 (0.11)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">KL*</td>
+<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.11 (0.02)</td>
+<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.3 (0.11)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.11 (0.01)</td>
+<td style="text-align: center;">0.43 (0.18)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.37 (0.03)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.35 (0.12)</td>
+</tr>
+<tr class="odd">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">50 noise variables</td>
+<td style="text-align: center;">Smallest</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.12 (0.01)</td>
+<td style="text-align: center;">1.88 (0.06)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">2.04 (0.05)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">2.04 (0.06)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">Largest</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.05 (0.01)</td>
+<td style="text-align: center;">0.05 (0.01)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.19 (0.02)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.33 (0.11)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">AUC*</td>
+<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.07 (0.03)</td>
 <td style="text-align: center;">0.2 (0)</td>
 <td style="text-align: center;">0.02 (0)</td>
 <td style="text-align: center;">0.14 (0.03)</td>
@@ -2379,57 +2575,32 @@ Isotonic
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">0.31 (0.1)</td>
 </tr>
-<tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">10 noise variables</td>
-<td style="text-align: center;">Smallest</td>
-<td style="text-align: center;">0.23 (0)</td>
-<td style="text-align: center;">0.12 (0.01)</td>
-<td style="text-align: center;">1.88 (0.06)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">2.04 (0.05)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">2.04 (0.06)</td>
-</tr>
-<tr class="even">
-<td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.11 (0.02)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.27 (0.09)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: center;">AUC*</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0.01)</td>
-<td style="text-align: center;">0.06 (0.03)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.13 (0.02)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.09)</td>
-</tr>
 <tr class="even">
 <td style="text-align: center;">KL*</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.11 (0.02)</td>
-<td style="text-align: center;">0.2 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.27 (0.09)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.12 (0.02)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.31 (0.1)</td>
 </tr>
 <tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">50 noise variables</td>
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.13 (0.01)</td>
+<td style="text-align: center;">0.69 (0.09)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.03 (0.01)</td>
+<td style="text-align: center;">0.43 (0.04)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.34 (0.12)</td>
+</tr>
+<tr class="even">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">100 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.23 (0)</td>
 <td style="text-align: center;">0.12 (0.01)</td>
@@ -2441,94 +2612,57 @@ Isotonic
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">2.04 (0.06)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.05 (0.01)</td>
+<td style="text-align: center;">0.05 (0.01)</td>
+<td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.11 (0.02)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.11)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: center;">AUC*</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.08 (0.03)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.14 (0.03)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.11)</td>
-</tr>
-<tr class="even">
-<td style="text-align: center;">KL*</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.11 (0.02)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.29 (0.11)</td>
-</tr>
-<tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">100 noise variables</td>
-<td style="text-align: center;">Smallest</td>
-<td style="text-align: center;">0.23 (0)</td>
-<td style="text-align: center;">0.12 (0.01)</td>
-<td style="text-align: center;">1.88 (0.06)</td>
+<td style="text-align: center;">0.2 (0.01)</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">2.04 (0.05)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">2.04 (0.06)</td>
+<td style="text-align: center;">0.32 (0.1)</td>
 </tr>
 <tr class="even">
-<td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.11 (0.02)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.1)</td>
-</tr>
-<tr class="odd">
 <td style="text-align: center;">AUC*</td>
 <td style="text-align: center;">0.2 (0)</td>
 <td style="text-align: center;">0.02 (0.01)</td>
 <td style="text-align: center;">0.09 (0.03)</td>
 <td style="text-align: center;">0.2 (0)</td>
 <td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.14 (0.03)</td>
+<td style="text-align: center;">0.15 (0.03)</td>
 <td style="text-align: center;">0.2 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.32 (0.12)</td>
-</tr>
-<tr class="even">
-<td style="text-align: center;">KL*</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.11 (0.02)</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.29 (0.09)</td>
+<td style="text-align: center;">0.32 (0.11)</td>
 </tr>
 <tr class="odd">
-<td rowspan="16" style="text-align: center; vertical-align: top !important;">2</td>
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">0 noise variables</td>
+<td style="text-align: center;">KL*</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.02 (0.01)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.12 (0.02)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.3 (0.11)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.24 (0)</td>
+<td style="text-align: center;">0.14 (0.01)</td>
+<td style="text-align: center;">0.8 (0.06)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.03 (0)</td>
+<td style="text-align: center;">0.44 (0.03)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.34 (0.11)</td>
+</tr>
+<tr class="odd">
+<td rowspan="20" style="text-align: center; vertical-align: top !important;">2</td>
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">0 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.19 (0)</td>
 <td style="text-align: center;">0.23 (0.01)</td>
@@ -2543,72 +2677,23 @@ Isotonic
 <tr class="even">
 <td style="text-align: center;">Largest</td>
 <td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
 <td style="text-align: center;">0.02 (0.01)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.04 (0)</td>
-<td style="text-align: center;">0.81 (0.21)</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.22 (0.07)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: center;">AUC*</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.03 (0.01)</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.04 (0)</td>
-<td style="text-align: center;">0.78 (0.21)</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.21 (0.07)</td>
-</tr>
-<tr class="even">
-<td style="text-align: center;">KL*</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.04 (0)</td>
-<td style="text-align: center;">0.8 (0.22)</td>
+<td style="text-align: center;">0.88 (0.03)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">0.21 (0.06)</td>
 </tr>
 <tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">10 noise variables</td>
-<td style="text-align: center;">Smallest</td>
-<td style="text-align: center;">0.19 (0)</td>
-<td style="text-align: center;">0.23 (0.01)</td>
-<td style="text-align: center;">3.21 (0.2)</td>
-<td style="text-align: center;">0.13 (0)</td>
-<td style="text-align: center;">0.03 (0)</td>
-<td style="text-align: center;">1.89 (0.09)</td>
-<td style="text-align: center;">0.13 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">1.72 (0.28)</td>
-</tr>
-<tr class="even">
-<td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.01 (0.01)</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.04 (0)</td>
-<td style="text-align: center;">0.86 (0.15)</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.2 (0.07)</td>
-</tr>
-<tr class="odd">
 <td style="text-align: center;">AUC*</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.03 (0.02)</td>
+<td style="text-align: center;">0.03 (0.03)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.04 (0)</td>
-<td style="text-align: center;">0.76 (0.22)</td>
+<td style="text-align: center;">0.78 (0.22)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">0.21 (0.07)</td>
@@ -2617,22 +2702,95 @@ Isotonic
 <td style="text-align: center;">KL*</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.01 (0.01)</td>
+<td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.04 (0)</td>
-<td style="text-align: center;">0.85 (0.16)</td>
+<td style="text-align: center;">0.86 (0.14)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.21 (0.08)</td>
+<td style="text-align: center;">0.21 (0.07)</td>
 </tr>
 <tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">50 noise variables</td>
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.05 (0)</td>
+<td style="text-align: center;">0.13 (0.13)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.05 (0.01)</td>
+<td style="text-align: center;">0.84 (0.08)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.24 (0.07)</td>
+</tr>
+<tr class="even">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">10 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.19 (0)</td>
 <td style="text-align: center;">0.23 (0.01)</td>
 <td style="text-align: center;">3.21 (0.2)</td>
 <td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.03 (0.01)</td>
+<td style="text-align: center;">1.89 (0.09)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">1.72 (0.28)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">Largest</td>
+<td style="text-align: center;">0.13 (0)</td>
 <td style="text-align: center;">0.03 (0)</td>
+<td style="text-align: center;">0.03 (0.01)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.05 (0)</td>
+<td style="text-align: center;">0.87 (0.04)</td>
+<td style="text-align: center;">0.12 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.22 (0.08)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">AUC*</td>
+<td style="text-align: center;">0.12 (0)</td>
+<td style="text-align: center;">0.01 (0.01)</td>
+<td style="text-align: center;">0.04 (0.07)</td>
+<td style="text-align: center;">0.12 (0)</td>
+<td style="text-align: center;">0.04 (0)</td>
+<td style="text-align: center;">0.76 (0.23)</td>
+<td style="text-align: center;">0.12 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.21 (0.07)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">KL*</td>
+<td style="text-align: center;">0.12 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.12 (0)</td>
+<td style="text-align: center;">0.04 (0)</td>
+<td style="text-align: center;">0.89 (0.08)</td>
+<td style="text-align: center;">0.12 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.21 (0.07)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.14 (0)</td>
+<td style="text-align: center;">0.08 (0)</td>
+<td style="text-align: center;">0.29 (0.14)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.06 (0.01)</td>
+<td style="text-align: center;">1.23 (0.36)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.26 (0.09)</td>
+</tr>
+<tr class="odd">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">50 noise variables</td>
+<td style="text-align: center;">Smallest</td>
+<td style="text-align: center;">0.19 (0)</td>
+<td style="text-align: center;">0.23 (0.01)</td>
+<td style="text-align: center;">3.21 (0.2)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.03 (0.01)</td>
 <td style="text-align: center;">1.89 (0.09)</td>
 <td style="text-align: center;">0.13 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
@@ -2640,15 +2798,15 @@ Isotonic
 </tr>
 <tr class="even">
 <td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.12 (0)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.03 (0)</td>
+<td style="text-align: center;">0.04 (0.01)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.05 (0)</td>
+<td style="text-align: center;">0.86 (0.04)</td>
+<td style="text-align: center;">0.13 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.01 (0.01)</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.04 (0)</td>
-<td style="text-align: center;">0.87 (0.12)</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.22 (0.08)</td>
+<td style="text-align: center;">0.22 (0.07)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">AUC*</td>
@@ -2657,25 +2815,37 @@ Isotonic
 <td style="text-align: center;">0.04 (0.02)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.04 (0)</td>
-<td style="text-align: center;">0.74 (0.22)</td>
+<td style="text-align: center;">0.73 (0.23)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.21 (0.07)</td>
+<td style="text-align: center;">0.2 (0.07)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">KL*</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.01 (0.01)</td>
+<td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.04 (0)</td>
-<td style="text-align: center;">0.86 (0.13)</td>
+<td style="text-align: center;">0.89 (0.05)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">0.21 (0.07)</td>
 </tr>
 <tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">100 noise variables</td>
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.14 (0)</td>
+<td style="text-align: center;">0.09 (0)</td>
+<td style="text-align: center;">0.43 (0.14)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.06 (0.01)</td>
+<td style="text-align: center;">1.79 (0.16)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.23 (0.08)</td>
+</tr>
+<tr class="even">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">100 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.19 (0)</td>
 <td style="text-align: center;">0.23 (0.01)</td>
@@ -2687,19 +2857,19 @@ Isotonic
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">1.72 (0.28)</td>
 </tr>
-<tr class="even">
-<td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.01 (0.01)</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.04 (0)</td>
-<td style="text-align: center;">0.88 (0.1)</td>
-<td style="text-align: center;">0.12 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.2 (0.07)</td>
-</tr>
 <tr class="odd">
+<td style="text-align: center;">Largest</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.04 (0)</td>
+<td style="text-align: center;">0.04 (0.01)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.05 (0)</td>
+<td style="text-align: center;">0.86 (0.03)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.22 (0.07)</td>
+</tr>
+<tr class="even">
 <td style="text-align: center;">AUC*</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
@@ -2709,23 +2879,35 @@ Isotonic
 <td style="text-align: center;">0.73 (0.22)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.22 (0.07)</td>
+<td style="text-align: center;">0.21 (0.07)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: center;">KL*</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.01 (0.01)</td>
+<td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.04 (0)</td>
-<td style="text-align: center;">0.87 (0.1)</td>
+<td style="text-align: center;">0.89 (0.03)</td>
 <td style="text-align: center;">0.12 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.2 (0.08)</td>
+<td style="text-align: center;">0.21 (0.07)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.14 (0)</td>
+<td style="text-align: center;">0.09 (0)</td>
+<td style="text-align: center;">0.48 (0.08)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.07 (0)</td>
+<td style="text-align: center;">1.85 (0.11)</td>
+<td style="text-align: center;">0.13 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.23 (0.07)</td>
 </tr>
 <tr class="odd">
-<td rowspan="16" style="text-align: center; vertical-align: top !important;">3</td>
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">0 noise variables</td>
+<td rowspan="20" style="text-align: center; vertical-align: top !important;">3</td>
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">0 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.24 (0)</td>
 <td style="text-align: center;">0.07 (0.01)</td>
@@ -2739,15 +2921,15 @@ Isotonic
 </tr>
 <tr class="even">
 <td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.04 (0)</td>
+<td style="text-align: center;">0.11 (0.03)</td>
+<td style="text-align: center;">0.23 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.09 (0.02)</td>
+<td style="text-align: center;">0.23 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.04 (0.01)</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.28 (0.11)</td>
+<td style="text-align: center;">0.29 (0.1)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">AUC*</td>
@@ -2759,7 +2941,7 @@ Isotonic
 <td style="text-align: center;">0.04 (0.01)</td>
 <td style="text-align: center;">0.22 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.1)</td>
+<td style="text-align: center;">0.28 (0.11)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">KL*</td>
@@ -2768,13 +2950,25 @@ Isotonic
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">0.22 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.04 (0.01)</td>
+<td style="text-align: center;">0.05 (0.01)</td>
 <td style="text-align: center;">0.22 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.28 (0.11)</td>
+<td style="text-align: center;">0.29 (0.11)</td>
 </tr>
 <tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">10 noise variables</td>
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.25 (0)</td>
+<td style="text-align: center;">0.11 (0)</td>
+<td style="text-align: center;">0.63 (0.09)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.27 (0.05)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.37 (0.11)</td>
+</tr>
+<tr class="even">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">10 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.24 (0)</td>
 <td style="text-align: center;">0.07 (0.01)</td>
@@ -2786,19 +2980,19 @@ Isotonic
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">1.67 (0.21)</td>
 </tr>
-<tr class="even">
-<td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.05 (0.01)</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.27 (0.11)</td>
-</tr>
 <tr class="odd">
+<td style="text-align: center;">Largest</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.05 (0)</td>
+<td style="text-align: center;">0.11 (0.02)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.12 (0.03)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.31 (0.1)</td>
+</tr>
+<tr class="even">
 <td style="text-align: center;">AUC*</td>
 <td style="text-align: center;">0.22 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
@@ -2808,22 +3002,34 @@ Isotonic
 <td style="text-align: center;">0.05 (0.01)</td>
 <td style="text-align: center;">0.22 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.29 (0.11)</td>
-</tr>
-<tr class="even">
-<td style="text-align: center;">KL*</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.05 (0.01)</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.27 (0.1)</td>
+<td style="text-align: center;">0.29 (0.1)</td>
 </tr>
 <tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">50 noise variables</td>
+<td style="text-align: center;">KL*</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0.01)</td>
+<td style="text-align: center;">0 (0)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.06 (0.02)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.28 (0.1)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.25 (0)</td>
+<td style="text-align: center;">0.13 (0.01)</td>
+<td style="text-align: center;">0.93 (0.11)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.37 (0.03)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.38 (0.11)</td>
+</tr>
+<tr class="odd">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">50 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.24 (0)</td>
 <td style="text-align: center;">0.07 (0.01)</td>
@@ -2837,15 +3043,15 @@ Isotonic
 </tr>
 <tr class="even">
 <td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.06 (0.01)</td>
+<td style="text-align: center;">0.12 (0.02)</td>
+<td style="text-align: center;">0.23 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.01 (0.01)</td>
-<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.16 (0.03)</td>
+<td style="text-align: center;">0.23 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.05 (0.01)</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.12)</td>
+<td style="text-align: center;">0.34 (0.1)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">AUC*</td>
@@ -2857,22 +3063,34 @@ Isotonic
 <td style="text-align: center;">0.05 (0.01)</td>
 <td style="text-align: center;">0.22 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.27 (0.11)</td>
+<td style="text-align: center;">0.27 (0.12)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">KL*</td>
 <td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.01 (0.01)</td>
+<td style="text-align: center;">0.02 (0.01)</td>
+<td style="text-align: center;">0 (0)</td>
 <td style="text-align: center;">0.22 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.05 (0.01)</td>
+<td style="text-align: center;">0.07 (0.02)</td>
 <td style="text-align: center;">0.22 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.29 (0.12)</td>
+<td style="text-align: center;">0.28 (0.1)</td>
 </tr>
 <tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">100 noise variables</td>
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.26 (0)</td>
+<td style="text-align: center;">0.14 (0.01)</td>
+<td style="text-align: center;">1.29 (0.17)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.4 (0.03)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.42 (0.11)</td>
+</tr>
+<tr class="even">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">100 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.24 (0)</td>
 <td style="text-align: center;">0.07 (0.01)</td>
@@ -2884,45 +3102,57 @@ Isotonic
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">1.67 (0.21)</td>
 </tr>
-<tr class="even">
-<td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.06 (0.02)</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.29 (0.1)</td>
-</tr>
 <tr class="odd">
+<td style="text-align: center;">Largest</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.06 (0)</td>
+<td style="text-align: center;">0.13 (0.03)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.18 (0.03)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.35 (0.12)</td>
+</tr>
+<tr class="even">
 <td style="text-align: center;">AUC*</td>
 <td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.02 (0.01)</td>
+<td style="text-align: center;">0.01 (0.01)</td>
 <td style="text-align: center;">0.07 (0.03)</td>
 <td style="text-align: center;">0.22 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">0.05 (0.02)</td>
 <td style="text-align: center;">0.22 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.28 (0.11)</td>
-</tr>
-<tr class="even">
-<td style="text-align: center;">KL*</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.06 (0.02)</td>
-<td style="text-align: center;">0.22 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.29 (0.1)</td>
+<td style="text-align: center;">0.29 (0.11)</td>
 </tr>
 <tr class="odd">
-<td rowspan="16" style="text-align: center; vertical-align: top !important;">4</td>
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">0 noise variables</td>
+<td style="text-align: center;">KL*</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0 (0)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.08 (0.02)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.3 (0.12)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.26 (0)</td>
+<td style="text-align: center;">0.15 (0.01)</td>
+<td style="text-align: center;">1.45 (0.18)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.42 (0.04)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.43 (0.11)</td>
+</tr>
+<tr class="odd">
+<td rowspan="20" style="text-align: center; vertical-align: top !important;">4</td>
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">0 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.24 (0)</td>
 <td style="text-align: center;">0.08 (0.01)</td>
@@ -2936,82 +3166,82 @@ Isotonic
 </tr>
 <tr class="even">
 <td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.07 (0.01)</td>
 <td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.14 (0.02)</td>
+<td style="text-align: center;">0.03 (0)</td>
+<td style="text-align: center;">0.02 (0.01)</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.11)</td>
+<td style="text-align: center;">0.12 (0.02)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.32 (0.12)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">AUC*</td>
 <td style="text-align: center;">0.2 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.07 (0.01)</td>
+<td style="text-align: center;">0.04 (0.02)</td>
+<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.13 (0.02)</td>
+<td style="text-align: center;">0.2 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.31 (0.1)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">KL*</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.14 (0.02)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.12 (0.01)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.29 (0.1)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.07 (0.01)</td>
+<td style="text-align: center;">0.18 (0.2)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.24 (0.13)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.36 (0.19)</td>
+</tr>
+<tr class="even">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">10 noise variables</td>
+<td style="text-align: center;">Smallest</td>
+<td style="text-align: center;">0.24 (0)</td>
+<td style="text-align: center;">0.08 (0.01)</td>
+<td style="text-align: center;">2.37 (0.3)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">2.06 (0.11)</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">2.06 (0.11)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">Largest</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.04 (0.01)</td>
+<td style="text-align: center;">0.02 (0.01)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.17 (0.02)</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">0.31 (0.11)</td>
 </tr>
 <tr class="even">
-<td style="text-align: center;">KL*</td>
-<td style="text-align: center;">0.2 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.07 (0.01)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.14 (0.02)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.11)</td>
-</tr>
-<tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">10 noise variables</td>
-<td style="text-align: center;">Smallest</td>
-<td style="text-align: center;">0.24 (0)</td>
-<td style="text-align: center;">0.08 (0.01)</td>
-<td style="text-align: center;">2.37 (0.3)</td>
-<td style="text-align: center;">0.23 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">2.06 (0.11)</td>
-<td style="text-align: center;">0.23 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">2.06 (0.11)</td>
-</tr>
-<tr class="even">
-<td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.08 (0.01)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.14 (0.02)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.11)</td>
-</tr>
-<tr class="odd">
 <td style="text-align: center;">AUC*</td>
 <td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.1 (0.02)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.14 (0.02)</td>
-<td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.1)</td>
-</tr>
-<tr class="even">
-<td style="text-align: center;">KL*</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.08 (0.01)</td>
+<td style="text-align: center;">0.09 (0.03)</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.02 (0)</td>
 <td style="text-align: center;">0.14 (0.02)</td>
@@ -3020,7 +3250,31 @@ Isotonic
 <td style="text-align: center;">0.3 (0.11)</td>
 </tr>
 <tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">50 noise variables</td>
+<td style="text-align: center;">KL*</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.03 (0.01)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.16 (0.02)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.31 (0.09)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.23 (0)</td>
+<td style="text-align: center;">0.11 (0)</td>
+<td style="text-align: center;">0.32 (0.28)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.4 (0.13)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.43 (0.21)</td>
+</tr>
+<tr class="odd">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">50 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.24 (0)</td>
 <td style="text-align: center;">0.08 (0.01)</td>
@@ -3034,15 +3288,15 @@ Isotonic
 </tr>
 <tr class="even">
 <td style="text-align: center;">Largest</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.04 (0.01)</td>
+<td style="text-align: center;">0.02 (0.01)</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.09 (0.02)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.14 (0.02)</td>
+<td style="text-align: center;">0.21 (0.02)</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.1)</td>
+<td style="text-align: center;">0.33 (0.1)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">AUC*</td>
@@ -3051,25 +3305,37 @@ Isotonic
 <td style="text-align: center;">0.13 (0.03)</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.14 (0.02)</td>
+<td style="text-align: center;">0.15 (0.02)</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.08)</td>
+<td style="text-align: center;">0.29 (0.11)</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">KL*</td>
 <td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.09 (0.02)</td>
-<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.03 (0.01)</td>
 <td style="text-align: center;">0.02 (0)</td>
-<td style="text-align: center;">0.14 (0.02)</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.3 (0.11)</td>
+<td style="text-align: center;">0.19 (0.02)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.35 (0.1)</td>
 </tr>
 <tr class="odd">
-<td rowspan="4" style="text-align: left; vertical-align: top !important;">100 noise variables</td>
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.24 (0)</td>
+<td style="text-align: center;">0.13 (0.01)</td>
+<td style="text-align: center;">0.42 (0.05)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.42 (0.04)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.38 (0.11)</td>
+</tr>
+<tr class="even">
+<td rowspan="5" style="text-align: left; vertical-align: top !important;">100 noise variables</td>
 <td style="text-align: center;">Smallest</td>
 <td style="text-align: center;">0.24 (0)</td>
 <td style="text-align: center;">0.08 (0.01)</td>
@@ -3081,41 +3347,53 @@ Isotonic
 <td style="text-align: center;">0.01 (0)</td>
 <td style="text-align: center;">2.06 (0.11)</td>
 </tr>
-<tr class="even">
-<td style="text-align: center;">Largest</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.1 (0.02)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.14 (0.02)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.31 (0.1)</td>
-</tr>
 <tr class="odd">
+<td style="text-align: center;">Largest</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.05 (0.01)</td>
+<td style="text-align: center;">0.02 (0.01)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.22 (0.02)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.36 (0.11)</td>
+</tr>
+<tr class="even">
 <td style="text-align: center;">AUC*</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.02 (0.01)</td>
-<td style="text-align: center;">0.15 (0.04)</td>
+<td style="text-align: center;">0.14 (0.03)</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.02 (0)</td>
 <td style="text-align: center;">0.15 (0.02)</td>
 <td style="text-align: center;">0.21 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.33 (0.11)</td>
+<td style="text-align: center;">0.33 (0.1)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">KL*</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.04 (0.01)</td>
+<td style="text-align: center;">0.02 (0)</td>
+<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.2 (0.02)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.01 (0)</td>
+<td style="text-align: center;">0.37 (0.11)</td>
 </tr>
 <tr class="even">
-<td style="text-align: center;">KL*</td>
-<td style="text-align: center;">0.21 (0)</td>
+<td style="text-align: center;">High ICI</td>
+<td style="text-align: center;">0.24 (0)</td>
+<td style="text-align: center;">0.13 (0.01)</td>
+<td style="text-align: center;">0.49 (0.05)</td>
+<td style="text-align: center;">0.22 (0)</td>
+<td style="text-align: center;">0.03 (0)</td>
+<td style="text-align: center;">0.47 (0.06)</td>
+<td style="text-align: center;">0.22 (0)</td>
 <td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.1 (0.02)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.14 (0.02)</td>
-<td style="text-align: center;">0.21 (0)</td>
-<td style="text-align: center;">0.01 (0)</td>
-<td style="text-align: center;">0.31 (0.1)</td>
+<td style="text-align: center;">0.4 (0.1)</td>
 </tr>
 </tbody>
 </table>
@@ -3125,6 +3403,89 @@ Isotonic
 </div>
 </div>
 </figure>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+
+</div>
+</div>
+</section>
+<section id="before-vs.-after-recalibration" class="level3" data-number="5.5.5">
+<h3 data-number="5.5.5" class="anchored" data-anchor-id="before-vs.-after-recalibration"><span class="header-section-number">5.5.5</span> Before vs.&nbsp;After Recalibration</h3>
+<p>Let us visualize how the KL divergence and the ICI of a selected model changes after the scores are recalibrated, either using Platt scaling or isotonic regression.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>table_models_interest_mean <span class="ot">&lt;-</span> </span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  table_models_interest_mean <span class="sc">|&gt;</span> </span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">no_noise =</span> <span class="fu">fct_recode</span>(no_noise, <span class="st">`</span><span class="at">0 noise variable</span><span class="st">`</span> <span class="ot">=</span> <span class="st">"0 noise variables"</span>),</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">dgp =</span> <span class="fu">str_c</span>(<span class="st">"DGP "</span>, dgp)</span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>initial_points <span class="ot">&lt;-</span> table_models_interest_mean <span class="sc">|&gt;</span> </span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(recalib <span class="sc">==</span> <span class="st">"None"</span>)</span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>points_after_c <span class="ot">&lt;-</span> initial_points <span class="sc">|&gt;</span> </span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(dgp, no_noise, result_type, ici, kl) <span class="sc">|&gt;</span> </span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>    table_models_interest_mean <span class="sc">|&gt;</span> </span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(recalib <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Platt"</span>, <span class="st">"Isotonic"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(dgp, no_noise, recalib, result_type, ici, kl) <span class="sc">|&gt;</span> </span>
+<span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rename</span>(<span class="at">ici_end =</span> ici, <span class="at">kl_end =</span> kl),</span>
+<span id="cb50-18"><a href="#cb50-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="st">"many-to-many"</span> <span class="co"># (Platt and Isotonic)</span></span>
+<span id="cb50-19"><a href="#cb50-19" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(dgp, no_noise, result_type)`</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>p_kl_vs_ici_recalib <span class="ot">&lt;-</span> </span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> initial_points,</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> ici, <span class="at">y =</span> kl, <span class="at">shape =</span> result_type),</span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="dv">2</span></span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(</span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> points_after_c,</span>
+<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">mapping =</span> <span class="fu">aes</span>(</span>
+<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> ici, <span class="at">y =</span> kl, <span class="at">xend =</span> ici_end, <span class="at">yend =</span> kl_end,</span>
+<span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">colour =</span> recalib, <span class="at">linetype =</span> recalib</span>
+<span id="cb52-13"><a href="#cb52-13" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb52-14"><a href="#cb52-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">arrow =</span> <span class="fu">arrow</span>(<span class="at">length=</span><span class="fu">unit</span>(.<span class="dv">2</span>, <span class="st">'cm'</span>))</span>
+<span id="cb52-15"><a href="#cb52-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb52-16"><a href="#cb52-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(dgp<span class="sc">~</span>no_noise, <span class="at">scales =</span> <span class="st">"free"</span>) <span class="sc">+</span></span>
+<span id="cb52-17"><a href="#cb52-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_shape_manual</span>(</span>
+<span id="cb52-18"><a href="#cb52-18" aria-hidden="true" tabindex="-1"></a>    <span class="cn">NULL</span>,</span>
+<span id="cb52-19"><a href="#cb52-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> <span class="fu">c</span>(</span>
+<span id="cb52-20"><a href="#cb52-20" aria-hidden="true" tabindex="-1"></a>      <span class="co"># "Smallest" = 1,</span></span>
+<span id="cb52-21"><a href="#cb52-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">"AUC*"</span> <span class="ot">=</span> <span class="dv">19</span>,</span>
+<span id="cb52-22"><a href="#cb52-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">"KL*"</span> <span class="ot">=</span> <span class="dv">15</span>,</span>
+<span id="cb52-23"><a href="#cb52-23" aria-hidden="true" tabindex="-1"></a>      <span class="st">"High ICI"</span> <span class="ot">=</span> <span class="dv">17</span></span>
+<span id="cb52-24"><a href="#cb52-24" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb52-25"><a href="#cb52-25" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb52-26"><a href="#cb52-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"ICI"</span>, <span class="at">y =</span> <span class="st">"KL Divergence"</span>) <span class="sc">+</span></span>
+<span id="cb52-27"><a href="#cb52-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="st">"Recalibration"</span>, <span class="at">values =</span> colour_recalib) <span class="sc">+</span></span>
+<span id="cb52-28"><a href="#cb52-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_linetype_discrete</span>(<span class="st">"Recalibration"</span>) <span class="sc">+</span></span>
+<span id="cb52-29"><a href="#cb52-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_paper</span>()</span>
+<span id="cb52-30"><a href="#cb52-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-31"><a href="#cb52-31" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(p_kl_vs_ici_recalib, <span class="at">file =</span> <span class="st">"../figs/kl_vs_ici_recalib.pdf"</span>, <span class="at">width =</span> <span class="dv">12</span>, <span class="at">height =</span> <span class="dv">8</span>)</span>
+<span id="cb52-32"><a href="#cb52-32" aria-hidden="true" tabindex="-1"></a>p_kl_vs_ici_recalib</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-kl-vs-ici-recalib-dgp-1" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-kl-vs-ici-recalib-dgp-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.19: Average KL divergence and ICI before and after recalibration of the estimated scores for DGP 1, for selected models.
+</figcaption>
+<div aria-describedby="fig-kl-vs-ici-recalib-dgp-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="simul-xgb_files/figure-html/fig-kl-vs-ici-recalib-dgp-1-1.png" class="img-fluid figure-img" width="1152">
+</div>
+</figure>
+</div>
 </div>
 </div>
 
@@ -3554,8 +3915,8 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./references.html" class="pagination-link" aria-label="References">
-        <span class="nav-page-text">References</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="./example_spambase_beta.html" class="pagination-link" aria-label="Illustration on Abalone dataset I">
+        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset I</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

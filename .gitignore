@@ -2,7 +2,9 @@
 .gitignore
 .Rhistory
 output/simul/
+output/real-data
 figs/
+data/
 # OS generated files #
 ######################
 .DS_Store

@@ -75,11 +75,20 @@ datasets <- tribble(
   "spambase", "is_spam"
 )
 
-load(str_c("output/real-data/xgb_resul_", name, ".rda"))
 ```
 
-```{r load-resul_xgb, eval=FALSE}
-files <- str_c("output/real-data/xgb_resul_", datasets$name, ".rda")
+The priors:
+```{r load-prior}
+for (name in datasets$name) {
+  # The Prior on the distribution of the scores
+  load(str_c("../output/real-data/priors_", name, ".rda"))
+}
+```
+
+
+The results:
+```{r load-resul_xgb}
+files <- str_c("../output/real-data/xgb_resul_", datasets$name, ".rda")
 # Loop through each file and load it with a new name
 walk2(files, datasets$name, ~{
   loaded_object_name <- load(.x)
@@ -87,3 +96,810 @@ walk2(files, datasets$name, ~{
   assign(new_name, get(loaded_object_name), envir = .GlobalEnv)
 })
 ```
+
+
+## Distribution of Scores
+
+```{r}
+#| code-fold: true
+#| code-summary: Graph functions
+plot_bp_interest <- function(metrics_interest,
+                             scores_hist_interest,
+                             label,
+                             recalib_method) {
+  subtitle <- str_c(
+    "Depth = ", metrics_interest$max_depth, ", ",
+    "AUC = ", round(metrics_interest$AUC, 2), ", \n",
+    "Brier = ", round(metrics_interest$brier, 2), ",",
+    "ICI = ", round(metrics_interest$ici, 2), ", ",
+    "KL = ", round(metrics_interest$KL_20_true_probas, 2)
+  )
+  
+  if (recalib_method == "none") {
+    plot(
+      main = str_c(label, " (iter = ", metrics_interest$nb_iter,")"),
+      scores_hist_interest$test,
+      xlab = latex2exp::TeX("$\\hat{s}(x)$"),
+      ylab = ""
+    )
+  } else if (recalib_method == "platt") {
+    plot(
+      main = str_c(label, " (iter = ", metrics_interest$nb_iter,")"),
+      scores_hist_interest$test_c_platt,
+      xlab = latex2exp::TeX("$\\hat{s}(x)$"),
+      ylab = "",
+      col = colour_recalib[["Platt"]]
+    )
+  } else if (recalib_method == "iso") {
+    plot(
+      main = str_c(label, " (iter = ", metrics_interest$nb_iter,")"),
+      scores_hist_interest$test_c_iso,
+      xlab = latex2exp::TeX("$\\hat{s}(x)$"),
+      ylab = "",
+      col = colour_recalib[["Isotonic"]]
+    )
+  }
+  mtext(side = 3, line = -0.25, adj = .5, subtitle, cex = .5)
+}
+
+plot_bp_xgb <- function(paper_version = FALSE) {
+  max_depth_val <- map_dbl(scores_hist_all, ~.x[[1]]$max_depth)
+  true_prob <- prior$scores_gamsel$scores_train
+  
+  for (recalib_method in c("none", "platt", "iso")) {
+    
+    i_method <- match(recalib_method, c("none", "platt", "iso"))
+    recalib_method_lab <- c("None", "Platt", "Isotonic")[i_method]
+    
+    # The metrics for the corresponding results, on the validation set
+    metrics_xgb_current_valid <-
+      metrics_xgb_all |>
+      filter(
+        sample == "Validation",
+        recalib == "None"
+      )
+    # and on the test set
+    metrics_xgb_current_test <-
+      metrics_xgb_all |>
+      filter(
+        sample == "Test",
+        recalib == recalib_method_lab
+      )
+    
+    if (paper_version == FALSE) {
+      hist(
+        true_prob,
+        breaks = seq(0, 1, by = .05),
+        xlab = "p", ylab = "",
+        main = "Prior Probabilities",
+        xlim = c(0, 1)
+      )
+      mtext(
+        side = 2, recalib_method_lab, line = 2.5, cex = 1,
+        font.lab = 2
+      )
+      # Iterations of interest----
+      ## Start of iterations
+      scores_hist_start <- scores_hist_all[[1]][[1]]
+      metrics_start <- metrics_xgb_current_test |>
+        filter(
+          nb_iter == scores_hist_start$nb_iter,
+          max_depth == scores_hist_start$max_depth
+        )
+      
+      plot_bp_interest(
+        metrics_interest = metrics_start,
+        scores_hist_interest = scores_hist_start,
+        label = "Start",
+        recalib_method = recalib_method
+      )
+      
+      ## End of iterations
+      scores_hist_end <- scores_hist_all[[1]][[length(scores_hist_all[[1]])]]
+      metrics_end <- metrics_xgb_current_test |>
+        filter(
+          nb_iter == scores_hist_end$nb_iter,
+          max_depth == scores_hist_start$max_depth
+        )
+      plot_bp_interest(
+        metrics_interest = metrics_end,
+        scores_hist_interest = scores_hist_end,
+        label = "End",
+        recalib_method = recalib_method
+      )
+    }
+    ## Iteration with max AUC on validation set
+    metrics_valid_auc_star <-
+      metrics_xgb_current_valid |> arrange(desc(AUC)) |> dplyr::slice(1)
+    nb_iter_auc <- metrics_valid_auc_star$nb_iter
+    max_depth_auc_star <- metrics_valid_auc_star$max_depth
+    i_max_depth_auc_star <- which(max_depth_val == max_depth_auc_star)
+    
+    metrics_max_auc <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_auc, max_depth == max_depth_auc_star)
+    # Note: indexing at 0 here...
+    ind_auc <- which(map_dbl(scores_hist_all[[i_max_depth_auc_star]], "nb_iter") == nb_iter_auc)
+    scores_hist_max_auc <- scores_hist_all[[i_max_depth_auc_star]][[ind_auc]]
+    plot_bp_interest(
+      metrics_interest = metrics_max_auc,
+      scores_hist_interest = scores_hist_max_auc,
+      label = "AUC*",
+      recalib_method = recalib_method
+    )
+    if (paper_version == TRUE) {
+      mtext(
+        side = 2, recalib_method_lab, line = 2.5, cex = 1,
+        font.lab = 2
+      )
+    }
+    
+    ## Min Brier on validation set
+    metrics_valid_brier_star <-
+      metrics_xgb_current_valid |> arrange(brier) |> dplyr::slice(1)
+    nb_iter_brier <- metrics_valid_brier_star$nb_iter
+    max_depth_brier_star <- metrics_valid_brier_star$max_depth
+    i_max_depth_brier_star <- which(max_depth_val == max_depth_brier_star)
+    
+    metrics_min_brier <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_brier, max_depth == max_depth_brier_star)
+    ind_brier <- which(map_dbl(scores_hist_all[[i_max_depth_brier_star]], "nb_iter") == nb_iter_brier)
+    scores_hist_min_brier <- scores_hist_all[[i_max_depth_brier_star]][[ind_brier]]
+    plot_bp_interest(
+      metrics_interest = metrics_min_brier,
+      scores_hist_interest = scores_hist_min_brier,
+      label = "Brier*",
+      recalib_method = recalib_method
+    )
+    
+    ## Min ICI on validation set
+    metrics_valid_ici_star <-
+      metrics_xgb_current_valid |> arrange(ici) |> dplyr::slice(1)
+    nb_iter_ici <-   metrics_valid_ici_star$nb_iter
+    max_depth_ici_star <- metrics_valid_ici_star$max_depth
+    i_max_depth_ici_star <- which(max_depth_val == max_depth_ici_star)
+    
+    metrics_min_ici <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_ici, max_depth == max_depth_ici_star)
+    ind_ici <- which(map_dbl(scores_hist_all[[i_max_depth_ici_star]], "nb_iter") == nb_iter_ici)
+    scores_hist_min_ici <- scores_hist_all[[i_max_depth_ici_star]][[ind_ici]]
+    plot_bp_interest(
+      metrics_interest = metrics_min_ici,
+      scores_hist_interest = scores_hist_min_ici,
+      label = "ICI*",
+      recalib_method = recalib_method
+    )
+    
+    ## Min KL on validation set
+    metrics_valid_kl_star <-
+      metrics_xgb_current_valid |> arrange(KL_20_true_probas) |> dplyr::slice(1)
+    nb_iter_kl <- metrics_valid_kl_star$nb_iter
+    max_depth_kl_star <- metrics_valid_kl_star$max_depth
+    i_max_depth_kl_star <- which(max_depth_val == max_depth_kl_star)
+    
+    metrics_min_kl <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_kl, max_depth == max_depth_kl_star)
+    ind_kl <- which(map_dbl(scores_hist_all[[i_max_depth_kl_star]], "nb_iter") == nb_iter_kl)
+    scores_hist_min_kl <- scores_hist_all[[i_max_depth_kl_star]][[ind_kl]]
+    plot_bp_interest(
+      metrics_interest = metrics_min_kl,
+      scores_hist_interest = scores_hist_min_kl,
+      label = "KL*",
+      recalib_method = recalib_method
+    )
+    
+    ## Mediocre ICI on validation set
+    identified_mici <-  mediocre_ici_xgb
+    
+    metrics_valid_mici_star <- metrics_xgb_current_valid |> 
+      filter(ind == identified_mici$ind, nb_iter == identified_mici$nb_iter)
+    nb_iter_mici <- metrics_valid_mici_star$nb_iter
+    max_depth_mici_star <- metrics_valid_mici_star$max_depth
+    i_max_depth_mici_star <- which(max_depth_val == max_depth_mici_star)
+    
+    metrics_mici <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_mici, max_depth == max_depth_mici_star)
+    ind_mici <- which(map_dbl(scores_hist_all[[i_max_depth_mici_star]], "nb_iter") == nb_iter_mici)
+    scores_hist_mici <- scores_hist_all[[i_max_depth_mici_star]][[ind_mici]]
+    plot_bp_interest(
+      metrics_interest = metrics_mici,
+      scores_hist_interest = scores_hist_mici,
+      label = "Med. ICI",
+      recalib_method = recalib_method
+    )
+  }
+}
+
+
+
+plot_bp_xgb <- function(scores_hist_all, 
+                        prior, 
+                        metrics_xgb_all,
+                        mediocre_ici_xgb,
+                        paper_version = FALSE) {
+  # # Focus on a value for max_depth
+  max_depth_val <- map_dbl(scores_hist_all, ~.x[[1]]$max_depth)
+  
+  # True Probabilities
+  true_prob <- prior$scores_gamsel$scores_train
+  
+  for (recalib_method in c("none", "platt", "iso")) {
+    
+    i_method <- match(recalib_method, c("none", "platt", "iso"))
+    recalib_method_lab <- c("None", "Platt", "Isotonic")[i_method]
+    
+    # The metrics for the corresponding results, on the validation set
+    metrics_xgb_current_valid <-
+      metrics_xgb_all |>
+      filter(
+        sample == "Validation",
+        recalib == "None"
+      )
+    # and on the test set
+    metrics_xgb_current_test <-
+      metrics_xgb_all |>
+      filter(
+        sample == "Test",
+        recalib == recalib_method_lab
+      )
+    
+    if (paper_version == FALSE) {
+      hist(
+        true_prob,
+        breaks = seq(0, 1, by = .05),
+        xlab = "p", ylab = "",
+        main = "Prior Probabilities",
+        xlim = c(0, 1)
+      )
+      mtext(
+        side = 2, recalib_method_lab, line = 2.5, cex = 1,
+        font.lab = 2
+      )
+      # Iterations of interest----
+      ## Start of iterations
+      scores_hist_start <- scores_hist_all[[1]][[1]]
+      metrics_start <- metrics_xgb_current_test |>
+        filter(
+          nb_iter == scores_hist_start$nb_iter,
+          max_depth == scores_hist_start$max_depth
+        )
+      
+      plot_bp_interest(
+        metrics_interest = metrics_start,
+        scores_hist_interest = scores_hist_start,
+        label = "Start",
+        recalib_method = recalib_method
+      )
+      
+      ## End of iterations
+      scores_hist_end <- scores_hist_all[[1]][[length(scores_hist_all[[1]])]]
+      metrics_end <- metrics_xgb_current_test |>
+        filter(
+          nb_iter == scores_hist_end$nb_iter,
+          max_depth == scores_hist_start$max_depth
+        )
+      plot_bp_interest(
+        metrics_interest = metrics_end,
+        scores_hist_interest = scores_hist_end,
+        label = "End",
+        recalib_method = recalib_method
+      )
+    }
+    ## Iteration with max AUC on validation set
+    metrics_valid_auc_star <-
+      metrics_xgb_current_valid |> arrange(desc(AUC)) |> dplyr::slice(1)
+    nb_iter_auc <- metrics_valid_auc_star$nb_iter
+    max_depth_auc_star <- metrics_valid_auc_star$max_depth
+    i_max_depth_auc_star <- which(max_depth_val == max_depth_auc_star)
+    
+    metrics_max_auc <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_auc, max_depth == max_depth_auc_star)
+    # Note: indexing at 0 here...
+    ind_auc <- which(map_dbl(scores_hist_all[[i_max_depth_auc_star]], "nb_iter") == nb_iter_auc)
+    scores_hist_max_auc <- scores_hist_all[[i_max_depth_auc_star]][[ind_auc]]
+    plot_bp_interest(
+      metrics_interest = metrics_max_auc,
+      scores_hist_interest = scores_hist_max_auc,
+      label = "AUC*",
+      recalib_method = recalib_method
+    )
+    if (paper_version == TRUE) {
+      mtext(
+        side = 2, recalib_method_lab, line = 2.5, cex = 1,
+        font.lab = 2
+      )
+    }
+    
+    ## Min Brier on validation set
+    metrics_valid_brier_star <-
+      metrics_xgb_current_valid |> arrange(brier) |> dplyr::slice(1)
+    nb_iter_brier <- metrics_valid_brier_star$nb_iter
+    max_depth_brier_star <- metrics_valid_brier_star$max_depth
+    i_max_depth_brier_star <- which(max_depth_val == max_depth_brier_star)
+    
+    metrics_min_brier <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_brier, max_depth == max_depth_brier_star)
+    ind_brier <- which(map_dbl(scores_hist_all[[i_max_depth_brier_star]], "nb_iter") == nb_iter_brier)
+    scores_hist_min_brier <- scores_hist_all[[i_max_depth_brier_star]][[ind_brier]]
+    plot_bp_interest(
+      metrics_interest = metrics_min_brier,
+      scores_hist_interest = scores_hist_min_brier,
+      label = "Brier*",
+      recalib_method = recalib_method
+    )
+    
+    ## Min ICI on validation set
+    metrics_valid_ici_star <-
+      metrics_xgb_current_valid |> arrange(ici) |> dplyr::slice(1)
+    nb_iter_ici <-   metrics_valid_ici_star$nb_iter
+    max_depth_ici_star <- metrics_valid_ici_star$max_depth
+    i_max_depth_ici_star <- which(max_depth_val == max_depth_ici_star)
+    
+    metrics_min_ici <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_ici, max_depth == max_depth_ici_star)
+    ind_ici <- which(map_dbl(scores_hist_all[[i_max_depth_ici_star]], "nb_iter") == nb_iter_ici)
+    scores_hist_min_ici <- scores_hist_all[[i_max_depth_ici_star]][[ind_ici]]
+    plot_bp_interest(
+      metrics_interest = metrics_min_ici,
+      scores_hist_interest = scores_hist_min_ici,
+      label = "ICI*",
+      recalib_method = recalib_method
+    )
+    
+    ## Min KL on validation set
+    metrics_valid_kl_star <-
+      metrics_xgb_current_valid |> arrange(KL_20_true_probas) |> dplyr::slice(1)
+    nb_iter_kl <- metrics_valid_kl_star$nb_iter
+    max_depth_kl_star <- metrics_valid_kl_star$max_depth
+    i_max_depth_kl_star <- which(max_depth_val == max_depth_kl_star)
+    
+    metrics_min_kl <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_kl, max_depth == max_depth_kl_star)
+    ind_kl <- which(map_dbl(scores_hist_all[[i_max_depth_kl_star]], "nb_iter") == nb_iter_kl)
+    scores_hist_min_kl <- scores_hist_all[[i_max_depth_kl_star]][[ind_kl]]
+    plot_bp_interest(
+      metrics_interest = metrics_min_kl,
+      scores_hist_interest = scores_hist_min_kl,
+      label = "KL*",
+      recalib_method = recalib_method
+    )
+    
+    ## Mediocre ICI on validation set
+    identified_mici <-  mediocre_ici_xgb
+    
+    metrics_valid_mici_star <- metrics_xgb_current_valid |> 
+      filter(ind == identified_mici$ind, nb_iter == identified_mici$nb_iter)
+    nb_iter_mici <- metrics_valid_mici_star$nb_iter
+    max_depth_mici_star <- metrics_valid_mici_star$max_depth
+    i_max_depth_mici_star <- which(max_depth_val == max_depth_mici_star)
+    
+    metrics_mici <-
+      metrics_xgb_current_test |>
+      filter(nb_iter == !!nb_iter_mici, max_depth == max_depth_mici_star)
+    ind_mici <- which(map_dbl(scores_hist_all[[i_max_depth_mici_star]], "nb_iter") == nb_iter_mici)
+    scores_hist_mici <- scores_hist_all[[i_max_depth_mici_star]][[ind_mici]]
+    plot_bp_interest(
+      metrics_interest = metrics_mici,
+      scores_hist_interest = scores_hist_mici,
+      label = "Med. ICI",
+      recalib_method = recalib_method
+    )
+  }
+}
+
+
+plot_bp_xgb_dataset <- function(xgb_resul, prior) {
+  scores_hist_all <- xgb_resul$scores_hist
+  
+  metrics_xgb_all <- xgb_resul$metrics_simul |>
+    mutate(
+      sample = factor(
+        sample,
+        levels = c("train", "valid", "calib", "test"),
+        labels = c("Train","Validation", "Calibration" ,"Test")
+      ),
+      recalib = factor(
+        recalib,
+        levels = c("none", "platt", "isotonic"),
+        labels = c("None", "Platt", "Isotonic")
+      )
+    )
+  
+  mediocre_ici_xgb <- 
+    metrics_xgb_all |>
+    filter(sample == "Validation", recalib == "None") |>
+    arrange(desc(ici)) |>
+    #slice_head(n = 1) |>
+    filter(nb_iter == 10 & ind == 1) |>
+    select(ind, nb_iter, recalib) |>
+    mutate(result_type = "mediocre_ici")
+  
+  plot_bp_xgb(
+    scores_hist_all = scores_hist_all, 
+    prior = prior, 
+    metrics_xgb_all = metrics_xgb_all,
+    mediocre_ici_xgb = mediocre_ici_xgb)
+}
+```
+
+
+:::{.panel-tabset}
+
+### Abalone
+
+```{r}
+#| fig-cap: Distribution of scores on the test set (abalone)
+#| label: fig-xgb-abalone-scores
+#| code-fold: true
+#| fig-height: 7
+#| fig-width: 14
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb_dataset(xgb_resul = xgb_resul_abalone, prior = priors_abalone)
+```
+
+### Adult
+
+```{r}
+#| fig-cap: Distribution of scores on the test set (adult)
+#| label: fig-xgb-adult-scores
+#| code-fold: true
+#| fig-height: 7
+#| fig-width: 14
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb_dataset(xgb_resul = xgb_resul_adult, prior = priors_adult)
+```
+
+### Bank
+
+```{r}
+#| fig-cap: Distribution of scores on the test set (bank)
+#| label: fig-xgb-bank-scores
+#| code-fold: true
+#| fig-height: 7
+#| fig-width: 14
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb_dataset(xgb_resul = xgb_resul_bank, prior = priors_bank)
+```
+
+### Default
+
+```{r}
+#| fig-cap: Distribution of scores on the test set (default)
+#| label: fig-xgb-default-scores
+#| code-fold: true
+#| fig-height: 7
+#| fig-width: 14
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb_dataset(xgb_resul = xgb_resul_default, prior = priors_default)
+```
+
+### Drybean
+
+```{r}
+#| fig-cap: Distribution of scores on the test set (drybean)
+#| label: fig-xgb-drybean-scores
+#| code-fold: true
+#| fig-height: 7
+#| fig-width: 14
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb_dataset(xgb_resul = xgb_resul_drybean, prior = priors_drybean)
+```
+
+### Coupon
+
+```{r}
+#| fig-cap: Distribution of scores on the test set (coupon)
+#| label: fig-xgb-coupon-scores
+#| code-fold: true
+#| fig-height: 7
+#| fig-width: 14
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb_dataset(xgb_resul = xgb_resul_coupon, prior = priors_coupon)
+```
+
+### Mushroom
+
+```{r}
+#| fig-cap: Distribution of scores on the test set (mushroom)
+#| label: fig-xgb-mushroom-scores
+#| code-fold: true
+#| fig-height: 7
+#| fig-width: 14
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb_dataset(xgb_resul = xgb_resul_mushroom, prior = priors_mushroom)
+```
+
+### Occupancy
+
+```{r}
+#| fig-cap: Distribution of scores on the test set (occupancy)
+#| label: fig-xgb-occupancy-scores
+#| code-fold: true
+#| fig-height: 7
+#| fig-width: 14
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb_dataset(xgb_resul = xgb_resul_occupancy, prior = priors_occupancy)
+```
+
+### Winequality
+
+```{r}
+#| fig-cap: Distribution of scores on the test set (winequality)
+#| label: fig-xgb-winequality-scores
+#| code-fold: true
+#| fig-height: 7
+#| fig-width: 14
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb_dataset(xgb_resul = xgb_resul_winequality, prior = priors_winequality)
+```
+
+### Spambase
+
+```{r}
+#| fig-cap: Distribution of scores on the test set (spambase)
+#| label: fig-xgb-spambase-scores
+#| code-fold: true
+#| fig-height: 7
+#| fig-width: 14
+par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+plot_bp_xgb_dataset(xgb_resul = xgb_resul_spambase, prior = priors_spambase)
+```
+
+:::
+
+## Estimated Metrics
+
+
+## Before vs. After Recalibration
+
+Let us have a look at the evolution of ICI and KL divergence before and after calibration with both methods (Platt-scaling and Isotonic regression). We consider three models for each dataset: the one for which the hyperparameters were selected based on the maximization of AUC (AUC*), the one for which the hyperparameters were selected based on the minimization of the Kullback-Leibler divergence between the distribution of the estimated scores and that of the prior distribution, and one with a relatively high ICI, i.e., with poor calibration.
+
+```{r define-gather-metrics}
+#| code-fold: true
+#| code-summary: Functions to extract the metrics from the results
+#' Function to extract the results for models of interest
+gather_metrics <- function(xgb_resul) {
+  
+  metrics_xgb_all <- xgb_resul$metrics_simul |>
+    mutate(
+      sample = factor(
+        sample,
+        levels = c("train", "valid", "calib", "test"),
+        labels = c("Train","Validation", "Calibration" ,"Test")
+      ),
+      recalib = factor(
+        recalib,
+        levels = c("none", "platt", "isotonic"),
+        labels = c("None", "Platt", "Isotonic")
+      )
+    )
+  
+  # Identify the smallest tree on the validation set, when the scores are not
+  # recalibrated
+  smallest_xgb <-
+    metrics_xgb_all |>
+    filter(sample == "Validation", recalib == "None") |>
+    arrange(nb_iter) |>
+    slice_head(n = 1) |>
+    select(ind, nb_iter, recalib) |>
+    mutate(result_type = "smallest")
+  
+  # Identify the largest tree
+  largest_xgb <-
+    metrics_xgb_all |>
+    filter(sample == "Validation", recalib == "None") |>
+    arrange(desc(nb_iter)) |>
+    slice_head(n = 1) |>
+    select(ind, nb_iter, recalib) |>
+    mutate(result_type = "largest")
+  
+  # Identify tree with highest AUC on test set
+  highest_auc_xgb <-
+    metrics_xgb_all |>
+    filter(sample == "Validation", recalib == "None") |>
+    arrange(desc(AUC)) |>
+    slice_head(n = 1) |>
+    select(ind, nb_iter, recalib) |>
+    mutate(result_type = "largest_auc")
+  
+  # Identify tree with lowest brier
+  lowest_brier_xgb <-
+    metrics_xgb_all |>
+    filter(sample == "Validation", recalib == "None") |>
+    arrange(brier) |>
+    slice_head(n = 1) |>
+    select(ind, nb_iter, recalib) |>
+    mutate(result_type = "lowest_brier")
+  
+  # Identify tree with lowest ICI
+  lowest_ici_xgb <-
+    metrics_xgb_all |>
+    filter(sample == "Validation", recalib == "None") |>
+    arrange(ici) |>
+    slice_head(n = 1) |>
+    select(ind, nb_iter, recalib) |>
+    mutate(result_type = "lowest_ici")
+  
+  # Identify tree with lowest KL
+  lowest_kl_xgb <-
+    metrics_xgb_all |>
+    filter(sample == "Validation", recalib == "None") |>
+    arrange(KL_20_true_probas) |>
+    slice_head(n = 1) |>
+    select(ind, nb_iter, recalib) |>
+    mutate(result_type = "lowest_kl")
+  
+  mediocre_ici_xgb <- 
+    metrics_xgb_all |>
+    filter(sample == "Validation", recalib == "None") |>
+    arrange(desc(ici)) |>
+    #slice_head(n = 1) |>
+    filter(nb_iter == 10 & ind == 1) |>
+    select(ind, nb_iter, recalib) |>
+    mutate(result_type = "mediocre_ici")
+  
+  # Merge these
+  models_of_interest_xgb <-
+    smallest_xgb |>
+    bind_rows(largest_xgb) |>
+    bind_rows(highest_auc_xgb) |>
+    bind_rows(lowest_brier_xgb) |>
+    bind_rows(lowest_ici_xgb) |>
+    bind_rows(lowest_kl_xgb) |> 
+    bind_rows(mediocre_ici_xgb)
+  
+  models_of_interest_metrics <- NULL
+  for (recalibration_method in c("None", "Platt", "Isotonic")) {
+    # Add metrics now
+    models_of_interest_metrics <-
+      models_of_interest_metrics |>
+      bind_rows(
+        models_of_interest_xgb |> select(-recalib) |>
+          left_join(
+            metrics_xgb_all |>
+              filter(
+                recalib == recalibration_method,
+                sample %in% c("Validation", "Test")
+              ),
+            by = c("ind", "nb_iter"),
+            relationship = "many-to-many" # (calib, test)
+          )
+      )
+  }
+  
+  models_of_interest_metrics <-
+    models_of_interest_metrics |>
+    mutate(
+      result_type = factor(
+        result_type,
+        levels = c(
+          "smallest", "largest", "lowest_mse", "largest_auc",
+          "lowest_brier", "lowest_ici", "lowest_kl", "mediocre_ici"),
+        labels = c(
+          "Smallest", "Largest", "MSE*", "AUC*",
+          "Brier*", "ICI*", "KL*", "High ICI"
+        )
+      )
+    )
+  models_of_interest_metrics
+}
+
+#' Function to format results for selected models for later use in ggplot2
+get_data_plot_before_after_recalib <- function(xgb_resul, dataset_name) {
+  models_of_interest_metrics <- gather_metrics(xgb_resul = xgb_resul)
+  
+  table_models_interest <- 
+    models_of_interest_metrics |> 
+    filter(sample == "Test") |> 
+    select(
+      recalib, sample, result_type, 
+      brier, ici, kl = KL_20_true_probas
+    ) |> 
+    filter(
+      result_type %in% c("AUC*", "KL*", "High ICI")
+    ) |> 
+    mutate(dataset = dataset_name)
+  
+  
+  initial_points <- table_models_interest |> 
+    filter(recalib == "None") |> 
+    mutate(dataset = dataset_name)
+  
+  points_after_c <- initial_points |> 
+    select(result_type, ici, kl) |> 
+    left_join(
+      table_models_interest |> 
+        filter(recalib %in% c("Platt", "Isotonic")) |> 
+        select(recalib, result_type, ici, kl) |> 
+        rename(ici_end = ici, kl_end = kl),
+      by = "result_type",
+      relationship = "many-to-many" # (Platt and Isotonic)
+    ) |> 
+    mutate(dataset = dataset_name)
+  
+  list(
+    table_models_interest = table_models_interest,
+    initial_points = initial_points,
+    points_after_c = points_after_c
+  )
+}
+
+
+# The models of interest for all datasets
+data_plot_before_after <- map2(
+  .x = str_c("xgb_resul_", datasets$name), 
+  .y = datasets$name, 
+  .f = ~get_data_plot_before_after_recalib(xgb_resul = get(.x), dataset_name = .y)
+)
+
+# The metrics for these models
+table_models_interest <- 
+  map(data_plot_before_after, "table_models_interest") |> 
+  list_rbind()
+
+# The metrics for the three models of interest in the subsequent plot
+# before recalibration
+initial_points <- 
+  map(data_plot_before_after, "initial_points") |> 
+  list_rbind()
+
+# and after recalibration
+points_after_c <- 
+  map(data_plot_before_after, "points_after_c") |> 
+  list_rbind()
+```
+
+
+
+```{r}
+#| fig-cap: Average KL divergence and ICI before and after recalibration of the estimated scores.
+#| label: fig-before-after-recalibration
+#| fig-width: 12
+#| fig-height: 5
+#| code-fold: true
+#| code-summary: Codes to crate the figure
+plot_before_after <- ggplot() +
+  geom_point(
+    data = initial_points,
+    mapping = aes(x = ici, y = kl, shape = result_type),
+    size = 2
+  ) +
+  geom_segment(
+    data = points_after_c,
+    mapping = aes(
+      x = ici, y = kl, xend = ici_end, yend = kl_end,
+      colour = recalib, linetype = recalib
+    ),
+    arrow = arrow(length=unit(.2, 'cm'))
+  ) +
+  scale_shape_manual(
+    NULL,
+    values = c(
+      "AUC*" = 19,
+      "KL*" = 15,
+      "High ICI" = 17
+    )
+  ) +
+  ggh4x::facet_wrap2(~dataset, scales = "free_y", ncol = 5, axes = "all") +
+  labs(x = "ICI", y = "KL Divergence") +
+  scale_colour_manual("Recalibration", values = colour_recalib) +
+  scale_linetype_discrete("Recalibration") +
+  theme_paper()
+
+ggsave(
+  plot_before_after, file = "../figs/real-dataset-before-after-calib.pdf",
+  width = 12, height = 5
+)
+
+plot_before_after
+```
+
+

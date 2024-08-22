@@ -11,7 +11,7 @@ This chapter illustrates the application of the method using one example of real
 
 ## Code Availability
 
-The functions for data preprocessing, model estimation, and Beta distribution fitting are stored in `functions/real-data.R` and will be used in subsequent chapters.
+The functions for data preprocessing, model estimation, and Beta distribution fitting are stored in `../scripts/functions/real-data.R` and will be used in subsequent chapters.
 
 :::
 
@@ -40,7 +40,7 @@ colour_recalib <- c(
 )
 
 # Functions
-source("functions/real-data.R")
+source("../scripts/functions/real-data.R")
 source("../scripts/functions/metrics.R")
 ```
 
@@ -697,9 +697,9 @@ simul_xgb_helper <- function(data_train,
 ## Import Data and Prior
 
 We load the dataset "spambase" and the associated Beta prior on both train and test sets.
-```{r load-data-priors, eval=FALSE}
-load("output/real-data/tb_spambase.rda") # dataset
-load("output/real-data/priors_spambase.rda") # scores_gamsel
+```{r load-data-priors}
+load("../output/real-data/tb_spambase.rda") # dataset
+load("../output/real-data/priors_spambase.rda") # scores_gamsel
 
 prior <- priors_spambase
 data <- tb_spambase
@@ -1207,20 +1207,22 @@ resul_iter_1 <- get_metrics_xgb_iter(
 
 We calculate the performance/calibration/dispersion metrics for all iterations and all hyperparameters of the grid:
 ```{r}
-xgb_resul <- simul_xgb_real(data,
-                            target_name,
-                            prior,
-                            seed = 1234)
+xgb_resul <- simul_xgb_real(
+  data,
+  target_name,
+  prior,
+  seed = 1234
+)
 ```
 
 We save the results for the dataset "spambase":
 ```{r}
-save(xgb_resul, file = str_c("output/real-data/xgb_resul_", name, ".rda"))
+save(xgb_resul, file = str_c("../output/real-data/xgb_resul_", name, ".rda"))
 ```
 
 We can now load the results:
 ```{r}
-load(str_c("output/real-data/xgb_resul_", name, ".rda"))
+load(str_c("../output/real-data/xgb_resul_", name, ".rda"))
 ```
 
 ## Results 
@@ -1249,6 +1251,7 @@ For each replication, we made some hyperparameters vary. Let us identify some mo
 - `lowest_mse`: model with the lowest MSE on validation set
 - `lowest_ici`: model with the lowest ICI on validation set
 - `lowest_kl`: model with the lowest KL Divergence on validation set
+- `mediocre_ici`: model with a rather high ICI (uncalibrated model)
 
 ```{r xgb-identify-trees-of-interest}
 #| code-fold: true
@@ -1356,7 +1359,7 @@ models_of_interest_metrics <-
         "lowest_brier", "lowest_ici", "lowest_kl", "mediocre_ici_xgb"),
       labels = c(
         "Smallest", "Largest", "MSE*", "AUC*",
-        "Brier*", "ICI*", "KL*", "Mediocre ICI"
+        "Brier*", "ICI*", "KL*", "High ICI"
       )
     )
   )
@@ -1366,14 +1369,19 @@ models_of_interest_metrics <-
 ```{r}
 #| tbl-cap: "Metrics for spambase dataset"
 #| label: tbl-results-xgb-spambase
-DT::datatable(models_of_interest_metrics)
+models_of_interest_metrics |> 
+  mutate(
+    across(
+      c(
+      "acc", "AUC", "brier", "ici", "log_loss", "inter_quantile_25_75",
+      "inter_quantile_10_90", starts_with("KL_"), "ind_cov", 
+      starts_with("prior_")
+      ), 
+      ~round(.x, 3)
+    )
+  ) |> 
+  DT::datatable()
 ```
-
-### Metrics vs Number of Iterations
-
-We define a function, `plot_metrics()`{.R} to plot selected metrics (AUC, ICI, and KL Divergence) as a function of the number of boosting iterations, for a given value for the hyperparameter `max_depth`. Each curve corresponds to a value of the maximal depth hyperparameter.
-
-TBD
 
 ### Distribution of Scores
 
@@ -1507,29 +1515,6 @@ plot_bp_xgb <- function(paper_version = FALSE) {
         label = "End",
         recalib_method = recalib_method
       )
-      
-      ## Iteration with min MSE on validation set
-      #metrics_valid_mse_star <- metrics_xgb_current_valid |> arrange(mse) |>
-      #  dplyr::slice(1)
-      #nb_iter_mse <- metrics_valid_mse_star$nb_iter
-      #max_depth_mse_star <- metrics_valid_mse_star$max_depth
-      #i_max_depth_mse_star <- which(max_depth_val == max_depth_mse_star)
-      # Metrics at the same iteration on the test set
-      #metrics_min_mse <-
-     #   metrics_xgb_current_test |>
-     #   filter(
-      #    nb_iter == !!nb_iter_mse,
-      #    max_depth == max_depth_mse_star
-      #  )
-      # Note: indexing at 0 here...
-      #ind_mse <- which(map_dbl(scores_hist_repn[[i_max_depth_mse_star]], "nb_iter") == nb_iter_mse)
-      #scores_hist_min_mse <- scores_hist_repn[[i_max_depth_mse_star]][[ind_mse]]
-      #plot_bp_interest(
-      #  metrics_interest = metrics_min_mse,
-      #  scores_hist_interest = scores_hist_min_mse,
-       # label = "MSE*",
-      #  recalib_method = recalib_method
-      #)
     }
     ## Iteration with max AUC on validation set
     metrics_valid_auc_star <-
@@ -1647,6 +1632,7 @@ plot_bp_xgb <- function(paper_version = FALSE) {
 par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb()
 ```
+
 ```{r}
 
 table_models_interest <- 
