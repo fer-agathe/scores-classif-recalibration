@@ -1,4 +1,4 @@
-# Illustration on Abalone dataset II {#sec-real-example-xgb}
+# Recalibration: Example {#sec-real-example-xgb}
 
 :::{.callout-note}
 

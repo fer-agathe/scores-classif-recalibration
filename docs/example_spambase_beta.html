@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Recalibration - 6&nbsp; Illustration on Abalone dataset I</title>
+<title>Recalibration - 6&nbsp; Prior Distribution: Example</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -192,7 +192,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./example_spambase_beta.html">IV. Real Data</a></li><li class="breadcrumb-item"><a href="./example_spambase_beta.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset I</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./example_spambase_beta.html">IV. Real Data</a></li><li class="breadcrumb-item"><a href="./example_spambase_beta.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Prior Distribution: Example</span></a></li></ol></nav>
         <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -279,7 +279,7 @@ window.Quarto = {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./example_spambase_beta.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset I</span></span></a>
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Prior Distribution: Example</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -291,7 +291,7 @@ window.Quarto = {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./example_spambase_xgb.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset II</span></span></a>
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Recalibration: Example</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -335,9 +335,9 @@ window.Quarto = {
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./example_spambase_beta.html">IV. Real Data</a></li><li class="breadcrumb-item"><a href="./example_spambase_beta.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset I</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./example_spambase_beta.html">IV. Real Data</a></li><li class="breadcrumb-item"><a href="./example_spambase_beta.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Prior Distribution: Example</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span id="sec-real-example-beta" class="quarto-section-identifier"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset I</span></span></h1>
+<h1 class="title"><span id="sec-real-example-beta" class="quarto-section-identifier"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Prior Distribution: Example</span></span></h1>
 </div>
 
 
@@ -508,10 +508,86 @@ dbl (58): word_freq_make, word_freq_address, word_freq_all, word_freq_3d, wo...
 <h2 data-number="6.3" class="anchored" data-anchor-id="estimation-functions-gamsel"><span class="header-section-number">6.3</span> Estimation Functions: GAMSEL</h2>
 <p>We first estimate the probability that the event occurs (the email is a spam) using a Generalized Additive Model with model selection. We use the helper function <code class="sourceCode r"><span class="fu">train_gamsel</span>()</code>, which can be used in a very simple way. This function first splits the target variable and the predictors in distinct objects. Then, we check that all variables obtained after using the <code class="sourceCode r"><span class="fu">encode_dataset</span>()</code> function are coded as <code>numeric</code>: the estimation function from {gamsel} does not allow <code>integer</code> variables. The formula to fit the GAMSEL model is then built (We need to create a vector that gives the maximum spline basis function to use for each variable. For dummy variables, this needs to be set to 1. For other variables, let us use either 6 or the minimum number of distinct values minus 1.). Then, we fit the model. The penalty parameter <span class="math inline">\(\lambda\)</span> is selected by 10-fold cross validation. We use the value of lambda which gives the minimum cross validation metric. Note that we could also use the largest value of lambda such that the error is within 1 standard error of the minimum (using <code>lambda = gamsel_cv$lambda.1se</code>). Lastly, we get the predicted scores.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>scores_gamsel <span class="ot">&lt;-</span> <span class="fu">train_gamsel</span>(</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">data_train =</span> data<span class="sc">$</span>train, <span class="at">data_test =</span> data<span class="sc">$</span>test, <span class="at">target_name =</span> target_name,</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">degrees =</span> <span class="dv">6</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>The <code class="sourceCode r"><span class="fu">train_gamsel</span>()</code> function.</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Train a GAMSEL model</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param data_train train set</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param data_test test set</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param target_name name of the target (response) variable</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param degrees degree for the splines</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param return_model if TRUE, the estimated model is returned</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co">#' @returns list with estimated scores on train set (`scores_train`) and on</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co">#'  test set (`scores_test`)</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>train_gamsel <span class="ot">&lt;-</span> <span class="cf">function</span>(data_train,</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>                         data_test,</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>                         target_name,</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>                         <span class="at">degrees =</span> <span class="dv">6</span>,</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>                         <span class="at">return_model =</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Encode dataset so that categorical variables become dummy variables</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  data_dmy <span class="ot">&lt;-</span> <span class="fu">encode_dataset</span>(</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">data_train =</span> data_train,</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">data_test =</span> data_test,</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">target_name =</span> target_name,</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">intercept =</span> <span class="cn">FALSE</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Estimation</span></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>  X_dmy_train <span class="ot">&lt;-</span> data_dmy<span class="sc">$</span>train <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-!!</span>target_name)</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>  X_dmy_train <span class="ot">&lt;-</span> X_dmy_train <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), as.numeric))</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>  X_dmy_test <span class="ot">&lt;-</span> data_dmy<span class="sc">$</span>test <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-!!</span>target_name)</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>  X_dmy_test <span class="ot">&lt;-</span> X_dmy_test <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), as.numeric))</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>  y_train <span class="ot">&lt;-</span> data_dmy<span class="sc">$</span>train <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(<span class="sc">!!</span>target_name)</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>  y_test <span class="ot">&lt;-</span> data_dmy<span class="sc">$</span>test <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">pull</span>(<span class="sc">!!</span>target_name)</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>  deg <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">ncol</span>(X_dmy_train))</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>  col_names_X <span class="ot">&lt;-</span> <span class="fu">colnames</span>(X_dmy_train)</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>  nb_val <span class="ot">&lt;-</span> <span class="fu">map_dbl</span>(</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>    col_names_X, <span class="sc">~</span>X_dmy_train <span class="sc">|&gt;</span> <span class="fu">pull</span>(.x) <span class="sc">|&gt;</span> <span class="fu">unique</span>() <span class="sc">|&gt;</span> <span class="fu">length</span>()</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i_var_name <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(X_dmy_train)) {</span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>    var_name <span class="ot">&lt;-</span> col_names_X[i_var_name]</span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (var_name <span class="sc">%in%</span> data_dmy<span class="sc">$</span>categ_names) {</span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>      deg[i_var_name] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>      deg[i_var_name] <span class="ot">&lt;-</span> <span class="fu">min</span>(nb_val[i_var_name]<span class="sc">-</span><span class="dv">1</span>, degrees)</span>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>  gamsel_cv <span class="ot">&lt;-</span> gamsel<span class="sc">::</span><span class="fu">cv.gamsel</span>(</span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="fu">as.data.frame</span>(X_dmy_train), <span class="at">y =</span> y_train, <span class="at">family =</span> <span class="st">"binomial"</span>,</span>
+<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">degrees =</span> deg</span>
+<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a>  gamsel_out <span class="ot">&lt;-</span> gamsel<span class="sc">::</span><span class="fu">gamsel</span>(</span>
+<span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="fu">as.data.frame</span>(X_dmy_train), <span class="at">y =</span> y_train, <span class="at">family =</span> <span class="st">"binomial"</span>,</span>
+<span id="cb16-50"><a href="#cb16-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">degrees =</span> deg,</span>
+<span id="cb16-51"><a href="#cb16-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">lambda =</span> gamsel_cv<span class="sc">$</span>lambda.min</span>
+<span id="cb16-52"><a href="#cb16-52" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-53"><a href="#cb16-53" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Scores on train and test set</span></span>
+<span id="cb16-54"><a href="#cb16-54" aria-hidden="true" tabindex="-1"></a>  scores_train <span class="ot">&lt;-</span> <span class="fu">predict</span>(</span>
+<span id="cb16-55"><a href="#cb16-55" aria-hidden="true" tabindex="-1"></a>    gamsel_out, <span class="at">newdata =</span> <span class="fu">as.data.frame</span>(X_dmy_train), <span class="at">type =</span> <span class="st">"response"</span>)[, <span class="dv">1</span>]</span>
+<span id="cb16-56"><a href="#cb16-56" aria-hidden="true" tabindex="-1"></a>  scores_test <span class="ot">&lt;-</span> <span class="fu">predict</span>(</span>
+<span id="cb16-57"><a href="#cb16-57" aria-hidden="true" tabindex="-1"></a>    gamsel_out, <span class="at">newdata =</span> <span class="fu">as.data.frame</span>(X_dmy_test), <span class="at">type =</span> <span class="st">"response"</span>)[, <span class="dv">1</span>]</span>
+<span id="cb16-58"><a href="#cb16-58" aria-hidden="true" tabindex="-1"></a>  scores_test[<span class="fu">which</span>(<span class="fu">is.na</span>(scores_test))] <span class="ot">&lt;-</span></span>
+<span id="cb16-59"><a href="#cb16-59" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="sc">/</span>(<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fu">predict</span>(gamsel_out,</span>
+<span id="cb16-60"><a href="#cb16-60" aria-hidden="true" tabindex="-1"></a>                        <span class="at">newdata =</span> <span class="fu">as.data.frame</span>(X_dmy_test[<span class="fu">which</span>(<span class="fu">is.na</span>(scores_test)),]))</span>
+<span id="cb16-61"><a href="#cb16-61" aria-hidden="true" tabindex="-1"></a>               [, <span class="dv">1</span>]))</span>
+<span id="cb16-62"><a href="#cb16-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-63"><a href="#cb16-63" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (return_model <span class="sc">==</span> <span class="cn">TRUE</span>) {</span>
+<span id="cb16-64"><a href="#cb16-64" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb16-65"><a href="#cb16-65" aria-hidden="true" tabindex="-1"></a>      <span class="at">scores_train =</span> scores_train,</span>
+<span id="cb16-66"><a href="#cb16-66" aria-hidden="true" tabindex="-1"></a>      <span class="at">scores_test =</span> scores_test,</span>
+<span id="cb16-67"><a href="#cb16-67" aria-hidden="true" tabindex="-1"></a>      <span class="at">fit =</span> fit)</span>
+<span id="cb16-68"><a href="#cb16-68" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb16-69"><a href="#cb16-69" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">scores_train =</span> scores_train, <span class="at">scores_test =</span> scores_test, <span class="at">fit =</span> <span class="cn">NULL</span>)</span>
+<span id="cb16-70"><a href="#cb16-70" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb16-71"><a href="#cb16-71" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>scores_gamsel <span class="ot">&lt;-</span> <span class="fu">train_gamsel</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">data_train =</span> data<span class="sc">$</span>train, <span class="at">data_test =</span> data<span class="sc">$</span>test, <span class="at">target_name =</span> target_name,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">degrees =</span> <span class="dv">6</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="fitting-a-beta-distribution" class="level2" data-number="6.4">
@@ -519,11 +595,35 @@ dbl (58): word_freq_make, word_freq_address, word_freq_all, word_freq_3d, wo...
 <p>Once the scores from the models have been estimated, we fit a Beta distribution to them. This will provide a prior distribution of the true probabilities in the exercise.</p>
 <p>To avoid crashing the ML estimation of the two parameters of the Beta distribution, let us make sure that any score is in <span class="math inline">\((0,1)\)</span> and not exactly equal to 0 or 1.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>x_gamsel <span class="ot">&lt;-</span> (scores_gamsel<span class="sc">$</span>scores_test <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="fl">1e-6</span>)) <span class="sc">+</span> <span class="fl">1e-6</span> <span class="sc">/</span> <span class="dv">2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>x_gamsel <span class="ot">&lt;-</span> (scores_gamsel<span class="sc">$</span>scores_test <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="fl">1e-6</span>)) <span class="sc">+</span> <span class="fl">1e-6</span> <span class="sc">/</span> <span class="dv">2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>To estimate the two parameters of the Beta distribution, we apply the function, <code class="sourceCode r"><span class="fu">fit_beta_scores</span>()</code> that calls the <code class="sourceCode r"><span class="fu">fitdistr</span>()</code> function from {MASS}.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>(mle_gamsel <span class="ot">&lt;-</span> <span class="fu">fit_beta_scores</span>(<span class="at">scores =</span> x_gamsel[<span class="sc">!</span><span class="fu">is.na</span>(x_gamsel)]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>The <code class="sourceCode r"><span class="fu">fit_beta_scores</span>()</code> function.</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Maximum-likelihood fitting of Beta distribution on scores</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param scores vector of estimated scores</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param shape1 non-negative first parameter of the Beta distribution</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param shape1 non-negative second parameter of the Beta distribution</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co">#' @returns An object of class `fitdistr`, a list with four components</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="co">#'  (see: MASS::fitdistr())</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="co">#'  - `estimate`: the parameter estimates</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="co">#'  - `sd`: the estimated standard errors</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="co">#'  - `vcov`: the estimated variance-covariance matrix</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="co">#'  - `loglik`: the log-likelihood</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>fit_beta_scores <span class="ot">&lt;-</span> <span class="cf">function</span>(scores, <span class="at">shape1 =</span> <span class="dv">1</span>, <span class="at">shape2 =</span> <span class="dv">1</span>) {</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fit a beta distribution</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  mle_fit <span class="ot">&lt;-</span> MASS<span class="sc">::</span><span class="fu">fitdistr</span>(</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    scores, <span class="st">"beta"</span>, <span class="at">start =</span> <span class="fu">list</span>(<span class="at">shape1 =</span> <span class="dv">1</span>, <span class="at">shape2 =</span> <span class="dv">1</span>)</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>  mle_fit</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>(mle_gamsel <span class="ot">&lt;-</span> <span class="fu">fit_beta_scores</span>(<span class="at">scores =</span> x_gamsel[<span class="sc">!</span><span class="fu">is.na</span>(x_gamsel)]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>     shape1       shape2  
   0.42746386   0.51025950 
@@ -534,13 +634,57 @@ dbl (58): word_freq_make, word_freq_address, word_freq_all, word_freq_3d, wo...
 <section id="wrapper-functions" class="level2" data-number="6.5">
 <h2 data-number="6.5" class="anchored" data-anchor-id="wrapper-functions"><span class="header-section-number">6.5</span> Wrapper Functions</h2>
 <p>For convenience, we use a wrapper function, <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> that takes a dataset as an input, the name of the target variable and possibly a seed. From these arguments, the function splits the dataset into a training and a test set. It then fits the GAMSEL model to the train set, and fit a Beta distribution on the scores estimated in the test set. This function returns a list with 2 elements: the estimated scores of the GAMSEL, the the parameters of the Beta distribution estimated using the scores of this model.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>The <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> function</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Estimation of a GLM-logistic, a GAM and a GAMSEL model on a classification</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co">#' task. Then, on estimated scores from the test set, fits a Beta distribution.</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param dataset dataset with response variable and predictors</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param target_name name of the target (response) variable</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param seed desired seed (default to `NULL`)</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="co">#' @returns A list with the following elements:</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="co">#'  - `scores_glm`: scores on train and test set (in a list) from the GLM</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="co">#'  - `scores_gam`: scores on train and test set (in a list) from the GAM</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="co">#'  - `scores_gamsel`: scores on train and test set (in a list) from the GAMSEL</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="co">#'  - `mle_glm`: An object of class "fitdistr" for the GLM model</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="co">#'    (see fit_beta_scores())</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="co">#'  - `mle_gamsel`: An object of class "fitdistr" for the GAM model</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="co">#'    (see fit_beta_scores())</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="co">#'  - `mle_gamsel`: An object of class "fitdistr" for the GAMSEL model</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a><span class="co">#'    (see fit_beta_scores())</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>get_beta_fit <span class="ot">&lt;-</span> <span class="cf">function</span>(dataset,</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>                         target_name,</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>                         <span class="at">seed =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Split data into train/test</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>  data <span class="ot">&lt;-</span> <span class="fu">split_train_test</span>(<span class="at">data =</span> dataset, <span class="at">prop_train =</span> .<span class="dv">8</span>, <span class="at">seed =</span> seed)</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Train a GAMSEL model</span></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>  scores_gamsel <span class="ot">&lt;-</span> <span class="fu">train_gamsel</span>(</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">data_train =</span> data<span class="sc">$</span>train, <span class="at">data_test =</span> data<span class="sc">$</span>test, <span class="at">target_name =</span> target_name,</span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">degrees =</span> <span class="dv">6</span></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add a little noise to the estimated scores to avoid being in [0,1] and be</span></span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>  <span class="co"># in (0,1) instead.</span></span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>  x_gamsel <span class="ot">&lt;-</span> (scores_gamsel<span class="sc">$</span>scores_test <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="fl">1e-6</span>)) <span class="sc">+</span> <span class="fl">1e-6</span> <span class="sc">/</span> <span class="dv">2</span></span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fit a Beta distribution on these scores</span></span>
+<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>  mle_gamsel <span class="ot">&lt;-</span> <span class="fu">fit_beta_scores</span>(<span class="at">scores =</span> x_gamsel[<span class="sc">!</span><span class="fu">is.nan</span>(x_gamsel)])</span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">scores_gamsel =</span> scores_gamsel,</span>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">mle_gamsel =</span> mle_gamsel</span>
+<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
 <p>These two functions can be called as follows:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>resul <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(<span class="at">dataset =</span> dataset, <span class="at">target_name =</span> <span class="st">"is_spam"</span>, <span class="at">seed =</span> <span class="dv">1234</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>resul <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(<span class="at">dataset =</span> dataset, <span class="at">target_name =</span> <span class="st">"is_spam"</span>, <span class="at">seed =</span> <span class="dv">1234</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We also use the function, <code class="sourceCode r"><span class="fu">plot_hist_scores_beta</span>()</code> to plot the distribution of scores obtained with the GAMSEL model and the density functions of the Beta distribution whose parameters were estimated based on the scores of the GAMSEL model.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_hist_scores_beta</span>(resul, <span class="st">"spambase"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_hist_scores_beta</span>(resul, <span class="st">"spambase"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">

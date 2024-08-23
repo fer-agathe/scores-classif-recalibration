@@ -79,7 +79,7 @@ tb_abalone <- tb_abalone |>
 target_name <- "Sex"
 ```
 
-Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors.
+Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example-beta] to get our priors.
 ```{r estim-abalone, eval=FALSE}
 priors_abalone <- get_beta_fit(
   dataset = tb_abalone, target_name = target_name, seed = 1234
@@ -163,7 +163,7 @@ tb_adult <- tb_adult |>
 target_name <- "high_income"
 ```
 
-Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors.
+Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example-beta] to get our priors.
 ```{r estim-adult, eval=FALSE}
 priors_adult <- get_beta_fit(
   dataset = tb_adult, target_name = target_name, seed = 1234
@@ -238,7 +238,7 @@ tb_bank <- tb_bank |>
 target_name <- "y"
 ```
 
-Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors.
+Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example-beta] to get our priors.
 ```{r estim-bank, eval=FALSE}
 priors_bank <- get_beta_fit(
   dataset = tb_bank, target_name = target_name, seed = 1234
@@ -321,7 +321,7 @@ tb_default <-
 target_name <- "default"
 ```
 
-Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors.
+Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example-beta] to get our priors.
 ```{r estim-default, eval=FALSE}
 priors_default <- get_beta_fit(
   dataset = tb_default, target_name = target_name, seed = 1234
@@ -390,7 +390,7 @@ tb_drybean <- tb_drybean |>
 target_name <- "is_dermason"
 ```
 
-Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors.
+Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example-beta] to get our priors.
 ```{r estim-drybean, eval=FALSE}
 priors_drybean <- get_beta_fit(
   dataset = tb_drybean, target_name = target_name, seed = 1234
@@ -468,7 +468,7 @@ tb_coupon <- na.omit(tb_coupon)
 target_name <- "y"
 ```
 
-Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors.
+Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example-beta] to get our priors.
 ```{r estim-coupon, eval=FALSE}
 priors_coupon <- get_beta_fit(
   dataset = tb_coupon, target_name = target_name, seed = 1234
@@ -546,7 +546,7 @@ tb_mushroom <- tb_mushroom |>
 target_name <- "edible"
 ```
 
-Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors.
+Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example-beta] to get our priors.
 ```{r estim-mushroom, eval=FALSE}
 priors_mushroom <- get_beta_fit(
   dataset = tb_mushroom, target_name = target_name, seed = 1234
@@ -637,7 +637,7 @@ tb_occupancy <- tb_occupancy |>
 target_name <- "Occupancy"
 ```
 
-Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors.
+Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example-beta] to get our priors.
 ```{r estim-occupancy, eval=FALSE}
 priors_occupancy <- get_beta_fit(
   dataset = tb_occupancy, target_name = target_name, seed = 1234
@@ -715,7 +715,7 @@ tb_winequality <- na.omit(tb_winequality)
 target_name <- "high_quality"
 ```
 
-Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors.
+Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example-beta] to get our priors.
 ```{r estim-winequality, eval=FALSE}
 priors_winequality <- get_beta_fit(
   dataset = tb_winequality, target_name = target_name, seed = 1234
@@ -809,7 +809,7 @@ target_name <- "is_spam"
 ```
 
 
-Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example] to get our priors.
+Let us call the `get_beta_fit()`{.R} from [Chapter -@sec-real-example-beta] to get our priors.
 ```{r estim-spambase, eval=FALSE}
 priors_spambase <- get_beta_fit(
   dataset = tb_spambase, target_name = target_name, seed = 1234

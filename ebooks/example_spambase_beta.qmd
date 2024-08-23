@@ -1,4 +1,4 @@
-# Illustration on Abalone dataset I {#sec-real-example-beta}
+# Prior Distribution: Example {#sec-real-example-beta}
 
 :::{.callout-note}
 
@@ -117,6 +117,82 @@ data_dmy <- encode_dataset(
 
 We first estimate the probability that the event occurs (the email is a spam) using a Generalized Additive Model with model selection. We use the helper function `train_gamsel()`{.R}, which can be used in a very simple way. This function first splits the target variable and the predictors in distinct objects. Then, we check that all variables obtained after using the `encode_dataset()`{.R} function are coded as `numeric`: the estimation function from {gamsel} does not allow `integer` variables. The formula to fit the GAMSEL model is then built (We need to create a vector that gives the maximum spline basis function to use for each variable. For dummy variables, this needs to be set to 1. For other variables, let us use either 6 or the minimum number of distinct values minus 1.). Then, we fit the model. The penalty parameter $\lambda$ is selected by 10-fold cross validation. We use the value of lambda which gives the minimum cross validation metric. Note that we could also use the largest value of lambda such that the error is within 1 standard error of the minimum (using `lambda = gamsel_cv$lambda.1se`). Lastly, we get the predicted scores. 
 
+```{r define-train_gamsel, eval=FALSE}
+#| code-fold: true
+#| code-summary: The `train_gamsel()`{.R} function.
+#' Train a GAMSEL model
+#'
+#' @param data_train train set
+#' @param data_test test set
+#' @param target_name name of the target (response) variable
+#' @param degrees degree for the splines
+#' @param return_model if TRUE, the estimated model is returned
+#'
+#' @returns list with estimated scores on train set (`scores_train`) and on
+#'  test set (`scores_test`)
+train_gamsel <- function(data_train,
+                         data_test,
+                         target_name,
+                         degrees = 6,
+                         return_model = FALSE) {
+  # Encode dataset so that categorical variables become dummy variables
+  data_dmy <- encode_dataset(
+    data_train = data_train,
+    data_test = data_test,
+    target_name = target_name,
+    intercept = FALSE
+  )
+  # Estimation
+  X_dmy_train <- data_dmy$train |> dplyr::select(-!!target_name)
+  X_dmy_train <- X_dmy_train |> mutate(across(everything(), as.numeric))
+  X_dmy_test <- data_dmy$test |> dplyr::select(-!!target_name)
+  X_dmy_test <- X_dmy_test |> mutate(across(everything(), as.numeric))
+  y_train <- data_dmy$train |> dplyr::pull(!!target_name)
+  y_test <- data_dmy$test |> dplyr::pull(!!target_name)
+
+  deg <- rep(NA, ncol(X_dmy_train))
+  col_names_X <- colnames(X_dmy_train)
+  nb_val <- map_dbl(
+    col_names_X, ~X_dmy_train |> pull(.x) |> unique() |> length()
+  )
+  for (i_var_name in 1:ncol(X_dmy_train)) {
+    var_name <- col_names_X[i_var_name]
+    if (var_name %in% data_dmy$categ_names) {
+      deg[i_var_name] <- 1
+    } else {
+      deg[i_var_name] <- min(nb_val[i_var_name]-1, degrees)
+    }
+  }
+  gamsel_cv <- gamsel::cv.gamsel(
+    x = as.data.frame(X_dmy_train), y = y_train, family = "binomial",
+    degrees = deg
+  )
+  gamsel_out <- gamsel::gamsel(
+    x = as.data.frame(X_dmy_train), y = y_train, family = "binomial",
+    degrees = deg,
+    lambda = gamsel_cv$lambda.min
+  )
+  # Scores on train and test set
+  scores_train <- predict(
+    gamsel_out, newdata = as.data.frame(X_dmy_train), type = "response")[, 1]
+  scores_test <- predict(
+    gamsel_out, newdata = as.data.frame(X_dmy_test), type = "response")[, 1]
+  scores_test[which(is.na(scores_test))] <-
+    1/(1 + exp(-predict(gamsel_out,
+                        newdata = as.data.frame(X_dmy_test[which(is.na(scores_test)),]))
+               [, 1]))
+
+  if (return_model == TRUE) {
+    res <- list(
+      scores_train = scores_train,
+      scores_test = scores_test,
+      fit = fit)
+  } else {
+    list(scores_train = scores_train, scores_test = scores_test, fit = NULL)
+  }
+}
+```
+
 ```{r define-scores_gamsel}
 scores_gamsel <- train_gamsel(
     data_train = data$train, data_test = data$test, target_name = target_name,
@@ -135,6 +211,31 @@ x_gamsel <- (scores_gamsel$scores_test * (1 - 1e-6)) + 1e-6 / 2
 
 To estimate the two parameters of the Beta distribution, we apply the function, `fit_beta_scores()`{.R} that calls the `fitdistr()`{.R} function from {MASS}.
 
+```{r define-fit_beta_scores, eval=FALSE}
+#| code-fold: true
+#| code-summary: The `fit_beta_scores()`{.R} function.
+#' Maximum-likelihood fitting of Beta distribution on scores
+#'
+#' @param scores vector of estimated scores
+#' @param shape1 non-negative first parameter of the Beta distribution
+#' @param shape1 non-negative second parameter of the Beta distribution
+#'
+#' @returns An object of class `fitdistr`, a list with four components
+#'  (see: MASS::fitdistr())
+#'  - `estimate`: the parameter estimates
+#'  - `sd`: the estimated standard errors
+#'  - `vcov`: the estimated variance-covariance matrix
+#'  - `loglik`: the log-likelihood
+fit_beta_scores <- function(scores, shape1 = 1, shape2 = 1) {
+  # Fit a beta distribution
+  mle_fit <- MASS::fitdistr(
+    scores, "beta", start = list(shape1 = 1, shape2 = 1)
+  )
+  mle_fit
+}
+```
+
+
 ```{r define-mle_gamsel-example, message=FALSE, warning=FALSE}
 (mle_gamsel <- fit_beta_scores(scores = x_gamsel[!is.na(x_gamsel)]))
 ```
@@ -142,6 +243,51 @@ To estimate the two parameters of the Beta distribution, we apply the function, 
 ## Wrapper Functions
 
 For convenience, we use a wrapper function, `get_beta_fit()`{.R} that takes a dataset as an input, the name of the target variable and possibly a seed. From these arguments, the function splits the dataset into a training and a test set. It then fits the GAMSEL model to the train set, and fit a Beta distribution on the scores estimated in the test set. This function returns a list with 2 elements: the estimated scores of the GAMSEL, the the parameters of the Beta distribution estimated using the scores of this model.
+
+```{r define-get_beta_fit, eval=FALSE}
+#| code-fold: true
+#| code-summary: The `get_beta_fit()`{.R} function
+#' Estimation of a GLM-logistic, a GAM and a GAMSEL model on a classification
+#' task. Then, on estimated scores from the test set, fits a Beta distribution.
+#'
+#' @param dataset dataset with response variable and predictors
+#' @param target_name name of the target (response) variable
+#' @param seed desired seed (default to `NULL`)
+#'
+#' @returns A list with the following elements:
+#'  - `scores_glm`: scores on train and test set (in a list) from the GLM
+#'  - `scores_gam`: scores on train and test set (in a list) from the GAM
+#'  - `scores_gamsel`: scores on train and test set (in a list) from the GAMSEL
+#'  - `mle_glm`: An object of class "fitdistr" for the GLM model
+#'    (see fit_beta_scores())
+#'  - `mle_gamsel`: An object of class "fitdistr" for the GAM model
+#'    (see fit_beta_scores())
+#'  - `mle_gamsel`: An object of class "fitdistr" for the GAMSEL model
+#'    (see fit_beta_scores())
+get_beta_fit <- function(dataset,
+                         target_name,
+                         seed = NULL) {
+  # Split data into train/test
+  data <- split_train_test(data = dataset, prop_train = .8, seed = seed)
+
+  # Train a GAMSEL model
+  scores_gamsel <- train_gamsel(
+    data_train = data$train, data_test = data$test, target_name = target_name,
+    degrees = 6
+  )
+  # Add a little noise to the estimated scores to avoid being in [0,1] and be
+  # in (0,1) instead.
+  x_gamsel <- (scores_gamsel$scores_test * (1 - 1e-6)) + 1e-6 / 2
+  # Fit a Beta distribution on these scores
+  mle_gamsel <- fit_beta_scores(scores = x_gamsel[!is.nan(x_gamsel)])
+
+  list(
+    scores_gamsel = scores_gamsel,
+    mle_gamsel = mle_gamsel
+  )
+}
+```
+
 
 These two functions can be called as follows:
 ```{r, warning = FALSE}

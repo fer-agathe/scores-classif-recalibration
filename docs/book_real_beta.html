@@ -299,7 +299,7 @@ window.Quarto = {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./example_spambase_beta.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset I</span></span></a>
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Prior Distribution: Example</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -311,7 +311,7 @@ window.Quarto = {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./example_spambase_xgb.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset II</span></span></a>
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Recalibration: Example</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -473,7 +473,7 @@ Note
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Sex =</span> <span class="fu">ifelse</span>(Sex <span class="sc">==</span> <span class="st">"M"</span>, <span class="dv">1</span>, <span class="dv">0</span>)) </span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"Sex"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <span class="quarto-unresolved-ref">?sec-real-example</span> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>priors_abalone <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_abalone, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -556,7 +556,7 @@ Figure&nbsp;7.1: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>income)</span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"high_income"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <span class="quarto-unresolved-ref">?sec-real-example</span> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>priors_adult <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_adult, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -638,7 +638,7 @@ Figure&nbsp;7.2: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">y =</span> <span class="fu">ifelse</span>(y <span class="sc">==</span> <span class="st">"yes"</span>, <span class="dv">1</span>, <span class="dv">0</span>)) </span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"y"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <span class="quarto-unresolved-ref">?sec-real-example</span> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>priors_bank <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_bank, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -722,7 +722,7 @@ Figure&nbsp;7.3: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">default =</span> <span class="st">`</span><span class="at">default payment next month</span><span class="st">`</span>)</span>
 <span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"default"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <span class="quarto-unresolved-ref">?sec-real-example</span> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>priors_default <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_default, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -791,7 +791,7 @@ Figure&nbsp;7.4: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Class)</span>
 <span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"is_dermason"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <span class="quarto-unresolved-ref">?sec-real-example</span> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>priors_drybean <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_drybean, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -870,7 +870,7 @@ Figure&nbsp;7.5: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"y"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <span class="quarto-unresolved-ref">?sec-real-example</span> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>priors_coupon <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_coupon, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -947,7 +947,7 @@ Figure&nbsp;7.6: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>veil_type)</span>
 <span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"edible"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <span class="quarto-unresolved-ref">?sec-real-example</span> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>priors_mushroom <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_mushroom, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -1039,7 +1039,7 @@ Figure&nbsp;7.7: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>date)</span>
 <span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"Occupancy"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <span class="quarto-unresolved-ref">?sec-real-example</span> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>priors_occupancy <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_occupancy, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -1131,7 +1131,7 @@ e.g.:
 <span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>tb_winequality <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(tb_winequality)</span>
 <span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"high_quality"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <span class="quarto-unresolved-ref">?sec-real-example</span> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>priors_winequality <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_winequality, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -1222,7 +1222,7 @@ Figure&nbsp;7.9: Distribution of estimated probabilities by the GAMSEL model and
 <div class="cell">
 <div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"is_spam"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <span class="quarto-unresolved-ref">?sec-real-example</span> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>priors_spambase <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_spambase, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -1856,13 +1856,13 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="./example_spambase_beta.html" class="pagination-link" aria-label="Illustration on Abalone dataset I">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset I</span></span>
+      <a href="./example_spambase_beta.html" class="pagination-link" aria-label="Prior Distribution: Example">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Prior Distribution: Example</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./example_spambase_xgb.html" class="pagination-link" aria-label="Illustration on Abalone dataset II">
-        <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Illustration on Abalone dataset II</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="./example_spambase_xgb.html" class="pagination-link" aria-label="Recalibration: Example">
+        <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Recalibration: Example</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
