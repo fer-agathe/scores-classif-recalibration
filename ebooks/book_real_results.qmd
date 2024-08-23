@@ -655,9 +655,6 @@ plot_bp_xgb_dataset(xgb_resul = xgb_resul_spambase, prior = priors_spambase)
 
 :::
 
-## Estimated Metrics
-
-
 ## Before vs. After Recalibration
 
 Let us have a look at the evolution of ICI and KL divergence before and after calibration with both methods (Platt-scaling and Isotonic regression). We consider three models for each dataset: the one for which the hyperparameters were selected based on the maximization of AUC (AUC*), the one for which the hyperparameters were selected based on the minimization of the Kullback-Leibler divergence between the distribution of the estimated scores and that of the prior distribution, and one with a relatively high ICI, i.e., with poor calibration.
@@ -801,7 +798,7 @@ get_data_plot_before_after_recalib <- function(xgb_resul, dataset_name) {
     filter(sample == "Test") |> 
     select(
       recalib, sample, result_type, 
-      brier, ici, kl = KL_20_true_probas
+      AUC, brier, ici, kl = KL_20_true_probas
     ) |> 
     filter(
       result_type %in% c("AUC*", "KL*", "High ICI")
@@ -857,6 +854,73 @@ points_after_c <-
   list_rbind()
 ```
 
+
+### Tables
+
+```{r}
+#| tbl-cap: "Performance and calibration metrics (Brier Score, Integrated Calibration Index, Kullback-Leibler Divergence) computed on the test set, on scores returned by the model (column ‘None’), on scores recalibrated using Platt scaling (column ‘Platt’), or Isotonic regression (coliumn ‘Isotonic’)"
+#| label: tbl-metrics-real
+#| code-fold: true
+#| code-summary: Display codes to create the Table
+digits <- 2
+
+table_models_interest |> 
+  relocate(dataset, .before = recalib) |> 
+  select(-sample, -AUC) |> 
+  pivot_longer(cols = c(brier, ici, kl)) |> 
+  pivot_wider(names_from = c(recalib, name), values_from = value) |> 
+  knitr::kable(
+    align = str_c("l", str_c(rep("c", 3*3), collapse = ""), collapse = ""),
+    escape = FALSE, booktabs = T, digits = 3, format = "markdown",
+    col.names = c(
+      "Dataset", "Optim.",
+      rep(c("BS", "ICI", "KL"), 3)
+    )
+  ) |> 
+  kableExtra::collapse_rows(columns = 1, valign = "top") |> 
+  kableExtra::add_header_above(
+    c(" " = 2,
+      "None" = 3,
+      "Platt" = 3,
+      "Isotonic" = 3
+    )
+  ) |> 
+  kableExtra::scroll_box(fixed_thead = TRUE, height = "500px")
+```
+
+
+```{r, echo=FALSE}
+# Latex version for paper
+
+digits <- 2
+
+
+
+table_models_interest |> 
+  relocate(dataset, .before = recalib) |> 
+  select(-sample, -AUC) |> 
+  pivot_longer(cols = c(brier, ici, kl)) |> 
+  pivot_wider(names_from = c(recalib, name), values_from = value) |> 
+  knitr::kable(
+    align = str_c("l", str_c(rep("c", 3*3), collapse = ""), collapse = ""),
+    escape = FALSE, booktabs = T, digits = 3, format = "latex",
+    col.names = c(
+      "Dataset", "Optim.",
+      rep(c("BS", "ICI", "KL"), 3)
+    )
+  ) |> 
+  kableExtra::collapse_rows(columns = 1, valign = "top") |> 
+  kableExtra::add_header_above(
+    c(" " = 2,
+      "None" = 3,
+      "Platt" = 3,
+      "Isotonic" = 3
+    )
+  )
+```
+
+
+### Figures
 
 
 ```{r}
