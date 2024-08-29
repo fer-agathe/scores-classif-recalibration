@@ -1742,7 +1742,7 @@ table_models_interest_sd <-
   ) |> 
   mutate(value_type = "sd")
 
-digits <- 2
+digits <- 3
 
 table_models_interest_mean |> 
   bind_rows(table_models_interest_sd) |> 
@@ -1800,7 +1800,7 @@ table_models_interest_sd <-
   ) |> 
   mutate(value_type = "sd")
 
-digits <- 2
+digits <- 3
 
 table_models_interest_mean |> 
   bind_rows(table_models_interest_sd) |> 
