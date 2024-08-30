@@ -514,13 +514,23 @@ plot_bp_xgb_dataset <- function(xgb_resul, prior) {
     )
   
   mediocre_ici_xgb <- 
-    metrics_xgb_all |>
-    filter(sample == "Validation", recalib == "None") |>
-    arrange(desc(ici)) |>
-    #slice_head(n = 1) |>
-    filter(nb_iter == 10 & ind == 1) |>
-    select(ind, nb_iter, recalib) |>
-    mutate(result_type = "mediocre_ici")
+  metrics_xgb_all |>
+  filter(sample == "Validation", recalib == "None") |>
+  # For each replication for a scenario, we select a model with a mediocre 
+  # calibration
+  mutate(
+    mean_ici = mean(ici),
+    sd_ici = sd(ici),
+    upb_ici = mean_ici + sd_ici,
+  ) |> 
+  filter(ici >  upb_ici) |> 
+  arrange(desc(AUC)) |>
+  # Among the configurations for which the calibration is not within 1-sd of the
+  # average calibration, we select the model with the lowest ICI
+  #arrange(ici) |> 
+  slice_head(n = 1) |> 
+  select(ind, nb_iter, recalib) |>
+  mutate(result_type = "mediocre_ici")
   
   plot_bp_xgb(
     scores_hist_all = scores_hist_all, 
@@ -735,13 +745,18 @@ gather_metrics <- function(xgb_resul) {
     mutate(result_type = "lowest_kl")
   
   mediocre_ici_xgb <- 
-    metrics_xgb_all |>
-    filter(sample == "Validation", recalib == "None") |>
-    arrange(desc(ici)) |>
-    #slice_head(n = 1) |>
-    filter(nb_iter == 10 & ind == 1) |>
-    select(ind, nb_iter, recalib) |>
-    mutate(result_type = "mediocre_ici")
+  metrics_xgb_all |>
+  filter(sample == "Validation", recalib == "None") |>
+  mutate(
+    mean_ici = mean(ici),
+    sd_ici = sd(ici),
+    upb_ici = mean_ici + sd_ici,
+  ) |> 
+  filter(ici >  upb_ici) |> 
+  arrange(desc(AUC)) |>
+  slice_head(n = 1) |> 
+  select(ind, nb_iter, recalib) |>
+  mutate(result_type = "mediocre_ici")
   
   # Merge these
   models_of_interest_xgb <-
@@ -896,7 +911,7 @@ digits <- 2
 
 
 
-table_models_interest |> 
+latex_table <- table_models_interest |> 
   relocate(dataset, .before = recalib) |> 
   select(-sample, -AUC) |> 
   pivot_longer(cols = c(brier, ici, kl)) |> 
@@ -917,6 +932,8 @@ table_models_interest |>
       "Isotonic" = 3
     )
   )
+
+cat(latex_table)
 ```
 
 
