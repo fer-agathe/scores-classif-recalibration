@@ -1,6 +1,17 @@
 # Dependencies:
 # tidyverse, gmish, pROC, purrr
 
+calculate_log_loss <- function(y, s){
+  s_pred <- pmin(pmax(s, 1e-15), 1 - 1e-15)
+  mean(-y*log(s_pred) - (1-y)*log(1-s_pred))
+}
+
+calculate_kl <- function(s, p){
+  s_pred <- pmin(pmax(s, 1e-15), 1 - 1e-15)
+  p_pred <- pmin(pmax(p, 1e-15), 1 - 1e-15)
+  mean(-s_pred*log(p_pred/s_pred) - (1-s_pred)*log((1-p_pred)/(1-s_pred)))
+}
+
 #' Brier Score
 #'
 #' The Brier Score \citep{brier_1950}, is expressed as: \deqn{\text{BS} =
@@ -52,7 +63,7 @@ compute_metrics <- function(obs,
 
   # Log loss
   scores_pred <- pmin(pmax(scores, 1e-15), 1 - 1e-15)
-  log_loss <- -mean(obs * log(scores_pred) + (1 - obs) * log(1 - scores_pred))
+  log_loss <- calculate_log_loss(obs, scores_pred)
 
   # AUC
   AUC <- pROC::auc(obs, scores, levels = c("0", "1"), quiet = TRUE) |>
@@ -71,6 +82,11 @@ compute_metrics <- function(obs,
   pred_class <- ifelse(scores > .5, yes = 1, no = 0)
   acc <- sum(diag(table(obs = obs, pred = pred_class))) / length(scores)
 
+  # Kendall tau
+  kendall_cor <- cor(true_probas, scores, method = "kendall")
+  # Spearman's rank correlation
+  spearman_cor <- cor(true_probas, scores, method = "spearman")
+
   tibble(
     mse = mse,
     mae = mae,
@@ -78,7 +94,9 @@ compute_metrics <- function(obs,
     AUC = AUC,
     brier = brier,
     ici = ici,
-    log_loss = log_loss
+    log_loss = log_loss,
+    kendall = kendall_cor,
+    spearman = spearman_cor
   )
 
 }
@@ -144,4 +162,38 @@ dispersion_metrics <- function(true_probas, scores){
 #' @param q2 upper quantile (default to 1-q2)
 prop_btw_quantiles <- function(s, q1, q2 = 1 - q1) {
   tibble(q1 = q1, q2 = q2, freq = mean(s < q2 & s > q1))
+}
+
+decomposition_metrics <- function(obs, scores, calibrated_scores, true_probas){
+
+  # Decomposition with Brier score
+  # Irreducible and epistemic loss
+  total_brier <- mean((scores-obs)^2)
+  irreducible_brier <- mean((true_probas-obs)^2)
+  epistemic_brier <- mean((true_probas-scores)^2)
+  # Calibration and grouping loss
+  calibration_brier <- mean((calibrated_scores-scores)^2)
+  grouping_brier <- mean((true_probas-calibrated_scores)^2)
+
+  # Decomposition with log-loss/KL
+  # Irreducible and epistemic loss
+  total_ll <- calculate_log_loss(obs, scores)
+  irreducible_ll <- calculate_log_loss(obs, true_probas)
+  epistemic_kl <- calculate_kl(scores, true_probas)
+  # Calibration and grouping loss
+  calibration_kl <- calculate_kl(scores, calibrated_scores)
+  grouping_kl <- calculate_kl(calibrated_scores, true_probas)
+
+  decomposition_losses <- tibble(
+    total_brier = total_brier,
+    irreducible_brier = irreducible_brier,
+    epistemic_brier = epistemic_brier,
+    calibration_brier = calibration_brier,
+    grouping_brier = grouping_brier,
+    total_ll = total_ll,
+    irreducible_ll = irreducible_ll,
+    epistemic_kl = epistemic_kl,
+    calibration_kl = calibration_kl,
+    grouping_kl = grouping_kl
+  )
 }
