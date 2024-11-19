@@ -27,7 +27,9 @@ colour_samples <- c(
 colour_recalib <- c(
   "None" = "#88CCEE",
   "Platt" = "#44AA99",
-  "Isotonic" = "#882255"
+  "Isotonic" = "#882255",
+  "Beta" = "darkgoldenrod",
+  "Locfit" = "firebrick3"
 )
 ```
 
@@ -1026,7 +1028,7 @@ stopCluster(cl)
 The results can be loaded as follows:
 
 ```{r load-resul_xgb, eval=FALSE}
-scenarios <- 13:15
+scenarios <- 13
 files <- str_c(
   "../output/simul/resul_xgb_scenario_", scenarios, ".rda"
 )
@@ -1062,8 +1064,8 @@ metrics_xgb_all <- map(
     ),
     recalib = factor(
       recalib,
-      levels = c("none", "platt", "isotonic"),
-      labels = c("None", "Platt", "Isotonic")
+      levels = c("none", "platt", "isotonic", "beta", "locfit"),
+      labels = c("None", "Platt", "Isotonic", "Beta", "Locfit")
     )
   )
 
