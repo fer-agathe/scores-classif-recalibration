@@ -4,6 +4,7 @@ library(ggrepel)
 library(rpart)
 library(locfit)
 library(philentropy)
+library(betacal)
 
 # Colours for train/validation/test
 colour_samples <- c(
@@ -117,11 +118,21 @@ source("../scripts/functions/metrics.R")
 
 library(xgboost)
 
+#' Recalibrates scores using a calibration
+#'
+#' @param obs_calib vector of observed events in the calibration set
+#' @param scores_calib vector of predicted probabilities in the calibration set
+#' @param obs_test vector of observed events in the test set
+#' @param scores_test vector of predicted probabilities in the test set
+#' @param method recalibration method (`"platt"` for Platt scaling,
+#'   `"isotonic"` for isotonic regression)
+#' @returns list of two elements: recalibrated scores on the calibration set,
+#'   recalibrated scores on the test set
 recalibrate <- function(obs_calib,
                         obs_test,
                         pred_calib,
                         pred_test,
-                        method = c("platt", "isotonic")) {
+                        method = c("platt", "isotonic", "beta", "locfit")) {
   data_calib <- tibble(d = obs_calib, scores = pred_calib)
   data_test <- tibble(d = obs_test, scores = pred_test)
 
@@ -134,9 +145,21 @@ recalibrate <- function(obs_calib,
     fit_iso <- as.stepfun(iso)
     score_c_calib <- fit_iso(data_calib$scores)
     score_c_test <- fit_iso(data_test$scores)
-
+  } else if (method == "beta") {
+    fit_beta <- beta_calibration(data_calib$scores, data_calib$d, parameters = "abm")
+    score_c_calib <- beta_predict(data_calib$scores, fit_beta)
+    score_c_test <- beta_predict(data_test$scores, fit_beta)
+  } else if (method == "locfit") {
+    noise_scores <- data_calib$scores + rnorm(nrow(data_calib), 0, 0.01)
+    noise_data_calib <- data_calib %>% mutate(scores = noise_scores)
+    locfit_reg <- locfit(
+      formula = d ~ lp(scores, nn = 0.15, deg = 0),
+      kern = "rect", maxk = 200, data = noise_data_calib
+    )
+    score_c_calib <- predict(locfit_reg, newdata = data_calib)
+    score_c_test <- predict(locfit_reg, newdata = data_test)
   } else {
-    stop("Unrecognized method: platt or isotonic only")
+    stop("Unrecognized method: platt, isotonic, beta or locfit only")
   }
   # Format results in tibbles:
   # For calibration set
@@ -156,7 +179,6 @@ recalibrate <- function(obs_calib,
     tb_score_c_calib = tb_score_c_calib,
     tb_score_c_test = tb_score_c_test
   )
-
 }
 
 #' Computes the performance and calibration metrics for an xgb model,
@@ -218,6 +240,28 @@ get_metrics_nb_iter <- function(nb_iter,
   scores_c_iso_calib <- res_recalibration_iso$tb_score_c_calib$p_c
   scores_c_iso_test <- res_recalibration_iso$tb_score_c_test$p_c
 
+  # Beta calibration
+  res_recalibration_beta <- recalibrate(
+    obs_calib = tb_calib$d,
+    obs_test = tb_test$d,
+    pred_calib = scores_calib,
+    pred_test = scores_test,
+    method = "beta"
+  )
+  scores_c_beta_calib <- res_recalibration_beta$tb_score_c_calib$p_c
+  scores_c_beta_test <- res_recalibration_beta$tb_score_c_test$p_c
+
+  # Locfit regression
+  res_recalibration_locfit <- recalibrate(
+    obs_calib = tb_calib$d,
+    obs_test = tb_test$d,
+    pred_calib = scores_calib,
+    pred_test = scores_test,
+    method = "locfit"
+  )
+  scores_c_locfit_calib <- res_recalibration_locfit$tb_score_c_calib$p_c
+  scores_c_locfit_test <- res_recalibration_locfit$tb_score_c_test$p_c
+
   ## Histogram of scores----
   breaks <- seq(0, 1, by = .05)
   scores_train_hist <- hist(scores_train, breaks = breaks, plot = FALSE)
@@ -228,6 +272,10 @@ get_metrics_nb_iter <- function(nb_iter,
   scores_c_platt_test_hist <- hist(scores_c_platt_test, breaks = breaks, plot = FALSE)
   scores_c_iso_calib_hist <- hist(scores_c_iso_calib, breaks = breaks, plot = FALSE)
   scores_c_iso_test_hist <- hist(scores_c_iso_test, breaks = breaks, plot = FALSE)
+  scores_c_beta_calib_hist <- hist(scores_c_beta_calib, breaks = breaks, plot = FALSE)
+  scores_c_beta_test_hist <- hist(scores_c_beta_test, breaks = breaks, plot = FALSE)
+  scores_c_locfit_calib_hist <- hist(scores_c_locfit_calib, breaks = breaks, plot = FALSE)
+  scores_c_locfit_test_hist <- hist(scores_c_locfit_test, breaks = breaks, plot = FALSE)
 
   scores_hist <- list(
     train = scores_train_hist,
@@ -238,6 +286,10 @@ get_metrics_nb_iter <- function(nb_iter,
     test_c_platt = scores_c_platt_test_hist,
     calib_c_iso = scores_c_iso_calib_hist,
     test_c_iso = scores_c_iso_test_hist,
+    calib_c_beta = scores_c_beta_calib_hist,
+    test_c_beta = scores_c_beta_test_hist,
+    calib_c_locfit = scores_c_locfit_calib_hist,
+    test_c_locfit = scores_c_locfit_test_hist,
     scenario = simu_data$scenario,
     ind = ind,
     repn = simu_data$repn,
@@ -279,7 +331,18 @@ get_metrics_nb_iter <- function(nb_iter,
   proq_scores_c_iso_test <- prop_btw_q_h(
     scores_c_iso_test, sample_name = "test", recalib_name = "isotonic"
   )
-
+  proq_scores_c_beta_calib <- prop_btw_q_h(
+    scores_c_beta_calib, sample_name = "calib", recalib_name = "beta"
+  )
+  proq_scores_c_beta_test <- prop_btw_q_h(
+    scores_c_beta_test, sample_name = "test", recalib_name = "beta"
+  )
+  proq_scores_c_locfit_calib <- prop_btw_q_h(
+    scores_c_locfit_calib, sample_name = "calib", recalib_name = "locfit"
+  )
+  proq_scores_c_locfit_test <- prop_btw_q_h(
+    scores_c_locfit_test, sample_name = "test", recalib_name = "locfit"
+  )
 
   ## Dispersion Metrics----
   disp_train <- dispersion_metrics(
@@ -321,6 +384,26 @@ get_metrics_nb_iter <- function(nb_iter,
     true_probas = true_prob$test, scores = scores_c_iso_test
   ) |>
     mutate(sample = "test", recalib = "isotonic")
+
+  disp_c_beta_calib <- dispersion_metrics(
+    true_probas = true_prob$calib, scores = scores_c_beta_calib
+  ) |>
+    mutate(sample = "calib", recalib = "beta")
+
+  disp_c_beta_test <- dispersion_metrics(
+    true_probas = true_prob$test, scores = scores_c_beta_test
+  ) |>
+    mutate(sample = "test", recalib = "beta")
+
+  disp_c_locfit_calib <- dispersion_metrics(
+    true_probas = true_prob$calib, scores = scores_c_locfit_calib
+  ) |>
+    mutate(sample = "calib", recalib = "locfit")
+
+  disp_c_locfit_test <- dispersion_metrics(
+    true_probas = true_prob$test, scores = scores_c_locfit_test
+  ) |>
+    mutate(sample = "test", recalib = "locfit")
 
   # Performance and Calibration Metrics
   # We add very small noise to predicted scores
@@ -387,6 +470,85 @@ get_metrics_nb_iter <- function(nb_iter,
     true_probas = true_prob$test
   ) |> mutate(sample = "test", recalib = "isotonic")
 
+  # With recalibrated scores (beta)
+  scores_c_beta_calib_noise <- scores_c_beta_calib +
+    runif(n = length(scores_c_beta_calib), min = 0, max = 0.01)
+  scores_c_beta_calib_noise[scores_c_beta_calib_noise > 1] <- 1
+  metrics_c_beta_calib <- compute_metrics(
+    obs = tb_calib$d, scores = scores_c_beta_calib_noise,
+    true_probas = true_prob$calib
+  ) |> mutate(sample = "calib", recalib = "beta")
+
+  scores_c_beta_test_noise <- scores_c_beta_test +
+    runif(n = length(scores_c_beta_test), min = 0, max = 0.01)
+  scores_c_beta_test_noise[scores_c_beta_test_noise > 1] <- 1
+  metrics_c_beta_test <- compute_metrics(
+    obs = tb_test$d, scores = scores_c_beta_test_noise,
+    true_probas = true_prob$test
+  ) |> mutate(sample = "test", recalib = "beta")
+
+  # With recalibrated scores (locfit)
+  scores_c_locfit_calib_noise <- scores_c_locfit_calib +
+    runif(n = length(scores_c_locfit_calib), min = 0, max = 0.01)
+  scores_c_locfit_calib_noise[scores_c_locfit_calib_noise > 1] <- 1
+  metrics_c_locfit_calib <- compute_metrics(
+    obs = tb_calib$d, scores = scores_c_locfit_calib_noise,
+    true_probas = true_prob$calib
+  ) |> mutate(sample = "calib", recalib = "locfit")
+
+  scores_c_locfit_test_noise <- scores_c_locfit_test +
+    runif(n = length(scores_c_locfit_test), min = 0, max = 0.01)
+  scores_c_locfit_test_noise[scores_c_locfit_test_noise > 1] <- 1
+  metrics_c_locfit_test <- compute_metrics(
+    obs = tb_test$d, scores = scores_c_locfit_test_noise,
+    true_probas = true_prob$test
+  ) |> mutate(sample = "test", recalib = "locfit")
+
+  # Decomposition of expected losses
+  # Platt
+  decomposition_platt_calib <- decomposition_metrics(
+    obs = tb_calib$d, scores = scores_calib,
+    calibrated_scores = scores_c_platt_calib, true_probas = true_prob$calib
+  ) |> mutate(sample = "calib", recalib = "platt")
+
+  decomposition_platt_test <- decomposition_metrics(
+    obs = tb_test$d, scores = scores_test,
+    calibrated_scores = scores_c_platt_test, true_probas = true_prob$test
+  ) |> mutate(sample = "test", recalib = "platt")
+
+  # Isotonic
+  decomposition_iso_calib <- decomposition_metrics(
+    obs = tb_calib$d, scores = scores_calib,
+    calibrated_scores = scores_c_iso_calib, true_probas = true_prob$calib
+  ) |> mutate(sample = "calib", recalib = "iso")
+
+  decomposition_iso_test <- decomposition_metrics(
+    obs = tb_test$d, scores = scores_test,
+    calibrated_scores = scores_c_iso_test, true_probas = true_prob$test
+  ) |> mutate(sample = "test", recalib = "iso")
+
+  # Beta
+  decomposition_beta_calib <- decomposition_metrics(
+    obs = tb_calib$d, scores = scores_calib,
+    calibrated_scores = scores_c_beta_calib, true_probas = true_prob$calib
+  ) |> mutate(sample = "calib", recalib = "beta")
+
+  decomposition_beta_test <- decomposition_metrics(
+    obs = tb_test$d, scores = scores_test,
+    calibrated_scores = scores_c_beta_test, true_probas = true_prob$test
+  ) |> mutate(sample = "test", recalib = "beta")
+
+  # Locfit
+  decomposition_locfit_calib <- decomposition_metrics(
+    obs = tb_calib$d, scores = scores_calib,
+    calibrated_scores = scores_c_locfit_calib, true_probas = true_prob$calib
+  ) |> mutate(sample = "calib", recalib = "locfit")
+
+  decomposition_locfit_test <- decomposition_metrics(
+    obs = tb_test$d, scores = scores_test,
+    calibrated_scores = scores_c_locfit_test, true_probas = true_prob$test
+  ) |> mutate(sample = "test", recalib = "locfit")
+
   tb_metrics <- metrics_train |>
     bind_rows(metrics_valid) |>
     bind_rows(metrics_calib) |>
@@ -395,6 +557,10 @@ get_metrics_nb_iter <- function(nb_iter,
     bind_rows(metrics_c_platt_test) |>
     bind_rows(metrics_c_iso_calib) |>
     bind_rows(metrics_c_iso_test) |>
+    bind_rows(metrics_c_beta_calib) |>
+    bind_rows(metrics_c_beta_test) |>
+    bind_rows(metrics_c_locfit_calib) |>
+    bind_rows(metrics_c_locfit_test) |>
     left_join(
       disp_train |>
         bind_rows(disp_valid) |>
@@ -403,7 +569,11 @@ get_metrics_nb_iter <- function(nb_iter,
         bind_rows(disp_c_platt_calib) |>
         bind_rows(disp_c_platt_test) |>
         bind_rows(disp_c_iso_calib) |>
-        bind_rows(disp_c_iso_test),
+        bind_rows(disp_c_iso_test) |>
+        bind_rows(disp_c_beta_calib) |>
+        bind_rows(disp_c_beta_test) |>
+        bind_rows(disp_c_locfit_calib) |>
+        bind_rows(disp_c_locfit_test),
       by = c("sample", "recalib")
     ) |>
     mutate(
@@ -422,6 +592,26 @@ get_metrics_nb_iter <- function(nb_iter,
     bind_rows(proq_scores_c_platt_test) |>
     bind_rows(proq_scores_c_iso_calib) |>
     bind_rows(proq_scores_c_iso_test) |>
+    bind_rows(proq_scores_c_beta_calib) |>
+    bind_rows(proq_scores_c_beta_test) |>
+    bind_rows(proq_scores_c_locfit_calib) |>
+    bind_rows(proq_scores_c_locfit_test) |>
+    mutate(
+      scenario = simu_data$scenario,
+      ind = ind,
+      repn = simu_data$repn,
+      max_depth = params$max_depth,
+      nb_iter = nb_iter
+    )
+
+  tb_decomposition_loss <- decomposition_platt_calib |>
+    bind_rows(decomposition_platt_test) |>
+    bind_rows(decomposition_iso_calib) |>
+    bind_rows(decomposition_iso_test) |>
+    bind_rows(decomposition_beta_calib) |>
+    bind_rows(decomposition_beta_test) |>
+    bind_rows(decomposition_locfit_calib) |>
+    bind_rows(decomposition_locfit_test) |>
     mutate(
       scenario = simu_data$scenario,
       ind = ind,
@@ -436,7 +626,7 @@ get_metrics_nb_iter <- function(nb_iter,
     repn = simu_data$repn,             # data replication ID
     nb_iter = nb_iter,                 # number of boosting iterations
     tb_metrics = tb_metrics,           # table with performance/calib/divergence
-    #  metrics
+    tb_decomposition = tb_decomposition_loss,                                   #  metrics
     tb_prop_scores = tb_prop_scores,   # table with P(q1 < score < q2)
     scores_hist = scores_hist          # histogram of scores
   )
@@ -551,6 +741,13 @@ simulate_xgb_scenario <- function(scenario, params_df, repn) {
   ) |>
     list_rbind()
 
+  # Decomposition of expected losses
+  decomposition_scores_simul <- map(
+    res_simul,
+    function(simul_grid_j) map(simul_grid_j, "tb_decomposition") |> list_rbind()
+  ) |>
+    list_rbind()
+
   # Histogram of estimated scores
   scores_hist <- map(
     res_simul,
@@ -560,13 +757,13 @@ simulate_xgb_scenario <- function(scenario, params_df, repn) {
   list(
     metrics_simul = metrics_simul,
     scores_hist = scores_hist,
-    prop_scores_simul = prop_scores_simul
+    prop_scores_simul = prop_scores_simul,
+    decomposition_scores_simul = decomposition_scores_simul
   )
 }
 
 grid <- expand_grid(
-  # max_depth = c(2, 4, 6),
-  max_depth = c(2,4,6),
+  max_depth = c(2, 4, 6),
   nb_iter_total = 400,
   eta = 0.3
 ) |>
@@ -625,10 +822,18 @@ simulate_xgb_scenario <- function(scenario, params_df, repn) {
     function(simul_grid_j) map(simul_grid_j, "scores_hist")
   )
 
+  # Decomposition of expected losses
+  decomposition_scores_simul <- map(
+    res_simul,
+    function(simul_grid_j) map(simul_grid_j, "tb_decomposition") |> list_rbind()
+  ) |>
+    list_rbind()
+
   list(
     metrics_simul = metrics_simul,
     scores_hist = scores_hist,
-    prop_scores_simul = prop_scores_simul
+    prop_scores_simul = prop_scores_simul,
+    decomposition_scores_simul = decomposition_scores_simul
   )
 }
 

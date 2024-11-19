@@ -52,14 +52,14 @@ compute_metrics <- function(obs,
                             scores,
                             true_probas = NULL) {
 
-  # True MSE, MAE
-  if (!is.null(true_probas)) {
-    mse <- mean((true_probas - scores)^2)
-    mae <- mean(abs(true_probas - scores))
-  } else {
-    mse <- NA
-    mae <- NA
-  }
+  # # True MSE, MAE
+  # if (!is.null(true_probas)) {
+  #   mse <- mean((true_probas - scores)^2)
+  #   mae <- mean(abs(true_probas - scores))
+  # } else {
+  #   mse <- NA
+  #   mae <- NA
+  # }
 
   # Log loss
   scores_pred <- pmin(pmax(scores, 1e-15), 1 - 1e-15)
@@ -83,19 +83,19 @@ compute_metrics <- function(obs,
   acc <- sum(diag(table(obs = obs, pred = pred_class))) / length(scores)
 
   # Kendall tau
-  kendall_cor <- cor(true_probas, scores, method = "kendall")
+  # kendall_cor <- cor(true_probas, scores, method = "kendall")
   # Spearman's rank correlation
   spearman_cor <- cor(true_probas, scores, method = "spearman")
 
   tibble(
-    mse = mse,
-    mae = mae,
+    # mse = mse,
+    # mae = mae,
     acc = acc,
     AUC = AUC,
     brier = brier,
     ici = ici,
     log_loss = log_loss,
-    kendall = kendall_cor,
+    # kendall = kendall_cor,
     spearman = spearman_cor
   )
 

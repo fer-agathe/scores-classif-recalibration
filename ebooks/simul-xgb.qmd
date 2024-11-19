@@ -976,6 +976,7 @@ clusterEvalQ(cl, {
   library(philentropy)
   library(xgboost)
   library(ks)
+  library(betacal)
 }) |>
   invisible()
 
@@ -993,6 +994,9 @@ clusterExport(
     "simulate_xgb_scenario",
     "get_metrics_nb_iter",
     "recalibrate",
+    "calculate_log_loss",
+    "decomposition_metrics",
+    "calculate_kl",
     # Objects
     "grid",
     "params_df",
@@ -1005,7 +1009,11 @@ if (!dir.exists("../output/simul/")) {
   dir.create("../output/simul/", recursive = TRUE)
 }
 
-for (i_scenario in 1:16) {
+# 1--4 Agathe
+# 5--8 Ewen
+# 9--12 AMSE
+#
+for (i_scenario in 5:8) {
   scenario <- i_scenario
   print(str_c("Scenario ", scenario, "/", nrow(params_df)))
   clusterExport(cl, c("scenario"))
