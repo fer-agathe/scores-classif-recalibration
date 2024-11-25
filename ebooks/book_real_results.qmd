@@ -28,7 +28,9 @@ colour_samples <- c(
 colour_recalib <- c(
   "None" = "#88CCEE",
   "Platt" = "#44AA99",
-  "Isotonic" = "#882255"
+  "Isotonic" = "#882255",
+  "Beta" = "#D55E00"#,
+  #"Locfit" = "firebrick3"
 )
 ```
 
@@ -130,6 +132,14 @@ plot_bp_interest <- function(metrics_interest,
       ylab = "",
       col = colour_recalib[["Platt"]]
     )
+  } else if (recalib_method == "beta") {
+    plot(
+      main = str_c(label, " (iter = ", metrics_interest$nb_iter,")"),
+      scores_hist_interest$test_c_iso,
+      xlab = latex2exp::TeX("$\\hat{s}(x)$"),
+      ylab = "",
+      col = colour_recalib[["Beta"]]
+    )
   } else if (recalib_method == "iso") {
     plot(
       main = str_c(label, " (iter = ", metrics_interest$nb_iter,")"),
@@ -138,7 +148,7 @@ plot_bp_interest <- function(metrics_interest,
       ylab = "",
       col = colour_recalib[["Isotonic"]]
     )
-  }
+  } 
   mtext(side = 3, line = -0.25, adj = .5, subtitle, cex = .5)
 }
 
@@ -146,10 +156,10 @@ plot_bp_xgb <- function(paper_version = FALSE) {
   max_depth_val <- map_dbl(scores_hist_all, ~.x[[1]]$max_depth)
   true_prob <- prior$scores_gamsel$scores_train
   
-  for (recalib_method in c("none", "platt", "iso")) {
+  for (recalib_method in c("none", "platt", "beta", "iso")) {
     
-    i_method <- match(recalib_method, c("none", "platt", "iso"))
-    recalib_method_lab <- c("None", "Platt", "Isotonic")[i_method]
+    i_method <- match(recalib_method, c("none", "platt", "beta", "iso"))
+    recalib_method_lab <- c("None", "Platt", "Beta", "Isotonic")[i_method]
     
     # The metrics for the corresponding results, on the validation set
     metrics_xgb_current_valid <-
@@ -327,10 +337,10 @@ plot_bp_xgb <- function(scores_hist_all,
   # True Probabilities
   true_prob <- prior$scores_gamsel$scores_train
   
-  for (recalib_method in c("none", "platt", "iso")) {
+  for (recalib_method in c("none", "platt", "beta", "iso")) {
     
-    i_method <- match(recalib_method, c("none", "platt", "iso"))
-    recalib_method_lab <- c("None", "Platt", "Isotonic")[i_method]
+    i_method <- match(recalib_method, c("none", "platt", "beta", "iso"))
+    recalib_method_lab <- c("None", "Platt", "Beta", "Isotonic")[i_method]
     
     # The metrics for the corresponding results, on the validation set
     metrics_xgb_current_valid <-
@@ -508,8 +518,8 @@ plot_bp_xgb_dataset <- function(xgb_resul, prior) {
       ),
       recalib = factor(
         recalib,
-        levels = c("none", "platt", "isotonic"),
-        labels = c("None", "Platt", "Isotonic")
+        levels = c("none", "platt", "beta", "isotonic"),
+        labels = c("None", "Platt", "Beta", "Isotonic")
       )
     )
   
@@ -551,7 +561,7 @@ plot_bp_xgb_dataset <- function(xgb_resul, prior) {
 #| code-fold: true
 #| fig-height: 7
 #| fig-width: 14
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+par(mfrow = c(4,8), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb_dataset(xgb_resul = xgb_resul_abalone, prior = priors_abalone)
 ```
 
@@ -563,7 +573,7 @@ plot_bp_xgb_dataset(xgb_resul = xgb_resul_abalone, prior = priors_abalone)
 #| code-fold: true
 #| fig-height: 7
 #| fig-width: 14
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+par(mfrow = c(4,8), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb_dataset(xgb_resul = xgb_resul_adult, prior = priors_adult)
 ```
 
@@ -575,7 +585,7 @@ plot_bp_xgb_dataset(xgb_resul = xgb_resul_adult, prior = priors_adult)
 #| code-fold: true
 #| fig-height: 7
 #| fig-width: 14
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+par(mfrow = c(4,8), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb_dataset(xgb_resul = xgb_resul_bank, prior = priors_bank)
 ```
 
@@ -587,7 +597,7 @@ plot_bp_xgb_dataset(xgb_resul = xgb_resul_bank, prior = priors_bank)
 #| code-fold: true
 #| fig-height: 7
 #| fig-width: 14
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+par(mfrow = c(4,8), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb_dataset(xgb_resul = xgb_resul_default, prior = priors_default)
 ```
 
@@ -599,7 +609,7 @@ plot_bp_xgb_dataset(xgb_resul = xgb_resul_default, prior = priors_default)
 #| code-fold: true
 #| fig-height: 7
 #| fig-width: 14
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+par(mfrow = c(4,8), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb_dataset(xgb_resul = xgb_resul_drybean, prior = priors_drybean)
 ```
 
@@ -611,7 +621,7 @@ plot_bp_xgb_dataset(xgb_resul = xgb_resul_drybean, prior = priors_drybean)
 #| code-fold: true
 #| fig-height: 7
 #| fig-width: 14
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+par(mfrow = c(4,8), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb_dataset(xgb_resul = xgb_resul_coupon, prior = priors_coupon)
 ```
 
@@ -623,7 +633,7 @@ plot_bp_xgb_dataset(xgb_resul = xgb_resul_coupon, prior = priors_coupon)
 #| code-fold: true
 #| fig-height: 7
 #| fig-width: 14
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+par(mfrow = c(4,8), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb_dataset(xgb_resul = xgb_resul_mushroom, prior = priors_mushroom)
 ```
 
@@ -635,7 +645,7 @@ plot_bp_xgb_dataset(xgb_resul = xgb_resul_mushroom, prior = priors_mushroom)
 #| code-fold: true
 #| fig-height: 7
 #| fig-width: 14
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+par(mfrow = c(4,8), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb_dataset(xgb_resul = xgb_resul_occupancy, prior = priors_occupancy)
 ```
 
@@ -647,7 +657,7 @@ plot_bp_xgb_dataset(xgb_resul = xgb_resul_occupancy, prior = priors_occupancy)
 #| code-fold: true
 #| fig-height: 7
 #| fig-width: 14
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+par(mfrow = c(4,8), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb_dataset(xgb_resul = xgb_resul_winequality, prior = priors_winequality)
 ```
 
@@ -659,7 +669,7 @@ plot_bp_xgb_dataset(xgb_resul = xgb_resul_winequality, prior = priors_winequalit
 #| code-fold: true
 #| fig-height: 7
 #| fig-width: 14
-par(mfrow = c(3,8), mar = c(4.1, 4, 3.5, 1.5))
+par(mfrow = c(4,8), mar = c(4.1, 4, 3.5, 1.5))
 plot_bp_xgb_dataset(xgb_resul = xgb_resul_spambase, prior = priors_spambase)
 ```
 
@@ -684,8 +694,8 @@ gather_metrics <- function(xgb_resul) {
       ),
       recalib = factor(
         recalib,
-        levels = c("none", "platt", "isotonic"),
-        labels = c("None", "Platt", "Isotonic")
+        levels = c("none", "platt", "beta", "isotonic"),
+        labels = c("None", "Platt", "Beta", "Isotonic")
       )
     )
   
@@ -769,7 +779,7 @@ gather_metrics <- function(xgb_resul) {
     bind_rows(mediocre_ici_xgb)
   
   models_of_interest_metrics <- NULL
-  for (recalibration_method in c("None", "Platt", "Isotonic")) {
+  for (recalibration_method in c("None", "Platt", "Beta", "Isotonic")) {
     # Add metrics now
     models_of_interest_metrics <-
       models_of_interest_metrics |>
@@ -829,11 +839,11 @@ get_data_plot_before_after_recalib <- function(xgb_resul, dataset_name) {
     select(result_type, ici, kl) |> 
     left_join(
       table_models_interest |> 
-        filter(recalib %in% c("Platt", "Isotonic")) |> 
+        filter(recalib %in% c("Platt", "Beta", "Isotonic")) |> 
         select(recalib, result_type, ici, kl) |> 
         rename(ici_end = ici, kl_end = kl),
       by = "result_type",
-      relationship = "many-to-many" # (Platt and Isotonic)
+      relationship = "many-to-many" # (Platt, Isotonic and Beta)
     ) |> 
     mutate(dataset = dataset_name)
   
@@ -885,11 +895,11 @@ table_models_interest |>
   pivot_longer(cols = c(brier, ici, kl)) |> 
   pivot_wider(names_from = c(recalib, name), values_from = value) |> 
   knitr::kable(
-    align = str_c("l", str_c(rep("c", 3*3), collapse = ""), collapse = ""),
+    align = str_c("l", str_c(rep("c", 3*4), collapse = ""), collapse = ""),
     escape = FALSE, booktabs = T, digits = 3, format = "markdown",
     col.names = c(
       "Dataset", "Optim.",
-      rep(c("BS", "ICI", "KL"), 3)
+      rep(c("BS", "ICI", "KL"), 4)
     )
   ) |> 
   kableExtra::collapse_rows(columns = 1, valign = "top") |> 
@@ -897,6 +907,7 @@ table_models_interest |>
     c(" " = 2,
       "None" = 3,
       "Platt" = 3,
+       "Beta" = 3,
       "Isotonic" = 3
     )
   ) |> 
@@ -917,11 +928,11 @@ latex_table <- table_models_interest |>
   pivot_longer(cols = c(brier, ici, kl)) |> 
   pivot_wider(names_from = c(recalib, name), values_from = value) |> 
   knitr::kable(
-    align = str_c("l", str_c(rep("c", 3*3), collapse = ""), collapse = ""),
+    align = str_c("l", str_c(rep("c", 3*4), collapse = ""), collapse = ""),
     escape = FALSE, booktabs = T, digits = 3, format = "latex",
     col.names = c(
       "Dataset", "Optim.",
-      rep(c("BS", "ICI", "KL"), 3)
+      rep(c("BS", "ICI", "KL"), 4)
     )
   ) |> 
   kableExtra::collapse_rows(columns = 1, valign = "top") |> 
@@ -929,6 +940,7 @@ latex_table <- table_models_interest |>
     c(" " = 2,
       "None" = 3,
       "Platt" = 3,
+      "Beta" = 3,
       "Isotonic" = 3
     )
   )
@@ -969,7 +981,7 @@ plot_before_after <- ggplot() +
       "High ICI" = 17
     )
   ) +
-  ggh4x::facet_wrap2(~dataset, scales = "free_y", ncol = 5, axes = "all") +
+  ggh4x::facet_wrap2(~dataset, ncol = 5, scales = "free", axes = "all") +
   labs(x = "ICI", y = "KL Divergence") +
   scale_colour_manual("Recalibration", values = colour_recalib) +
   scale_linetype_discrete("Recalibration") +

@@ -95,7 +95,7 @@ We start by splitting the dataset into train and test sets in order calculate th
 
 With the current dataset:
 ```{r define-data}
-data <- split_train_test(data = dataset, prop_train = .8, seed = 1234)
+data <- split_train_test(data = dataset, prop_train = .7, seed = 1234)
 names(data)
 ```
 
@@ -268,7 +268,7 @@ get_beta_fit <- function(dataset,
                          target_name,
                          seed = NULL) {
   # Split data into train/test
-  data <- split_train_test(data = dataset, prop_train = .8, seed = seed)
+  data <- split_train_test(data = dataset, prop_train = .7, seed = seed)
 
   # Train a GAMSEL model
   scores_gamsel <- train_gamsel(
