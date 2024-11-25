@@ -22,6 +22,26 @@ split_train_test <- function(data,
   )
 }
 
+#' Split prior scores into train and test set
+#'
+#' @param prior scores
+#' @param prop_train proportion in the train test (default to .8)
+#' @param seed desired seed (default to `NULL`)
+#'
+#' @returns a list with two elements: the train set, the test set of prior scores
+split_train_test_prior <- function(prior,
+                                   prop_train = .8,
+                                   seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+  size_train <- round(prop_train * length(prior))
+  ind_sample <- sample(1:length(prior), replace = FALSE, size = size_train)
+
+  list(
+    train = prior[ind_sample],
+    test = prior[-ind_sample]
+  )
+}
+
 #' One-hot encoding, and renaming variables to avoid naming that do not respect
 #' r old naming conventions
 #'
@@ -142,6 +162,10 @@ train_gamsel <- function(data_train,
     gamsel_out, newdata = as.data.frame(X_dmy_train), type = "response")[, 1]
   scores_test <- predict(
     gamsel_out, newdata = as.data.frame(X_dmy_test), type = "response")[, 1]
+  scores_train[which(is.na(scores_train))] <-
+    1/(1 + exp(-predict(gamsel_out,
+                        newdata = as.data.frame(X_dmy_train[which(is.na(scores_train)),]))
+               [, 1]))
   scores_test[which(is.na(scores_test))] <-
     1/(1 + exp(-predict(gamsel_out,
                         newdata = as.data.frame(X_dmy_test[which(is.na(scores_test)),]))
@@ -200,7 +224,7 @@ get_beta_fit <- function(dataset,
                          target_name,
                          seed = NULL) {
   # Split data into train/test
-  data <- split_train_test(data = dataset, prop_train = .8, seed = seed)
+  data <- split_train_test(data = dataset, prop_train = .7, seed = seed)
 
   # Train a GAMSEL model
   scores_gamsel <- train_gamsel(
