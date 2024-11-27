@@ -52,14 +52,18 @@ compute_metrics <- function(obs,
                             scores,
                             true_probas = NULL) {
 
-  # # True MSE, MAE
-  # if (!is.null(true_probas)) {
-  #   mse <- mean((true_probas - scores)^2)
-  #   mae <- mean(abs(true_probas - scores))
-  # } else {
-  #   mse <- NA
-  #   mae <- NA
-  # }
+  # True MSE, MAE
+  if (!is.null(true_probas)) {
+    mse <- mean((true_probas - scores)^2)
+    # mae <- mean(abs(true_probas - scores))
+    kl <- kullback_leibler(true_probas = true_probas, scores = scores)
+    ks <- ks.test(true_probas, scores)$statistic[["D"]]
+  } else {
+    mse <- NA
+    # mae <- NA
+    kl <- NA
+    ks <- NA
+  }
 
   # Log loss
   scores_pred <- pmin(pmax(scores, 1e-15), 1 - 1e-15)
@@ -88,8 +92,9 @@ compute_metrics <- function(obs,
   spearman_cor <- cor(true_probas, scores, method = "spearman")
 
   tibble(
-    # mse = mse,
-    # mae = mae,
+    mse = mse,
+    kl = kl,
+    ks = ks,
     acc = acc,
     AUC = AUC,
     brier = brier,
@@ -99,6 +104,28 @@ compute_metrics <- function(obs,
     spearman = spearman_cor
   )
 
+}
+
+#' Computes the dispersion metrics for a set of observed and predicted
+#' probabilities
+#'
+#' @returns KL of of predicted probabilities w.r. to true probabilities
+#' with 20 bins
+#'
+#' @param true_probas true probabilities from simulations
+#' @param scores predicted scores
+#'
+kullback_leibler <- function(true_probas, scores){
+  # KL divergences
+  m <- 20 # Number of bins
+  h_p <- hist(true_probas,breaks = seq(0, 1, length = m + 1), plot = FALSE)
+  h_phat <- hist(scores, breaks = seq(0, 1, length = m + 1), plot = FALSE)
+  # Densities
+  h1 <- rbind(h_phat$density / m,h_p$density / m) # Reference : true probabilities
+  KL_20_true_probas <- philentropy::distance(
+    h1, method = "kullback-leibler", unit = "log2", mute.message = TRUE)
+
+  KL_20_true_probas
 }
 
 # Wrapper functions----

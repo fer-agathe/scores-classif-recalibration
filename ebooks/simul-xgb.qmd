@@ -986,6 +986,7 @@ clusterExport(
     "brier_score",
     "compute_metrics",
     "dispersion_metrics",
+    "kullback_leibler",
     "prop_btw_quantiles",
     "subset_target",
     "simulate_data",
@@ -1013,7 +1014,7 @@ if (!dir.exists("../output/simul/")) {
 # 5--8 Ewen
 # 9--12 AMSE
 #
-for (i_scenario in 5:8) {
+for (i_scenario in 1:16) {
   scenario <- i_scenario
   print(str_c("Scenario ", scenario, "/", nrow(params_df)))
   clusterExport(cl, c("scenario"))
