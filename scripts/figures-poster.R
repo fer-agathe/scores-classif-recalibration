@@ -1,3 +1,4 @@
+library(tidyverse)
 # Figure motivation----
 predicted_risk <- seq(0, 1, length.out = 1000)
 f_inverse_logistic <- function(x, x0 = .5, k=.1) {
@@ -6,7 +7,21 @@ f_inverse_logistic <- function(x, x0 = .5, k=.1) {
 
 observed <- f_inverse_logistic(predicted_risk, x0 =.45, k=.1)
 
-pdf("autocalib.pdf", width = 4, height=4)
+pdf("../figs/autocalib.pdf", width = 4, height=4)
+par(mar = c(4.1, 4.1, 1.1, 1.1))
+plot(
+  predicted_risk, observed, t= "l",
+  xlim = c(0, 1), ylim = c(0,1),
+  xlab = "Predicted risk", ylab = "Observed proportion",
+  col = "#56B4E9", lwd=2
+)
+abline(a = 0, b = 1, lty = 2, col = "black", lwd = 2)
+text(x = .7, y = .9, substitute(paste(bold("Perfect"))), col = "black")
+text(x = .2, y = .5, substitute(paste(bold("Underestimation\n of lower risks"))), col = "#56B4E9")
+text(x = .8, y = .3, substitute(paste(bold("Overestimation\n of higher risks"))), col = "#56B4E9")
+dev.off()
+
+png("../figs/thumbnail.png", width = 320, height=256, res = 75, bg = "transparent")
 par(mar = c(4.1, 4.1, 1.1, 1.1))
 plot(
   predicted_risk, observed, t= "l",
@@ -23,6 +38,9 @@ dev.off()
 
 # Figure simulated probabilities
 source("../scripts/functions/simul-data.R")
+
+nb_obs <- 10000
+
 coefficients <- list(
   # First category (baseline, 2 covariates)
   c(0.5, 1),  # scenario 1, 0 noise variable
@@ -122,7 +140,7 @@ simu_data$data
 
 true_prob <- simu_data$data$probs_train
 
-pdf("true-prob-dgp1.pdf", width = 5, height=4)
+pdf("../figs/true-prob-dgp1.pdf", width = 5, height=4)
 par(mar = c(2.1, 2.1, 1.1, 1.1))
 hist(
   true_prob,
