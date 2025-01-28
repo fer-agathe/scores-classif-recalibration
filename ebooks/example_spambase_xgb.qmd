@@ -851,7 +851,7 @@ simul_xgb_helper <- function(data_train,
     "compute_metrics",
     "disp_metrics_dataset", "dispersion_metrics_beta",
     "recalibrate", "prop_btw_quantiles", "calculate_log_loss",
-    "calculate_kl", "decomposition_metrics"
+    "calculate_kl", "decomposition_metrics", "kullback_leibler"
   ))
 
   metrics_iter <-
@@ -1613,7 +1613,7 @@ resul_iter_1 <- get_metrics_xgb_iter(
 ## Final results: "spambase" dataset
 
 We calculate the performance/calibration/dispersion metrics for all iterations and all hyperparameters of the grid:
-```{r}
+```{r, eval=FALSE}
 xgb_resul <- simul_xgb_real(
   data,
   target_name,
@@ -1623,7 +1623,7 @@ xgb_resul <- simul_xgb_real(
 ```
 
 We save the results for the dataset "spambase":
-```{r}
+```{r, eval=F}
 save(xgb_resul, file = str_c("../output/real-data/xgb_resul_", name, ".rda"))
 ```
 
