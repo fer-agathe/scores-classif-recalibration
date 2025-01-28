@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.6.40">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>3&nbsp; Metrics – Recalibration</title>
+<title>3&nbsp; Metrics – Post-Calibration Techniques: Balancing Calibration and Score Distribution Alignment</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -91,10 +91,10 @@ div.csl-indent {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-86daaaaad7353f9cc0c554efc1dd6d94.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-f868c3b369b738ce9afd17f71ee17ec3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="site_libs/quarto-contrib/pseudocode-2.4.1/pseudocode.min.js"></script>
 <link href="site_libs/quarto-contrib/pseudocode-2.4.1/pseudocode.min.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -187,7 +187,7 @@ window.Quarto = {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">Recalibration</span>
+    <span class="navbar-title">Post-Calibration Techniques: Balancing Calibration and Score Distribution Alignment</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -410,8 +410,8 @@ Warning
 </ul>
 <p>To measure calibration, we compute two metrics:</p>
 <ul>
-<li>the Brier score (<span class="citation" data-cites="brier_1950">Brier (<a href="references.html#ref-brier_1950" role="doc-biblioref">1950</a>)</span>)</li>
-<li>the Integrated Calibration Index (<span class="citation" data-cites="Austin_2019">Austin and Steyerberg (<a href="references.html#ref-Austin_2019" role="doc-biblioref">2019</a>)</span>).</li>
+<li>the Brier score (<span class="citation" data-cites="brier_1950">Brier (<a href="#ref-brier_1950" role="doc-biblioref">1950</a>)</span>)</li>
+<li>the Integrated Calibration Index (<span class="citation" data-cites="Austin_2019">Austin and Steyerberg (<a href="#ref-Austin_2019" role="doc-biblioref">2019</a>)</span>).</li>
 </ul>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -423,7 +423,7 @@ Brier Score
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Given a sample size <span class="math inline">\(n\)</span>, the Brier Score <span class="citation" data-cites="brier_1950">Brier (<a href="references.html#ref-brier_1950" role="doc-biblioref">1950</a>)</span>, is expressed as: <span id="eq-brier-score"><span class="math display">\[
+<p>Given a sample size <span class="math inline">\(n\)</span>, the Brier Score <span class="citation" data-cites="brier_1950">Brier (<a href="#ref-brier_1950" role="doc-biblioref">1950</a>)</span>, is expressed as: <span id="eq-brier-score"><span class="math display">\[
 \begin{equation}
 \text{BS} = \frac{1}{n}\sum_{i=1}^{n} \big(\hat{s}(\mathbf{x}_i) - d_i\big)^{2}\enspace ,
 \end{equation}
@@ -441,7 +441,7 @@ Integrated Calibration Index
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Instead of defining bins, the Integrated Calibration Index or ICI (<span class="citation" data-cites="Austin_2019">Austin and Steyerberg (<a href="references.html#ref-Austin_2019" role="doc-biblioref">2019</a>)</span>) measures calibration using a local estimation (loess if the number of observation is lower than 1000 ; using a GAM otherwise).</p>
+<p>Instead of defining bins, the Integrated Calibration Index or ICI (<span class="citation" data-cites="Austin_2019">Austin and Steyerberg (<a href="#ref-Austin_2019" role="doc-biblioref">2019</a>)</span>) measures calibration using a local estimation (loess if the number of observation is lower than 1000 ; using a GAM otherwise).</p>
 <p>The occurrence of the binary event is regressed on the predicted scores, employing either locally estimated scatterplot smoothing (LOESS) when the number of observations is small (<span class="math inline">\(n &lt; 1000\)</span>) or cubic regression splines for larger datasets. The ICI is defined as <span id="eq-ici"><span class="math display">\[
 \begin{equation}
     \text{ICI} = \int_{0}^{1} f(p)  \phi(p)\, dp
@@ -549,7 +549,7 @@ Integrated Calibration Index
 </section>
 <section id="divergence-and-dispersion-metrics" class="level2" data-number="3.2">
 <h2 data-number="3.2" class="anchored" data-anchor-id="divergence-and-dispersion-metrics"><span class="header-section-number">3.2</span> Divergence and Dispersion Metrics</h2>
-<p>We compute the Kullback-Leibler divergence <span class="citation" data-cites="Kullback_1951">Kullback and Leibler (<a href="references.html#ref-Kullback_1951" role="doc-biblioref">1951</a>)</span> between the distribution of the estimated scores and the distribution of the true probabilities. Denoting (Q) the distribution of the scores and (P) the distribution of the true probabilities, the Kullback Leibler divergence of <span class="math inline">\(Q\)</span> with respect to <span class="math inline">\(P\)</span> is :% <span class="math display">\[\begin{equation}
+<p>We compute the Kullback-Leibler divergence <span class="citation" data-cites="Kullback_1951">Kullback and Leibler (<a href="#ref-Kullback_1951" role="doc-biblioref">1951</a>)</span> between the distribution of the estimated scores and the distribution of the true probabilities. Denoting (Q) the distribution of the scores and (P) the distribution of the true probabilities, the Kullback Leibler divergence of <span class="math inline">\(Q\)</span> with respect to <span class="math inline">\(P\)</span> is :% <span class="math display">\[\begin{equation}
 D_{KL}(Q || P) = \sum_{i} Q(i) \log \frac{Q(i)}{P(i)}.
 \end{equation}\]</span></p>
 <p>The distributions both need to be discretized. We divide the segment ([0,1]) into (m) bins.</p>
@@ -620,7 +620,7 @@ D_{KL}(Q || P) = \sum_{i} Q(i) \log \frac{Q(i)}{P(i)}.
 </div>
 
 
-<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-Austin_2019" class="csl-entry" role="listitem">
 Austin, Peter C., and Ewout W. Steyerberg. 2019. <span>“The Integrated Calibration Index (ICI) and Related Metrics for Quantifying the Calibration of Logistic Regression Models.”</span> <em>Statistics in Medicine</em> 38 (21): 4051–65. <a href="https://doi.org/10.1002/sim.8281">https://doi.org/10.1002/sim.8281</a>.
 </div>
@@ -716,8 +716,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   });
   clipboard.on('success', onCopySuccess);
   if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
     const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
       text: getTextToCopy,
       container: window.document.getElementById('quarto-embedded-source-code-modal')
@@ -828,7 +826,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       if (window.Quarto?.typesetMath) {
         window.Quarto.typesetMath(note);
       }
-      // TODO in 1.5, we should make sure this works without a callout special case
       if (note.classList.contains("callout")) {
         return note.outerHTML;
       } else {

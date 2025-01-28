@@ -1,49 +1,10 @@
 # Introduction
 
-This notebook is the online appendix of the article titled _xxx_." It provides supplementary materials to the main part of the paper.
+This notebook is the online appendix of the article titled _Post-Calibration Techniques: Balancing Calibration and Score Distribution Alignment_." It provides supplementary materials to the main part of the paper.
+
+The poster associated with the paper was presented at [NeurIPS workshop on Bayesian Decision-making and Uncertainty](https://gp-seminar-series.github.io/neurips-2024/), Vancouver, British Columbia, Canada on December 14, 2024.
+<https://neurips.cc/virtual/2024/98915>
 
 ## Abstract of the Paper
 
-
-
-## Outline
-
-
-
-
-## Replication Codes
-
-The codes to replicate the results displayed in the paper are presented in this ebook. We also provide the codes in an archive file with the following structure:
-
-
-```
-Supplementary-materials
-├ ── ebook
-├ ── scripts
-│   └── functions
-|   |   └── data-ojeda.R
-|   |   └── data-setup-dgp-scenarios.R
-|   |   └── metrics.R
-|   |   └── real-data.R
-|   |   └── subsample_target_distribution.R
-|   |   └── utils.R
-│   └── 01_data_targeted_distrib.R
-│   └── 02_data-simulated.R
-│   └── 03_simul-trees.R
-│   └── 04_simul-random-forests.R
-│   └── 05_simul-random-forests-ntrees.R
-│   └── 06_simul-xgb.R
-│   └── 07_simul-glm.R
-│   └── 08_simul-gam.R
-│   └── 09_simul-gamsel.R
-│   └── 10_simul-comparison.R
-│   └── 11_real-priors-illustration.R
-│   └── 12_real-datasets-priors.R
-│   └── 13_real-estimations.R
-│   └── 14_real_results.R
-│   └── proj.Rproj
-```
-
-
-
-<a href="./replication_codes.zip" class="btn btn-primary btn-sm" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{< fa brands r-project >}} Download the Replication Codes (Zip archive)</a>
+A binary scoring classifier can appear well-calibrated according to standard calibration metrics, even when the distribution of scores does not align with the distribution of the true events. In this paper, we investigate the impact of post-processing calibration on the score distribution (sometimes named ‘recalibration’). Using simulated data, where the true probability is known, followed by real-world datasets with prior knowledge on event distributions, we compare the performance of an XGBoost model before and after applying calibration techniques. The results show that while applying methods such as Platt scaling, Beta calibration, or isotonic regression can improve the model’s calibration, they may also lead to an increase in the divergence between the score distribution and the underlying event probability distribution.

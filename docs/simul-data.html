@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.6.40">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>4&nbsp; Simulated Data – Recalibration</title>
+<title>4&nbsp; Simulated Data – Post-Calibration Techniques: Balancing Calibration and Score Distribution Alignment</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -91,10 +91,10 @@ div.csl-indent {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-86daaaaad7353f9cc0c554efc1dd6d94.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-f868c3b369b738ce9afd17f71ee17ec3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="site_libs/quarto-contrib/pseudocode-2.4.1/pseudocode.min.js"></script>
 <link href="site_libs/quarto-contrib/pseudocode-2.4.1/pseudocode.min.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -187,7 +187,7 @@ window.Quarto = {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">Recalibration</span>
+    <span class="navbar-title">Post-Calibration Techniques: Balancing Calibration and Score Distribution Alignment</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -382,7 +382,7 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>We follow <span class="citation" data-cites="Ojeda_2023">Ojeda et al. (<a href="references.html#ref-Ojeda_2023" role="doc-biblioref">2023</a>)</span> to generate data. They kindly provide two functions to simulate binary in the supplementary materials of their article. We adapt their codes to generate the first 12 scenarios from their article.</p>
+<p>We follow <span class="citation" data-cites="Ojeda_2023">Ojeda et al. (<a href="#ref-Ojeda_2023" role="doc-biblioref">2023</a>)</span> to generate data. They kindly provide two functions to simulate binary in the supplementary materials of their article. We adapt their codes to generate the first 12 scenarios from their article.</p>
 <p>We add another type of scenarios to generate the data, so that the predictor is no longer linear.</p>
 </div>
 </div>
@@ -406,7 +406,7 @@ Code Availability
 ✔ dplyr     1.1.4     ✔ readr     2.1.5
 ✔ forcats   1.0.0     ✔ stringr   1.5.1
 ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-✔ lubridate 1.9.3     ✔ tidyr     1.3.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.1
 ✔ purrr     1.0.2     
 ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ✖ dplyr::filter() masks stats::filter()
@@ -444,7 +444,7 @@ Code Availability
 </div>
 <section id="functions" class="level2" data-number="4.1">
 <h2 data-number="4.1" class="anchored" data-anchor-id="functions"><span class="header-section-number">4.1</span> Functions</h2>
-<p>We load the functions from <a href="target-distribution.html" class="quarto-xref">Chapter&nbsp;<span>2</span></a> to subsample from a dataset so that the true probability follows a beta distribution.</p>
+<p>We load the functions from <a href="#sec-target-distributions" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-target-distributions</span></a> to subsample from a dataset so that the true probability follows a beta distribution.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ks)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"../scripts/functions/subsample_target_distribution.R"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -686,7 +686,7 @@ Code Availability
 </section>
 <section id="scenarios" class="level2" data-number="4.2">
 <h2 data-number="4.2" class="anchored" data-anchor-id="scenarios"><span class="header-section-number">4.2</span> Scenarios</h2>
-<p>Let us define the 12 first scenarios, using the code provided in <span class="citation" data-cites="Ojeda_2023">Ojeda et al. (<a href="references.html#ref-Ojeda_2023" role="doc-biblioref">2023</a>)</span>.</p>
+<p>Let us define the 12 first scenarios, using the code provided in <span class="citation" data-cites="Ojeda_2023">Ojeda et al. (<a href="#ref-Ojeda_2023" role="doc-biblioref">2023</a>)</span>.</p>
 <ul>
 <li><p><strong>DGP 1</strong>:</p>
 <ul>
@@ -807,7 +807,7 @@ Code Availability
 </section>
 <section id="example" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="example"><span class="header-section-number">4.3</span> Example</h2>
-<p>Let us draw a sample of 10,000 observations in each set (train, calibration, validation, test), for each scenario. We can then plot the histogram of the true probabilities in each sample (<a href="#fig-hist-true-prob-ojeda" class="quarto-xref">Figure&nbsp;<span>4.1</span></a>).</p>
+<p>Let us draw a sample of 10,000 observations in each set (train, calibration, validation, test), for each scenario. We can then plot the histogram of the true probabilities in each sample (<a href="#fig-hist-true-prob-ojeda" class="quarto-xref">Figure&nbsp;<span class="quarto-unresolved-ref">fig-hist-true-prob-ojeda</span></a>).</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -924,7 +924,7 @@ Figure&nbsp;4.2: Distribution of the underlying probabilities in the different c
 </div>
 
 
-<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-Ojeda_2023" class="csl-entry" role="listitem">
 Ojeda, Francisco M., Max L. Jansen, Alexandre Thiéry, Stefan Blankenberg, Christian Weimar, Matthias Schmid, and Andreas Ziegler. 2023. <span>“Calibrating Machine Learning Approaches for Probability Estimation: A Comprehensive Comparison.”</span> <em>Statistics in Medicine</em> 42 (29): 5451–78. <a href="https://doi.org/10.1002/sim.9921">https://doi.org/10.1002/sim.9921</a>.
 </div>
@@ -1014,8 +1014,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   });
   clipboard.on('success', onCopySuccess);
   if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
     const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
       text: getTextToCopy,
       container: window.document.getElementById('quarto-embedded-source-code-modal')
@@ -1126,7 +1124,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       if (window.Quarto?.typesetMath) {
         window.Quarto.typesetMath(note);
       }
-      // TODO in 1.5, we should make sure this works without a callout special case
       if (note.classList.contains("callout")) {
         return note.outerHTML;
       } else {

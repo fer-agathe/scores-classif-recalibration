@@ -3,7 +3,7 @@ project:
   output-dir: ../docs
 
 book:
-  title: "Recalibration"
+  title: "Post-Calibration Techniques: Balancing Calibration and Score Distribution Alignment"
   author:
   - name: Arthur Charpentier
     orcid: 0000-0003-3654-6286
@@ -25,7 +25,7 @@ book:
     orcid: 0009-0000-6093-6175
     affiliations:
       - name: Milliman France
-  date: "08/15/2024"
+  date: "12/14/2024"
   chapters:
     - index.qmd
     - part: "I. Subsampling"

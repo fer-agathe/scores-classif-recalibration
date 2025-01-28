@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Recalibration",
     "section": "",
-    "text": "1 Introduction\nThis notebook is the online appendix of the article titled xxx.” It provides supplementary materials to the main part of the paper.",
+    "text": "1 Introduction\nThis notebook is the online appendix of the article titled Post-Calibration Techniques: Balancing Calibration and Score Distribution Alignment.” It provides supplementary materials to the main part of the paper.\nThe poster associated with the paper was presented at NeurIPS workshop on Bayesian Decision-making and Uncertainty, Vancouver, British Columbia, Canada on December 14, 2024. https://neurips.cc/virtual/2024/98915",
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction</span>"
     ]
@@ -14,7 +14,7 @@
     "href": "index.html#abstract-of-the-paper",
     "title": "Recalibration",
     "section": "1.1 Abstract of the Paper",
-    "text": "1.1 Abstract of the Paper",
+    "text": "1.1 Abstract of the Paper\nA binary scoring classifier can appear well-calibrated according to standard calibration metrics, even when the distribution of scores does not align with the distribution of the true events. In this paper, we investigate the impact of post-processing calibration on the score distribution (sometimes named ‘recalibration’). Using simulated data, where the true probability is known, followed by real-world datasets with prior knowledge on event distributions, we compare the performance of an XGBoost model before and after applying calibration techniques. The results show that while applying methods such as Platt scaling, Beta calibration, or isotonic regression can improve the model’s calibration, they may also lead to an increase in the divergence between the score distribution and the underlying event probability distribution.",
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction</span>"
     ]

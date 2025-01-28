@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.6.40">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>7&nbsp; Datasets and Priors – Recalibration</title>
+<title>7&nbsp; Datasets and Priors – Post-Calibration Techniques: Balancing Calibration and Score Distribution Alignment</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -91,10 +91,10 @@ div.csl-indent {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-86daaaaad7353f9cc0c554efc1dd6d94.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-f868c3b369b738ce9afd17f71ee17ec3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="site_libs/quarto-contrib/pseudocode-2.4.1/pseudocode.min.js"></script>
 <link href="site_libs/quarto-contrib/pseudocode-2.4.1/pseudocode.min.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -187,7 +187,7 @@ window.Quarto = {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">Recalibration</span>
+    <span class="navbar-title">Post-Calibration Techniques: Balancing Calibration and Score Distribution Alignment</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -393,7 +393,7 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This chapter provides priors for the distribution of the true probability of binary events from the real-world dataset used in the paper. It uses the functions defined in <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a>. We assume that the true probabilities are distributed according to a Beta distribution. The parameters of that distribution are obtained by fitting a Beta distribution by maximimum likelihood on the scores estimated using Generalized Additive Model with model selection (GAMSEL) model.</p>
+<p>This chapter provides priors for the distribution of the true probability of binary events from the real-world dataset used in the paper. It uses the functions defined in <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a>. We assume that the true probabilities are distributed according to a Beta distribution. The parameters of that distribution are obtained by fitting a Beta distribution by maximimum likelihood on the scores estimated using Generalized Additive Model with model selection (GAMSEL) model.</p>
 </div>
 </div>
 <div class="cell">
@@ -403,7 +403,7 @@ Note
 ✔ dplyr     1.1.4     ✔ readr     2.1.5
 ✔ forcats   1.0.0     ✔ stringr   1.5.1
 ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-✔ lubridate 1.9.3     ✔ tidyr     1.3.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.1
 ✔ purrr     1.0.2     
 ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ✖ dplyr::filter() masks stats::filter()
@@ -412,7 +412,7 @@ Note
 </div>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gamsel)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Loaded gamsel 1.8-4</code></pre>
+<pre><code>Loaded gamsel 1.8-5</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Colours for train/test</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>colour_samples <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
@@ -420,7 +420,7 @@ Note
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Test"</span> <span class="ot">=</span> <span class="st">"#D55E00"</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us load the functions defined in <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a>:</p>
+<p>Let us load the functions defined in <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a>:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"../scripts/functions/real-data.R"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -438,7 +438,7 @@ Note
 <li>Description: Predict the age of abalone from physical measurements.</li>
 <li>Number of instances: 4,177</li>
 <li>Features: 8</li>
-<li>Reference: <span class="citation" data-cites="misc_abalone_1">Nash et al. (<a href="references.html#ref-misc_abalone_1" role="doc-biblioref">1995</a>)</span></li>
+<li>Reference: <span class="citation" data-cites="misc_abalone_1">Nash et al. (<a href="#ref-misc_abalone_1" role="doc-biblioref">1995</a>)</span></li>
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>name <span class="ot">&lt;-</span> <span class="st">"abalone"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -473,7 +473,7 @@ Note
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Sex =</span> <span class="fu">ifelse</span>(Sex <span class="sc">==</span> <span class="st">"M"</span>, <span class="dv">1</span>, <span class="dv">0</span>)) </span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"Sex"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>priors_abalone <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_abalone, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -507,7 +507,7 @@ Figure&nbsp;7.1: Distribution of estimated probabilities by the GAMSEL model and
 <li>Description: Predict whether income exceeds $50K/yr based on census data. Also known as “Census Income” dataset.</li>
 <li>Number of instances: 48,842</li>
 <li>Features: 14</li>
-<li>Reference: <span class="citation" data-cites="misc_adult_2">Becker and Kohavi (<a href="references.html#ref-misc_adult_2" role="doc-biblioref">1996</a>)</span></li>
+<li>Reference: <span class="citation" data-cites="misc_adult_2">Becker and Kohavi (<a href="#ref-misc_adult_2" role="doc-biblioref">1996</a>)</span></li>
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>name <span class="ot">&lt;-</span> <span class="st">"adult"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -556,7 +556,7 @@ Figure&nbsp;7.1: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>income)</span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"high_income"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>priors_adult <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_adult, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -590,7 +590,7 @@ Figure&nbsp;7.2: Distribution of estimated probabilities by the GAMSEL model and
 <li>Description: The data is related with direct marketing campaigns (phone calls) of a Portuguese banking institution. The classification goal is to predict if the client will subscribe a term deposit (variable y).</li>
 <li>Number of instances: 45,211</li>
 <li>Features: 16</li>
-<li>Reference: <span class="citation" data-cites="misc_bank_marketing_222">Moro, Rita, and Cortez (<a href="references.html#ref-misc_bank_marketing_222" role="doc-biblioref">2012</a>)</span></li>
+<li>Reference: <span class="citation" data-cites="misc_bank_marketing_222">Moro, Rita, and Cortez (<a href="#ref-misc_bank_marketing_222" role="doc-biblioref">2012</a>)</span></li>
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>name <span class="ot">&lt;-</span> <span class="st">"bank"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -638,7 +638,7 @@ Figure&nbsp;7.2: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">y =</span> <span class="fu">ifelse</span>(y <span class="sc">==</span> <span class="st">"yes"</span>, <span class="dv">1</span>, <span class="dv">0</span>)) </span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"y"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>priors_bank <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_bank, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -672,7 +672,7 @@ Figure&nbsp;7.3: Distribution of estimated probabilities by the GAMSEL model and
 <li>Description: This research aimed at the case of customers’ default payments in Taiwan and compares the predictive accuracy of probability of default among six data mining methods.</li>
 <li>Number of instances: 30,000</li>
 <li>Features: 23</li>
-<li>Reference: <span class="citation" data-cites="misc_default_of_credit_card_clients_350">Yeh (<a href="references.html#ref-misc_default_of_credit_card_clients_350" role="doc-biblioref">2016</a>)</span></li>
+<li>Reference: <span class="citation" data-cites="misc_default_of_credit_card_clients_350">Yeh (<a href="#ref-misc_default_of_credit_card_clients_350" role="doc-biblioref">2016</a>)</span></li>
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>name <span class="ot">&lt;-</span> <span class="st">"default"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -722,7 +722,7 @@ Figure&nbsp;7.3: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">default =</span> <span class="st">`</span><span class="at">default payment next month</span><span class="st">`</span>)</span>
 <span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"default"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>priors_default <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_default, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -756,7 +756,7 @@ Figure&nbsp;7.4: Distribution of estimated probabilities by the GAMSEL model and
 <li>Description: Images of 13,611 grains of 7 different registered dry beans were taken with a high-resolution camera. A total of 16 features; 12 dimensions and 4 shape forms, were obtained from the grains.</li>
 <li>Number of instances: 13,611</li>
 <li>Features: 16</li>
-<li>References: <span class="citation" data-cites="misc_dry_bean_602"><span>“<span>Dry Bean</span>”</span> (<a href="references.html#ref-misc_dry_bean_602" role="doc-biblioref">2020</a>)</span></li>
+<li>References: <span class="citation" data-cites="misc_dry_bean_602"><span>“<span>Dry Bean</span>”</span> (<a href="#ref-misc_dry_bean_602" role="doc-biblioref">2020</a>)</span></li>
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>name <span class="ot">&lt;-</span> <span class="st">"drybean"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -791,7 +791,7 @@ Figure&nbsp;7.4: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Class)</span>
 <span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"is_dermason"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>priors_drybean <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_drybean, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -825,7 +825,7 @@ Figure&nbsp;7.5: Distribution of estimated probabilities by the GAMSEL model and
 <li>Description: This data studies whether a person will accept the coupon recommended to him in different driving scenarios.</li>
 <li>Number of instances: 12,684</li>
 <li>Features: 25</li>
-<li>References: <span class="citation" data-cites="misc_vehicle_coupon_recommendation_603"><span>“<span>In-Vehicle Coupon Recommendation</span>”</span> (<a href="references.html#ref-misc_vehicle_coupon_recommendation_603" role="doc-biblioref">2020</a>)</span></li>
+<li>References: <span class="citation" data-cites="misc_vehicle_coupon_recommendation_603"><span>“<span>In-Vehicle Coupon Recommendation</span>”</span> (<a href="#ref-misc_vehicle_coupon_recommendation_603" role="doc-biblioref">2020</a>)</span></li>
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>name <span class="ot">&lt;-</span> <span class="st">"coupon"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -870,7 +870,7 @@ Figure&nbsp;7.5: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"y"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>priors_coupon <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_coupon, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -904,7 +904,7 @@ Figure&nbsp;7.6: Distribution of estimated probabilities by the GAMSEL model and
 <li>Description: From Audobon Society Field Guide; mushrooms described in terms of physical characteristics; classification: poisonous or edible.</li>
 <li>Number of instances: 8,124</li>
 <li>Features: 22</li>
-<li>References: <span class="citation" data-cites="misc_mushroom_73"><span>“<span>Mushroom</span>”</span> (<a href="references.html#ref-misc_mushroom_73" role="doc-biblioref">1987</a>)</span></li>
+<li>References: <span class="citation" data-cites="misc_mushroom_73"><span>“<span>Mushroom</span>”</span> (<a href="#ref-misc_mushroom_73" role="doc-biblioref">1987</a>)</span></li>
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>name <span class="ot">&lt;-</span> <span class="st">"mushroom"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -947,7 +947,7 @@ Figure&nbsp;7.6: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>veil_type)</span>
 <span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"edible"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>priors_mushroom <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_mushroom, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -981,7 +981,7 @@ Figure&nbsp;7.7: Distribution of estimated probabilities by the GAMSEL model and
 <li>Description: Predict the age of occupancy from physical measurements.</li>
 <li>Number of instances: 20,560</li>
 <li>Features: 6</li>
-<li>References: <span class="citation" data-cites="misc_occupancy_detection__357">Candanedo (<a href="references.html#ref-misc_occupancy_detection__357" role="doc-biblioref">2016</a>)</span></li>
+<li>References: <span class="citation" data-cites="misc_occupancy_detection__357">Candanedo (<a href="#ref-misc_occupancy_detection__357" role="doc-biblioref">2016</a>)</span></li>
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>name <span class="ot">&lt;-</span> <span class="st">"occupancy"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1039,7 +1039,7 @@ Figure&nbsp;7.7: Distribution of estimated probabilities by the GAMSEL model and
 <span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>date)</span>
 <span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"Occupancy"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>priors_occupancy <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_occupancy, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -1073,7 +1073,7 @@ Figure&nbsp;7.8: Distribution of estimated probabilities by the GAMSEL model and
 <li>Description: Two datasets are included, related to red and white vinho verde wine samples, from the north of Portugal. The goal is to model wine quality based on physicochemical tests (see [Cortez et al., 2009], http://www3.dsi.uminho.pt/pcortez/wine/).</li>
 <li>Number of instances: 4,898</li>
 <li>Features: 11</li>
-<li>References: <span class="citation" data-cites="misc_wine_quality_186">Cortez et al. (<a href="references.html#ref-misc_wine_quality_186" role="doc-biblioref">2009</a>)</span></li>
+<li>References: <span class="citation" data-cites="misc_wine_quality_186">Cortez et al. (<a href="#ref-misc_wine_quality_186" role="doc-biblioref">2009</a>)</span></li>
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>name <span class="ot">&lt;-</span> <span class="st">"winequality"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1131,7 +1131,7 @@ e.g.:
 <span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>tb_winequality <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(tb_winequality)</span>
 <span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"high_quality"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>priors_winequality <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_winequality, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -1165,7 +1165,7 @@ Figure&nbsp;7.9: Distribution of estimated probabilities by the GAMSEL model and
 <li>Description: Classifying Email as Spam or Non-Spam</li>
 <li>Number of instances: 4,601</li>
 <li>Features: 57</li>
-<li>References: <span class="citation" data-cites="misc_spambase_94">Hopkins et al. (<a href="references.html#ref-misc_spambase_94" role="doc-biblioref">1999</a>)</span></li>
+<li>References: <span class="citation" data-cites="misc_spambase_94">Hopkins et al. (<a href="#ref-misc_spambase_94" role="doc-biblioref">1999</a>)</span></li>
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>name <span class="ot">&lt;-</span> <span class="st">"spambase"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1222,7 +1222,7 @@ Figure&nbsp;7.9: Distribution of estimated probabilities by the GAMSEL model and
 <div class="cell">
 <div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>target_name <span class="ot">&lt;-</span> <span class="st">"is_spam"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="example_spambase_beta.html" class="quarto-xref">Chapter&nbsp;<span>6</span></a> to get our priors.</p>
+<p>Let us call the <code class="sourceCode r"><span class="fu">get_beta_fit</span>()</code> from <a href="#sec-real-example-beta" class="quarto-xref">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-real-example-beta</span></a> to get our priors.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>priors_spambase <span class="ot">&lt;-</span> <span class="fu">get_beta_fit</span>(</span>
 <span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> tb_spambase, <span class="at">target_name =</span> target_name, <span class="at">seed =</span> <span class="dv">1234</span></span>
@@ -1327,7 +1327,7 @@ Table&nbsp;7.1: Key characteristics of the datasets.
 <td style="text-align: right;">8</td>
 <td style="text-align: right;">8</td>
 <td style="text-align: right;">0.37</td>
-<td style="text-align: left;"><span class="citation" data-cites="misc_abalone_1">Nash et al. (<a href="references.html#ref-misc_abalone_1" role="doc-biblioref">1995</a>)</span></td>
+<td style="text-align: left;"><span class="citation" data-cites="misc_abalone_1">Nash et al. (<a href="#ref-misc_abalone_1" role="doc-biblioref">1995</a>)</span></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">adult</td>
@@ -1335,7 +1335,7 @@ Table&nbsp;7.1: Key characteristics of the datasets.
 <td style="text-align: right;">14</td>
 <td style="text-align: right;">6</td>
 <td style="text-align: right;">0.24</td>
-<td style="text-align: left;"><span class="citation" data-cites="misc_adult_2">Becker and Kohavi (<a href="references.html#ref-misc_adult_2" role="doc-biblioref">1996</a>)</span></td>
+<td style="text-align: left;"><span class="citation" data-cites="misc_adult_2">Becker and Kohavi (<a href="#ref-misc_adult_2" role="doc-biblioref">1996</a>)</span></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">bank</td>
@@ -1343,7 +1343,7 @@ Table&nbsp;7.1: Key characteristics of the datasets.
 <td style="text-align: right;">16</td>
 <td style="text-align: right;">7</td>
 <td style="text-align: right;">0.12</td>
-<td style="text-align: left;"><span class="citation" data-cites="misc_bank_marketing_222">Moro, Rita, and Cortez (<a href="references.html#ref-misc_bank_marketing_222" role="doc-biblioref">2012</a>)</span></td>
+<td style="text-align: left;"><span class="citation" data-cites="misc_bank_marketing_222">Moro, Rita, and Cortez (<a href="#ref-misc_bank_marketing_222" role="doc-biblioref">2012</a>)</span></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">default</td>
@@ -1351,7 +1351,7 @@ Table&nbsp;7.1: Key characteristics of the datasets.
 <td style="text-align: right;">23</td>
 <td style="text-align: right;">14</td>
 <td style="text-align: right;">0.22</td>
-<td style="text-align: left;"><span class="citation" data-cites="misc_default_of_credit_card_clients_350">Yeh (<a href="references.html#ref-misc_default_of_credit_card_clients_350" role="doc-biblioref">2016</a>)</span></td>
+<td style="text-align: left;"><span class="citation" data-cites="misc_default_of_credit_card_clients_350">Yeh (<a href="#ref-misc_default_of_credit_card_clients_350" role="doc-biblioref">2016</a>)</span></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">drybean</td>
@@ -1359,7 +1359,7 @@ Table&nbsp;7.1: Key characteristics of the datasets.
 <td style="text-align: right;">16</td>
 <td style="text-align: right;">16</td>
 <td style="text-align: right;">0.26</td>
-<td style="text-align: left;"><span class="citation" data-cites="misc_dry_bean_602"><span>“<span>Dry Bean</span>”</span> (<a href="references.html#ref-misc_dry_bean_602" role="doc-biblioref">2020</a>)</span></td>
+<td style="text-align: left;"><span class="citation" data-cites="misc_dry_bean_602"><span>“<span>Dry Bean</span>”</span> (<a href="#ref-misc_dry_bean_602" role="doc-biblioref">2020</a>)</span></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">coupon</td>
@@ -1367,7 +1367,7 @@ Table&nbsp;7.1: Key characteristics of the datasets.
 <td style="text-align: right;">22</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0.57</td>
-<td style="text-align: left;"><span class="citation" data-cites="misc_vehicle_coupon_recommendation_603"><span>“<span>In-Vehicle Coupon Recommendation</span>”</span> (<a href="references.html#ref-misc_vehicle_coupon_recommendation_603" role="doc-biblioref">2020</a>)</span></td>
+<td style="text-align: left;"><span class="citation" data-cites="misc_vehicle_coupon_recommendation_603"><span>“<span>In-Vehicle Coupon Recommendation</span>”</span> (<a href="#ref-misc_vehicle_coupon_recommendation_603" role="doc-biblioref">2020</a>)</span></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">mushroom</td>
@@ -1375,7 +1375,7 @@ Table&nbsp;7.1: Key characteristics of the datasets.
 <td style="text-align: right;">21</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0.52</td>
-<td style="text-align: left;"><span class="citation" data-cites="misc_mushroom_73"><span>“<span>Mushroom</span>”</span> (<a href="references.html#ref-misc_mushroom_73" role="doc-biblioref">1987</a>)</span></td>
+<td style="text-align: left;"><span class="citation" data-cites="misc_mushroom_73"><span>“<span>Mushroom</span>”</span> (<a href="#ref-misc_mushroom_73" role="doc-biblioref">1987</a>)</span></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">occupancy</td>
@@ -1383,7 +1383,7 @@ Table&nbsp;7.1: Key characteristics of the datasets.
 <td style="text-align: right;">5</td>
 <td style="text-align: right;">5</td>
 <td style="text-align: right;">0.23</td>
-<td style="text-align: left;"><span class="citation" data-cites="misc_occupancy_detection__357">Candanedo (<a href="references.html#ref-misc_occupancy_detection__357" role="doc-biblioref">2016</a>)</span></td>
+<td style="text-align: left;"><span class="citation" data-cites="misc_occupancy_detection__357">Candanedo (<a href="#ref-misc_occupancy_detection__357" role="doc-biblioref">2016</a>)</span></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">winequality</td>
@@ -1391,7 +1391,7 @@ Table&nbsp;7.1: Key characteristics of the datasets.
 <td style="text-align: right;">12</td>
 <td style="text-align: right;">11</td>
 <td style="text-align: right;">0.63</td>
-<td style="text-align: left;"><span class="citation" data-cites="misc_wine_quality_186">Cortez et al. (<a href="references.html#ref-misc_wine_quality_186" role="doc-biblioref">2009</a>)</span></td>
+<td style="text-align: left;"><span class="citation" data-cites="misc_wine_quality_186">Cortez et al. (<a href="#ref-misc_wine_quality_186" role="doc-biblioref">2009</a>)</span></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">spambase</td>
@@ -1399,7 +1399,7 @@ Table&nbsp;7.1: Key characteristics of the datasets.
 <td style="text-align: right;">57</td>
 <td style="text-align: right;">57</td>
 <td style="text-align: right;">0.39</td>
-<td style="text-align: left;"><span class="citation" data-cites="misc_spambase_94">Hopkins et al. (<a href="references.html#ref-misc_spambase_94" role="doc-biblioref">1999</a>)</span></td>
+<td style="text-align: left;"><span class="citation" data-cites="misc_spambase_94">Hopkins et al. (<a href="#ref-misc_spambase_94" role="doc-biblioref">1999</a>)</span></td>
 </tr>
 </tbody>
 </table>
@@ -1410,7 +1410,7 @@ Table&nbsp;7.1: Key characteristics of the datasets.
 </div>
 
 
-<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-misc_adult_2" class="csl-entry" role="listitem">
 Becker, Barry, and Ronny Kohavi. 1996. <span>“<span>Adult</span>.”</span> UCI Machine Learning Repository.
 </div>
@@ -1527,8 +1527,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   });
   clipboard.on('success', onCopySuccess);
   if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
     const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
       text: getTextToCopy,
       container: window.document.getElementById('quarto-embedded-source-code-modal')
@@ -1639,7 +1637,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       if (window.Quarto?.typesetMath) {
         window.Quarto.typesetMath(note);
       }
-      // TODO in 1.5, we should make sure this works without a callout special case
       if (note.classList.contains("callout")) {
         return note.outerHTML;
       } else {

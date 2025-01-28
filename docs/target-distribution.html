@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.6.40">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>2&nbsp; Targeted Distribution – Recalibration</title>
+<title>2&nbsp; Targeted Distribution – Post-Calibration Techniques: Balancing Calibration and Score Distribution Alignment</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -91,10 +91,10 @@ div.csl-indent {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-86daaaaad7353f9cc0c554efc1dd6d94.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-f868c3b369b738ce9afd17f71ee17ec3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="site_libs/quarto-contrib/pseudocode-2.4.1/pseudocode.min.js"></script>
 <link href="site_libs/quarto-contrib/pseudocode-2.4.1/pseudocode.min.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -187,7 +187,7 @@ window.Quarto = {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">Recalibration</span>
+    <span class="navbar-title">Post-Calibration Techniques: Balancing Calibration and Score Distribution Alignment</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -408,7 +408,7 @@ Code Availability
 ✔ dplyr     1.1.4     ✔ readr     2.1.5
 ✔ forcats   1.0.0     ✔ stringr   1.5.1
 ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-✔ lubridate 1.9.3     ✔ tidyr     1.3.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.1
 ✔ purrr     1.0.2     
 ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ✖ dplyr::filter() masks stats::filter()
@@ -421,14 +421,14 @@ Code Availability
 <p>In our generated sample, <span class="math inline">\(\mathcal{D}=\{(\boldsymbol{x}_i,y_i,{s}_i),i\in\{1,\cdots,n\}\}\)</span>, let <span class="math inline">\(\widehat{f}\)</span> denote the (empirical) density of scores. For the various scenarios, suppose that we want a specific distribution for the scores, denoted <span class="math inline">\(g\)</span> (uniform, Beta, etc.). A classical idea is to use ‘’rejection sampling’’ techniques to create a subsample of the dataset. Set <span class="math display">\[
 c = \sup_{s\in(0,1)} \frac{\widehat{f}(s)}{g(s)} \leq \infty.
 \]</span> If <span class="math inline">\(c\)</span> is finite, and not too large, we can use the standard rejection technique, described in <a href="#alg-cap-1" class="quarto-xref">Algorithm 2.1</a>. In a nutshell, point <span class="math inline">\(i\)</span> is kept with probability <span class="math inline">\((cg(s_i))^{-1}\widehat{f}(s_i)\)</span>.</p>
-<div id="alg-cap-1" class="pseudocode-container quarto-float" data-chapter-level="2" data-comment-delimiter="//" data-no-end="false" data-caption-prefix="Algorithm" data-line-number-punc=":" data-indent-size="1.2em" data-pseudocode-number="1" data-line-number="true">
+<div id="alg-cap-1" class="pseudocode-container quarto-float" data-comment-delimiter="//" data-line-number="true" data-indent-size="1.2em" data-caption-prefix="Algorithm" data-no-end="false" data-pseudocode-number="1" data-line-number-punc=":" data-chapter-level="2">
 <div class="pseudocode">
 \begin{algorithm} \caption{Subsample a dataset so that the distribution of scores has density $g$ (Rejection, $c$ small)} \begin{algorithmic} \Require $\mathcal{D}=\{(\boldsymbol{x}_i,y_i,{s}_i),i\in\{1,\cdots,n\}\}$ and $g$ (target density) \State $\mathcal{I} \gets ,i\in\{1,\cdots,n\}$ \State $\widehat{f} \gets$ density of $\{({s}_i),i\in\mathcal{I}\}$, using Chen (1999) \State $c = \displaystyle\sup_{s\in(0,1)} \frac{\widehat{f}(s)}{g(s)} \gets \max_{i=1,\cdots,n}\displaystyle\frac{\widehat{f}(s_i)}{g(s_i)} $ \For{$i\in\{1,\cdots,n\}$} \State $U \gets \mathcal{U}([0,1])$ \If{$\displaystyle U &gt; \frac{\widehat{f}(s_i)}{c\,g(s_i)}$} \State $\mathcal{I} \gets \mathcal{I}\backslash\{i\}$ , i.e. ``reject" \EndIf \EndFor \State $s\mathcal{D}=\{(\boldsymbol{x}_i,y_i,{s}_i),i\in\mathcal{I}\}$ \end{algorithmic} \end{algorithm}
 </div>
 </div>
-<p>Note: the reference mentioned: <span class="citation" data-cites="chen1999beta">Chen (<a href="references.html#ref-chen1999beta" role="doc-biblioref">1999</a>)</span></p>
-<p>If <span class="math inline">\(c\)</span> is too large, we use an iterative algorithm, described in <a href="#alg-cap-2" class="quarto-xref">Algorithm 2.2</a>, inspired by <span class="citation" data-cites="rumbell2023novel">Rumbell et al. (<a href="references.html#ref-rumbell2023novel" role="doc-biblioref">2023</a>)</span> (alternative options could be the ‘’Empirical Supremum Rejection Sampling’’ introduced in <span class="citation" data-cites="caffo2002empirical">Caffo, Booth, and Davison (<a href="references.html#ref-caffo2002empirical" role="doc-biblioref">2002</a>)</span>, for instance)</p>
-<div id="alg-cap-2" class="pseudocode-container quarto-float" data-chapter-level="2" data-comment-delimiter="//" data-no-end="false" data-caption-prefix="Algorithm" data-line-number-punc=":" data-indent-size="1.2em" data-pseudocode-number="2" data-line-number="true">
+<p>Note: the reference mentioned: <span class="citation" data-cites="chen1999beta">Chen (<a href="#ref-chen1999beta" role="doc-biblioref">1999</a>)</span></p>
+<p>If <span class="math inline">\(c\)</span> is too large, we use an iterative algorithm, described in <a href="#alg-cap-2" class="quarto-xref">Algorithm 2.2</a>, inspired by <span class="citation" data-cites="rumbell2023novel">Rumbell et al. (<a href="#ref-rumbell2023novel" role="doc-biblioref">2023</a>)</span> (alternative options could be the ‘’Empirical Supremum Rejection Sampling’’ introduced in <span class="citation" data-cites="caffo2002empirical">Caffo, Booth, and Davison (<a href="#ref-caffo2002empirical" role="doc-biblioref">2002</a>)</span>, for instance)</p>
+<div id="alg-cap-2" class="pseudocode-container quarto-float" data-comment-delimiter="//" data-line-number="true" data-indent-size="1.2em" data-caption-prefix="Algorithm" data-no-end="false" data-pseudocode-number="2" data-line-number-punc=":" data-chapter-level="2">
 <div class="pseudocode">
 \begin{algorithm} \caption{Subsample a dataset so that the distribution of scores has density $g$ (Iterative Rejection, $c$ large)} \begin{algorithmic} \Require $\mathcal{D}=\{(\boldsymbol{x}_i,y_i,{s}_i),i\in\{1,\cdots,n\}\}$, $\epsilon&gt;0$ and $g$ (target density) \State $\mathcal{I} \gets \{1,\cdots,n\}$ \State $\widehat{f} \gets$ density of $\{({s}_i),i\in\mathcal{I}\}$, using Chen (1999) \State $d \gets \|\widehat{F}-G\|_{\infty}$ (Kolmogorov-Smirnov distance) \While{$d&gt;\epsilon$} \State $\mathcal{J} \gets \mathcal{I}$ \For{$i\in\mathcal{I}$} \State $U \gets \mathcal{U}([0,1])$ \If{$\displaystyle U&gt;\frac{\widehat{f}(s_i)}{g(s_i)}$} \State $\mathcal{J} \gets \mathcal{J}\backslash\{i\}$ , i.e. 'reject' observation $i$ \EndIf \EndFor \State $\mathcal{I} \gets \mathcal{J}$ \State $\widehat{f} \gets$ density of $\{({s}_i),i\in\mathcal{I}\}$ \State $d \gets \|\widehat{F}-G\|_{\infty}$ \EndWhile \State $s\mathcal{D}=\{(\boldsymbol{x}_i,y_i,{s}_i),i\in\mathcal{I}\}$ \end{algorithmic} \end{algorithm}
 </div>
@@ -546,8 +546,8 @@ c = \sup_{s\in(0,1)} \frac{\widehat{f}(s)}{g(s)} \leq \infty.
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>B <span class="ot">&lt;-</span> <span class="fu">subset_target</span>(<span class="at">data =</span> data, <span class="at">probs_name =</span> <span class="st">"scores"</span>, <span class="at">iter =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>1) Size ...... 48997
-1)  ks ............ 0.3002057
+<pre><code>1) Size ...... 48588
+1)  ks ............ 0.300183
 1)  (pvalue) ...... 0</code></pre>
 </div>
 <div class="cell-output-display">
@@ -558,9 +558,9 @@ c = \sup_{s\in(0,1)} \frac{\widehat{f}(s)}{g(s)} \leq \infty.
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>2) Size ...... 19048
-2)   ks ............ 0.005333075
-2)   (pvalue) ...... 0.6506961</code></pre>
+<pre><code>2) Size ...... 17574
+2)   ks ............ 0.004580561
+2)   (pvalue) ...... 0.8545655</code></pre>
 </div>
 <div class="cell-output-display">
 <div>
@@ -570,9 +570,9 @@ c = \sup_{s\in(0,1)} \frac{\widehat{f}(s)}{g(s)} \leq \infty.
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>3) Size ...... 18642
-3)   ks ............ 0.002285488
-3)   (pvalue) ...... 0.9999747</code></pre>
+<pre><code>3) Size ...... 16952
+3)   ks ............ 0.004669826
+3)   (pvalue) ...... 0.8535013</code></pre>
 </div>
 <div class="cell-output-display">
 <div>
@@ -582,9 +582,9 @@ c = \sup_{s\in(0,1)} \frac{\widehat{f}(s)}{g(s)} \leq \infty.
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>4) Size ...... 18091
-4)   ks ............ 0.002551736
-4)   (pvalue) ...... 0.9997934</code></pre>
+<pre><code>4) Size ...... 16326
+4)   ks ............ 0.001962388
+4)   (pvalue) ...... 1</code></pre>
 </div>
 <div class="cell-output-display">
 <div>
@@ -594,9 +594,9 @@ c = \sup_{s\in(0,1)} \frac{\widehat{f}(s)}{g(s)} \leq \infty.
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>5) Size ...... 17400
-5)   ks ............ 0.002624571
-5)   (pvalue) ...... 0.9997548</code></pre>
+<pre><code>5) Size ...... 16062
+5)   ks ............ 0.001768082
+5)   (pvalue) ...... 1</code></pre>
 </div>
 <div class="cell-output-display">
 <div>
@@ -645,7 +645,7 @@ c = \sup_{s\in(0,1)} \frac{\widehat{f}(s)}{g(s)} \leq \infty.
 one-sample Kolmogorov-Smirnov test</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>1)  ks ............ 0.502691
+<pre><code>1)  ks ............ 0.5034851
 1)  (pvalue) ...... 0</code></pre>
 </div>
 <div class="cell-output-display">
@@ -656,9 +656,9 @@ one-sample Kolmogorov-Smirnov test</code></pre>
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>2) Size ...... 7329
-2)   ks ............ 0.05595482
-2)   (pvalue) ...... 2.343175e-20</code></pre>
+<pre><code>2) Size ...... 7577
+2)   ks ............ 0.05550301
+2)   (pvalue) ...... 1.063625e-20</code></pre>
 </div>
 <div class="cell-output-display">
 <div>
@@ -681,7 +681,7 @@ one-sample Kolmogorov-Smirnov test</code></pre>
 <span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning in bs(x, degree = 3L, knots = numeric(0), Boundary.knots =
-c(3.13157225521199e-08, : some 'x' values beyond boundary knots may cause
+c(5.61704243326441e-07, : some 'x' values beyond boundary knots may cause
 ill-conditioned bases</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(</span>
@@ -691,7 +691,7 @@ ill-conditioned bases</code></pre>
 <span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning in bs(x, degree = 3L, knots = numeric(0), Boundary.knots =
-c(0.00777749687920286, : some 'x' values beyond boundary knots may cause
+c(0.0141219512059958, : some 'x' values beyond boundary knots may cause
 ill-conditioned bases</code></pre>
 </div>
 <div class="cell-output-display">
@@ -704,7 +704,7 @@ ill-conditioned bases</code></pre>
 </div>
 
 
-<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-caffo2002empirical" class="csl-entry" role="listitem">
 Caffo, Brian S, James G Booth, and AC Davison. 2002. <span>“Empirical Supremum Rejection Sampling.”</span> <em>Biometrika</em> 89 (4): 745–54.
 </div>
@@ -800,8 +800,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   });
   clipboard.on('success', onCopySuccess);
   if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
     const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
       text: getTextToCopy,
       container: window.document.getElementById('quarto-embedded-source-code-modal')
@@ -912,7 +910,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       if (window.Quarto?.typesetMath) {
         window.Quarto.typesetMath(note);
       }
-      // TODO in 1.5, we should make sure this works without a callout special case
       if (note.classList.contains("callout")) {
         return note.outerHTML;
       } else {
